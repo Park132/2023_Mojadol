@@ -5,7 +5,7 @@ using UnityEngine;
 public class LSM_TurretSc : MonoBehaviour
 {
 
-	private float ATTACKDELAY = 3f, SEARCHINGDELAY = 1f;
+	private float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
 
     public MoonHeader.TurretStats stats;
 	private GameObject mark;
@@ -17,25 +17,32 @@ public class LSM_TurretSc : MonoBehaviour
 	{
 		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
 		mark.transform.localPosition = Vector3.up * 10;
-		stats = new MoonHeader.TurretStats(10,4);
-		Color dummy_c = Color.white;
-		switch (stats.team) {
-			case MoonHeader.Team.Red:
-				dummy_c = Color.red;
-				break;
-			case MoonHeader.Team.Blue:
-				dummy_c = Color.blue;
-				break;
-			default:
-				dummy_c = Color.yellow;
-				break;
-		}
-		mark.GetComponent<Renderer>().material.color = dummy_c;
+		// health, atk
+		stats = new MoonHeader.TurretStats(10,6);
+		ChangeColor();
 
 		timer = 0;
 		searchRadius = 10f;
 		target = null;
 	}
+
+	private void ChangeColor()
+	{
+        Color dummy_c = Color.white;
+        switch (stats.team)
+        {
+            case MoonHeader.Team.Red:
+                dummy_c = Color.red;
+                break;
+            case MoonHeader.Team.Blue:
+                dummy_c = Color.blue;
+                break;
+            default:
+                dummy_c = Color.yellow;
+                break;
+        }
+        mark.GetComponent<Renderer>().material.color = dummy_c;
+    }
 
 	private void Update()
 	{
@@ -45,6 +52,16 @@ public class LSM_TurretSc : MonoBehaviour
 			AttackTarget();
 		}
 
+	}
+
+	public void Damaged(int dam, MoonHeader.Team t)
+	{
+		this.stats.Health -= dam;
+		if (this.stats.Health <= 0) {
+			this.stats.team = t;
+			this.stats.Health = 10;
+			ChangeColor();
+		}
 	}
 
 	// 일정 범위 내에 적이 있는지를 확인하는 코드.
@@ -57,23 +74,25 @@ public class LSM_TurretSc : MonoBehaviour
 				timer = 0;
 				RaycastHit[] hits = Physics.SphereCastAll(transform.position, searchRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Minion"));
 
-
-				foreach (RaycastHit hit in hits)
+                float minDistance = float.MaxValue;
+                foreach (RaycastHit hit in hits)
 				{
-					float minDistance = float.MaxValue;
 					if (hit.transform.CompareTag("Minion"))
 					{
 						LSM_MinionCtrl dummyCtr = hit.transform.GetComponent<LSM_MinionCtrl>();
-						float dummydistance = Vector3.Distance(transform.position, hit.transform.position);
-						if (dummyCtr.stats.team != stats.team && minDistance > dummydistance)
+						if (dummyCtr.stats.team != this.stats.team)
 						{
-							target = hit.transform.gameObject;
-							minDistance = dummydistance;
+							float dummydistance = Vector3.Distance(transform.position, hit.transform.position);
+							if (dummyCtr.stats.team != stats.team && minDistance > dummydistance)
+							{
+								target = hit.transform.gameObject;
+								minDistance = dummydistance;
+							}
 						}
 					}
 				}
 
-				if (!ReferenceEquals(target, null)) Debug.Log("Minion Searching!!");
+				//if (!ReferenceEquals(target, null)) Debug.Log("Minion Searching!!");
 			}
 		}
 		else timer = 0;
@@ -90,12 +109,16 @@ public class LSM_TurretSc : MonoBehaviour
 			{
 				if (timer_attack >= ATTACKDELAY)
 				{
-					Debug.Log("Attack Minion!");
+					//Debug.Log("Attack Minion!");
 					timer_attack = 0;
 					LSM_MinionCtrl dummyMinion = target.GetComponent<LSM_MinionCtrl>();
-					dummyMinion.Damaged(stats.Atk);
-					if (dummyMinion.stats.health <= 0)
-						target = null;
+					if (dummyMinion.stats.team != this.stats.team)
+					{
+						dummyMinion.Damaged(stats.Atk);
+						if (dummyMinion.stats.health <= 0)
+							target = null;
+					}
+					else { target = null; }
 				}
 			}
 		}

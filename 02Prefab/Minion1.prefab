@@ -389,6 +389,7 @@ MonoBehaviour:
     Atk: 0
     destination: []
   mySpawner: {fileID: 0}
+  way_index: 0
   CameraPosition: {fileID: 2816231537466286677}
   icon: {fileID: 0}
   target_attack: {fileID: 0}

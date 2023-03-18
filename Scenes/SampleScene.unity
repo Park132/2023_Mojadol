@@ -513,6 +513,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 221951800}
+  - component: {fileID: 221951801}
   m_Layer: 0
   m_Name: WayPoint1 (1)
   m_TagString: WayPoint
@@ -537,6 +538,19 @@ Transform:
   m_Father: {fileID: 254482921}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &221951801
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221951799}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &254482918
 GameObject:
   m_ObjectHideFlags: 0
@@ -643,6 +657,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 368673610}
+  - component: {fileID: 368673611}
   m_Layer: 0
   m_Name: WayPoint1 (2)
   m_TagString: WayPoint
@@ -667,6 +682,19 @@ Transform:
   m_Father: {fileID: 254482921}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &368673611
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 368673609}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &382259312
 GameObject:
   m_ObjectHideFlags: 0
@@ -816,6 +844,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 452454440}
+  - component: {fileID: 452454441}
   m_Layer: 0
   m_Name: WayPoint1 (4)
   m_TagString: WayPoint
@@ -840,6 +869,19 @@ Transform:
   m_Father: {fileID: 254482921}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &452454441
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 452454439}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &460954314
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1097,6 +1139,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Ways:
   - {fileID: 605355091}
+  - {fileID: 368673609}
+  - {fileID: 1724237250}
   Paths: []
   number: 2
   isClicked: 0
@@ -1284,6 +1328,7 @@ MonoBehaviour:
   Ways:
   - {fileID: 1352368584}
   - {fileID: 753958260}
+  - {fileID: 1059195883}
   Paths: []
   number: 0
   isClicked: 0
@@ -1298,6 +1343,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 605355092}
+  - component: {fileID: 605355093}
   m_Layer: 0
   m_Name: WayPoint1 (5)
   m_TagString: WayPoint
@@ -1322,6 +1368,19 @@ Transform:
   m_Father: {fileID: 254482921}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &605355093
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 605355091}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &684477228
 GameObject:
   m_ObjectHideFlags: 0
@@ -1589,6 +1648,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 753958261}
+  - component: {fileID: 753958262}
   m_Layer: 0
   m_Name: WayPoint1 (3)
   m_TagString: WayPoint
@@ -1613,6 +1673,19 @@ Transform:
   m_Father: {fileID: 254482921}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!135 &753958262
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 753958260}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 10
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &767461772
 GameObject:
   m_ObjectHideFlags: 0
@@ -2708,6 +2781,7 @@ MonoBehaviour:
   Ways:
   - {fileID: 368673609}
   - {fileID: 605355091}
+  - {fileID: 1059195883}
   Paths: []
   number: 2
   isClicked: 0
@@ -2831,7 +2905,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7.5
+  m_Radius: 10
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1354306374
 GameObject:
@@ -3183,6 +3257,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Ways:
   - {fileID: 452454439}
+  - {fileID: 221951799}
+  - {fileID: 1724237250}
   Paths: []
   number: 1
   isClicked: 0
@@ -3962,6 +4038,7 @@ MonoBehaviour:
   Ways:
   - {fileID: 221951799}
   - {fileID: 452454439}
+  - {fileID: 1059195883}
   Paths: []
   number: 1
   isClicked: 0
@@ -4163,6 +4240,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Ways:
   - {fileID: 753958260}
+  - {fileID: 1352368584}
+  - {fileID: 1724237250}
   Paths: []
   number: 0
   isClicked: 0

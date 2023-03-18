@@ -8,7 +8,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	public MoonHeader.MinionStats stats;
 	public LSM_Spawner mySpawner;
 	private bool PlayerSelect;
-	private int way_index;
+	[SerializeField]private int way_index;
 
 	float MAXIMUMVELOCITY = 3f, SEARCHTARGET_DELAY = 1.5f, ATTACK_DELAY = 2f;
 
@@ -98,11 +98,11 @@ public class LSM_MinionCtrl : MonoBehaviour
 		timer_Searching = 0;
 		timer_Attack = 0;
 		target_attack = null;
-
-		// maxhealth, speed, atk, paths, team
-		stats.Setting(10,50f,10, way, t);
+        way_index = 0;
+        // maxhealth, speed, atk, paths, team
+        stats.Setting(10,50f,3, way, t);
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
-		way_index = 0;
+
 		transform.LookAt(stats.destination[way_index].transform);
 		nav.destination = stats.destination[way_index].transform.position;
 		mySpawner= spawn;
@@ -112,16 +112,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-		if (other.CompareTag("WayPoint"))
+		if (other.CompareTag("WayPoint") && stats.state != MoonHeader.State.Dead)
 		{
-			Debug.Log("Finding Waypoint.. ");
-			if (stats.destination[way_index].Equals(other.transform.gameObject))
-			{
-				if (other.transform.GetComponentInChildren<LSM_TurretSc>().stats.Health <= 0)
-				{
-					way_index++;
-				}
-			}
+			CheckingTurretTeam(other.transform.gameObject);
 		}
     }
 
@@ -134,6 +127,18 @@ public class LSM_MinionCtrl : MonoBehaviour
 			nav.destination = stats.destination[way_index].transform.position;
 		}
 	}
+
+	private void CheckingTurretTeam(GameObject obj)
+	{
+        if (stats.destination[way_index].Equals(obj))
+        {
+            LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
+            if (dummySc.stats.Health <= 0 || dummySc.stats.team == this.stats.team)
+            {
+                way_index++;
+            }
+        }
+    }
 
 	// 미니언이 주변을 탐색하는 함수.
 	private void SearchingTarget()
@@ -150,27 +155,26 @@ public class LSM_MinionCtrl : MonoBehaviour
 				// 스피어캐스트를 사용하여 일정 반지름 내에 적이 있는지 확인.
 				RaycastHit[] hits;
 				hits = Physics.SphereCastAll(transform.position, searchRadius, Vector3.up, 0);
+				float dummyDistance = float.MaxValue;
 				foreach (RaycastHit hit in hits)
 				{
-					if (hit.transform.CompareTag("Minion"))
+					float hit_dummy_distance = Vector3.Distance(transform.position, hit.transform.position);
+					if (dummyDistance > hit_dummy_distance)
 					{
-						if (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team)
-						{
-							target_attack = hit.transform.gameObject;
-							nav.destination = target_attack.transform.position;
-							//Debug.Log("Search Minion! : " + target_attack.name + " " + target_attack.GetComponent<LSM_MinionCtrl>().stats.team);
-							break;
-						}
-					}
-					else if (hit.transform.CompareTag("Turret"))
-					{
-						if (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team)
-						{
-							target_attack = hit.transform.gameObject;
-							nav.destination = target_attack.transform.position;//////
+						bool different_Team = false;
+						if (hit.transform.CompareTag("Minion"))
+						{different_Team = stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team;}
+						else if (hit.transform.CompareTag("Turret"))
+						{different_Team = stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team;}
 
-							break;
+						if (different_Team)
+						{
+							dummyDistance = hit_dummy_distance;
+							target_attack = hit.transform.gameObject;
+							if (nav.enabled)
+								nav.destination = target_attack.transform.position;
 						}
+
 					}
 				}
 			}
@@ -182,7 +186,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 			nav.destination = target_attack.transform.position;
 			// 타겟이 MaxDistance이상 떨어져있다면 null
 			if (Vector3.Distance(target_attack.transform.position, this.transform.position) > maxAtkRadius)
-			{target_attack = null;}
+			{ StartCoroutine(AttackFin()); }
 
 			else if (Vector3.Distance(target_attack.transform.position, this.transform.position) <= minAtkRadius)
 			{
@@ -190,29 +194,31 @@ public class LSM_MinionCtrl : MonoBehaviour
 			}
 
 		}
+
 	}
 
 	private void Attack()
 	{
-		if (timer_Attack <= ATTACK_DELAY) timer_Attack += Time.deltaTime;
+		if (timer_Attack <= ATTACK_DELAY) { timer_Attack += Time.deltaTime; }
 
 		if (!ReferenceEquals(target_attack, null))
 		{
 			if (!target_attack.activeSelf)
-				target_attack = null;
-			else if (stats.state == MoonHeader.State.Attack )
+				StartCoroutine(AttackFin());
+
+			else if (stats.state == MoonHeader.State.Attack)
 			{
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
-				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled? 0.7f : 1f);
+				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled ? 0.7f : 1f);
 
-				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true;}
+				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
 				else { nav.enabled = false; nav_ob.enabled = true; }
-				
+
 
 				if (!dummy_cant_attack)
 				{
 					this.transform.LookAt(target_attack.transform.position);
-					this.transform.rotation = Quaternion.Euler(0,this.transform.rotation.eulerAngles.y,0);
+					this.transform.rotation = Quaternion.Euler(0, this.transform.rotation.eulerAngles.y, 0);
 					if (timer_Attack >= ATTACK_DELAY)
 					{
 						timer_Attack = 0;
@@ -222,24 +228,33 @@ public class LSM_MinionCtrl : MonoBehaviour
 							case "Minion":
 								LSM_MinionCtrl dummy_ctrl = target_attack.GetComponent<LSM_MinionCtrl>();
 								dummy_ctrl.Damaged(this.stats.Atk);
-								Debug.Log("Minion Attack!! : Minion");
+
 								break;
 							case "Turret":
 								LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
-								dummy_Sc.stats.Health -= this.stats.Atk;
-								Debug.Log("Minion Attack! : Turret");
+								if (dummy_Sc.stats.team != stats.team)
+									dummy_Sc.Damaged(this.stats.Atk, this.stats.team);
+								else
+								{
+									CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin());
+								}
+
 								break;
 						}
+
 					}
 				}
 			}
 		}
+
 	}
+
+	
 
 	public int Damaged(int dam)
 	{
 		stats.health -= dam;
-		Debug.Log("Minion Damaged!! : " +stats.health);
+		//Debug.Log("Minion Damaged!! : " +stats.health);
 		if (stats.health <= 0 && stats.state != MoonHeader.State.Dead)
 		{
 			StartCoroutine(DeadProcessing());
@@ -256,7 +271,15 @@ public class LSM_MinionCtrl : MonoBehaviour
 		this.gameObject.SetActive(false);
 	}
 
-	public void CHangeTeamColor()
+    protected IEnumerator AttackFin()
+    {
+        target_attack = null;
+        this.stats.state = MoonHeader.State.Normal;
+        nav_ob.enabled = false;
+        yield return new WaitForSeconds(0.5f);
+        nav.enabled = true;
+    }
+    public void CHangeTeamColor()
 	{
 		Color dummy_color;
 		switch (stats.team)
