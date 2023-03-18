@@ -48,6 +48,8 @@ public class LSM_TimerSc : MonoBehaviour
 
 	public void TimerStop() { timer = 0; timerPannel.SetActive(false); startTimer = false; limitTimeSetting = false; limitS = 0; reverse = false; }
 
+	public void TimerOut() { GameManager.Instance.TimeOutProcess(); TimerStop(); }
+
 	public float Get() { return timer; }
 
 }

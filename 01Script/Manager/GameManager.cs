@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,6 +31,7 @@ public class GameManager : MonoBehaviour
 
 	//public Vector3 mapCamBasePosition;
 	public GameObject canvas;
+	public GameObject selectAttackPathUI;
 	public LSM_PlayerCtrl[] player;
 
 	private void Awake_Function()
@@ -39,7 +41,9 @@ public class GameManager : MonoBehaviour
 		numOfPlayer = 1;
 		spawnPoints = GameObject.FindGameObjectsWithTag("Spawner");
 		canvas = GameObject.Find("Canvas");
-		
+		selectAttackPathUI = GameObject.Find("AttackPathUIs");
+		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(timerSc.TimerOut);
+		selectAttackPathUI.SetActive(false);
 	}
 
 	private void Start()
@@ -71,7 +75,7 @@ public class GameManager : MonoBehaviour
 					{
 						s.GetComponent<LSM_Spawner>().ChangeTurn();
 					}
-					
+					selectAttackPathUI.SetActive(true);
 					break;
 
 				// 공격로 지정이 모두 완료 후 게임을 시작하기 전 카운트 다운
@@ -110,6 +114,7 @@ public class GameManager : MonoBehaviour
 					}
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.StartGame;
+					selectAttackPathUI.SetActive(false);
 					break;
 			}
 		}

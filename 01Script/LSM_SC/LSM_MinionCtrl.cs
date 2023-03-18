@@ -114,6 +114,7 @@ public class LSM_MinionCtrl : MonoBehaviour
     {
 		if (other.CompareTag("WayPoint"))
 		{
+			Debug.Log("Finding Waypoint.. ");
 			if (stats.destination[way_index].Equals(other.transform.gameObject))
 			{
 				if (other.transform.GetComponentInChildren<LSM_TurretSc>().stats.Health <= 0)
@@ -134,6 +135,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 		}
 	}
 
+	// 미니언이 주변을 탐색하는 함수.
 	private void SearchingTarget()
 	{
 		// 현재 미니언이 타겟을 확인 하였는지.
@@ -187,7 +189,6 @@ public class LSM_MinionCtrl : MonoBehaviour
 				stats.state = MoonHeader.State.Attack;
 			}
 
-			//Debug.Log("searchingSuccess " + target_attack.name);
 		}
 	}
 
@@ -204,11 +205,8 @@ public class LSM_MinionCtrl : MonoBehaviour
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled? 0.7f : 1f);
 
-				// 현재 미니언의 이동 경로가 이상함... 공격하고있는 미니언은 밀어내지않고 피해갔으면 좋겠는데...
 				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true;}
 				else { nav.enabled = false; nav_ob.enabled = true; }
-				//nav.avoidancePriority = (!dummy_cant_attack ? 30 : 50);
-				//nav.isStopped = !dummy_cant_attack;
 				
 
 				if (!dummy_cant_attack)
