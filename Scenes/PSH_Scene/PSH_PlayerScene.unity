@@ -152,6 +152,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 424129865}
+  - {fileID: 429330896}
   m_Father: {fileID: 1724322958}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -358,6 +359,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   head: {fileID: 1724322952}
+  isSkill: 0
 --- !u!135 &429330895
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -378,12 +380,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 429330893}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.087}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.6, z: 1.0870001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1724322958}
+  m_Father: {fileID: 246027062}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &439144499
@@ -484,7 +486,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1663937474}
-  - {fileID: 996618393}
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -505,10 +506,13 @@ MonoBehaviour:
   handpos: {fileID: 1117223078}
   sword: {fileID: 597260563}
   attackRange: {fileID: 996618392}
+  swordball_prefab: {fileID: 1616009717459003868, guid: 4bc85e6b81a5fef4190df697f48360ee, type: 3}
+  eDamage: 35
   canMove: 1
   movespeed: 5
   playerCamera: {fileID: 1684665371}
   camerapos: {fileID: 1663937473}
+  canSee: 1
   mouseSensitivity: 3
   maxLookAngle: 50
 --- !u!54 &439144505
@@ -639,6 +643,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   head: {fileID: 439144499}
+  isSkill: 1
 --- !u!1 &941271010
 GameObject:
   m_ObjectHideFlags: 0
@@ -758,12 +763,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 996618392}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1.087}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.6, z: 1.087}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 439144503}
+  m_Father: {fileID: 1663937474}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!135 &996618394
@@ -792,6 +797,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   head: {fileID: 439144499}
+  isSkill: 0
 --- !u!1 &1110570566
 GameObject:
   m_ObjectHideFlags: 0
@@ -971,6 +977,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   head: {fileID: 1724322952}
+  isSkill: 1
 --- !u!65 &1193944358
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1203,6 +1210,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1117223079}
+  - {fileID: 996618393}
   m_Father: {fileID: 439144503}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1344,10 +1352,13 @@ MonoBehaviour:
   handpos: {fileID: 424129864}
   sword: {fileID: 1193944355}
   attackRange: {fileID: 429330893}
+  swordball_prefab: {fileID: 1616009717459003868, guid: 4bc85e6b81a5fef4190df697f48360ee, type: 3}
+  eDamage: 35
   canMove: 0
   movespeed: 5
   playerCamera: {fileID: 1684665371}
   camerapos: {fileID: 246027061}
+  canSee: 0
   mouseSensitivity: 3
   maxLookAngle: 50
 --- !u!136 &1724322955
@@ -1427,7 +1438,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 246027062}
-  - {fileID: 429330896}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
