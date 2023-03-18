@@ -17,11 +17,16 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     public GameObject handpos;
     public GameObject sword;
     public GameObject attackRange;
+    public GameObject swordball_prefab;
     private bool canAttack = true;
 
     // 스킬관련 변수
     private float qDamage = 30.0f;
     private bool canUseQ = true;
+    public float eDamage = 25.0f;
+    private float ePlusDamage = 0.0f;
+    private bool ePressed = false;
+    private bool canUseE = true;
 
     // 이동 관련 변수
     public bool canMove = true; // 움직일 수 있는지 없는지
@@ -30,6 +35,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     // 카메라 관련 변수들
     public Camera playerCamera;
     public GameObject camerapos;
+    public bool canSee = true;
     bool cameraCanMove = true;
     bool invertCamera = false;
     float yaw = 0.0f;
@@ -40,6 +46,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     // 타이머
     private float timer = 0.0f;
 
+    // 근접 캐릭 관련해서 만듬
     // Start is called before the first frame update
     void Start()
     {
@@ -52,21 +59,12 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // 왜 이거 안먹힘?
-        if (state == State.Blocking || state == State.Attacking)
-        {
-            movespeed = 2.0f;
-        }
-        else if (state == State.Normal)
-        {
-            movespeed = 5.0f;
-        }
 
         // 이동, 카메라 조작
         if(canMove)
             Move();
-
-        LookAround();
+        if(canSee)
+            LookAround();
 
         // 기본공격
         if (Input.GetMouseButtonDown(0) && canAttack)
@@ -86,7 +84,20 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
             StartCoroutine(QskillCool(3.0f));
         }
 
-        Debug.Log($"Player Health : {Health}");
+        // 스킬 2
+        if (canUseE)
+        {
+            EskillActive();
+        }
+
+        // Debug.Log($"Player Health : {Health}");
+        Debug.Log($"Player Movspeed : {movespeed}");
+        Debug.Log($"Player State : {state}");
+    }
+
+    private void LateUpdate()
+    {
+        RecoverMoveSpeed();
     }
 
 
@@ -96,7 +107,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
 
-        movespeed = Input.GetKey(KeyCode.LeftShift) ? 8.0f : 5.0f; // 달리기
+        // movespeed = Input.GetKey(KeyCode.LeftShift) ? 8.0f : 5.0f; // 달리기
         this.transform.Translate(new Vector3(x, 0, y) * movespeed * Time.deltaTime);
     }
 
@@ -129,6 +140,21 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
         }
 
+    }
+
+    // 상태이상 회복(이동속도)
+    void RecoverMoveSpeed()
+    {
+        if(movespeed <= 2.0f)
+        {
+            timer += Time.deltaTime;
+
+            if (timer >= 2.0f)
+            {
+                movespeed = 5.0f;
+                timer = 0.0f;
+            }
+        }
     }
 
     // 기본공격 코루틴
@@ -194,7 +220,52 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         canUseQ = true;
     }
 
-    
+    // 스킬 E
 
+    void EskillActive()
+    {
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            state = State.Casting;
+            canMove = false;
+            ePressed = true;
+            handpos.transform.localPosition = new Vector3(0, 0.1f, 0);
+        }
 
+        if(Input.GetKey(KeyCode.E))
+        {
+            timer += Time.deltaTime;
+            if (timer <= 7.0f && ePressed)
+            {
+                ePlusDamage += 3.0f * Time.deltaTime;
+            }
+        }
+
+        if(Input.GetKeyUp(KeyCode.E))
+        {
+            if(ePressed)
+            {
+                state = State.Normal;
+                canMove = true;
+                eDamage += ePlusDamage;
+                ePlusDamage = 0.0f;
+                handpos.transform.localPosition = new Vector3(0.6f, -0.2f, 0);
+
+                GameObject sprefab = Instantiate(swordball_prefab, attackRange.transform.position, attackRange.transform.rotation);
+                sprefab.gameObject.GetComponent<PSH_SwordProjectile>().damage = eDamage;
+
+                eDamage = 25.0f;
+                timer = 0.0f;
+                ePressed = false;
+                StartCoroutine(EskillCool(8.0f));
+            }
+        }
+    }
+
+    IEnumerator EskillCool(float delay)
+    {
+        canUseE = false;
+        yield return new WaitForSecondsRealtime(delay);
+        canUseE = true;
+    }
 }

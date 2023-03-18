@@ -5,6 +5,7 @@ using UnityEngine;
 public class PSH_MeleeCtrl : MonoBehaviour
 {
     public GameObject head;
+    public bool isSkill = false;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -14,7 +15,8 @@ public class PSH_MeleeCtrl : MonoBehaviour
         if(other.transform.tag == "Player")
         {
             other.GetComponent<PSH_PlayerFPSCtrl>().Health -= thisdamage;
-            // other.GetComponent<PSH_PlayerFPSCtrl>().
+            if (isSkill)
+                other.GetComponent<PSH_PlayerFPSCtrl>().movespeed -= 3.0f;
         }
     }
 }
