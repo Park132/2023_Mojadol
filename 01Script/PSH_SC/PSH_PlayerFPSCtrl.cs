@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PSH_PlayerFPSCtrl : MonoBehaviour
 {
+    // 근접 플레이어 구현
     // 플레이어 상태
     enum State { Normal, Attacking, Blocking, Casting, Exhausting};
     State state = State.Normal;
@@ -90,9 +91,6 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
             EskillActive();
         }
 
-        // Debug.Log($"Player Health : {Health}");
-        Debug.Log($"Player Movspeed : {movespeed}");
-        Debug.Log($"Player State : {state}");
     }
 
     private void LateUpdate()
@@ -161,15 +159,18 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     IEnumerator BasicAttack(float delay)
     {
         canAttack = false;
+        currentdamage = basicdamage;
         state = State.Attacking;
         handpos.transform.localEulerAngles = new Vector3(0, 0, 0);
         handpos.transform.localEulerAngles += new Vector3(70.0f, 0, 0);
+        movespeed = 3.0f;
         
         yield return new WaitForSecondsRealtime(delay);
 
         canAttack = true;
         state = State.Normal;
         handpos.transform.localEulerAngles = new Vector3(0, 0, 0);
+        movespeed = 5.0f;
     }
 
     IEnumerator BasicAttackVolume(float delay)
@@ -186,12 +187,14 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         {
             handpos.transform.localEulerAngles = new Vector3(0, 0, 70);
             state = State.Blocking;
+            movespeed = 3.0f;
         }
 
         if (Input.GetMouseButtonUp(1))
         {
             handpos.transform.localEulerAngles = new Vector3(0, 0, 0);
             state = State.Normal;
+            movespeed = 5.0f;
         }
     }
 
@@ -221,7 +224,6 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     }
 
     // 스킬 E
-
     void EskillActive()
     {
         if(Input.GetKeyDown(KeyCode.E))
@@ -268,4 +270,6 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         yield return new WaitForSecondsRealtime(delay);
         canUseE = true;
     }
+
+    // UI
 }

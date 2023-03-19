@@ -502,7 +502,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 100
-  currentdamage: 0
+  currentdamage: 20
   handpos: {fileID: 1117223078}
   sword: {fileID: 597260563}
   attackRange: {fileID: 996618392}
@@ -1348,7 +1348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Health: 100
-  currentdamage: 0
+  currentdamage: 20
   handpos: {fileID: 424129864}
   sword: {fileID: 1193944355}
   attackRange: {fileID: 429330893}
