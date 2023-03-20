@@ -17,7 +17,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	private NavMeshObstacle nav_ob;
 
 	public GameObject CameraPosition;
-	public GameObject icon;
+	public GameObject icon, playerIcon;
 
 	[SerializeField]protected GameObject target_attack;
 	[SerializeField]
@@ -47,6 +47,10 @@ public class LSM_MinionCtrl : MonoBehaviour
 
         icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
         icon.transform.localPosition = new Vector3(0, 60, 0);
+		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
+		playerIcon.transform.localPosition = new Vector3(0, 60, 0);
+		playerIcon.SetActive(false);
+
 		searchRadius = 17f;
 		minAtkRadius = 14f;
 		maxAtkRadius = 18f;
@@ -106,7 +110,11 @@ public class LSM_MinionCtrl : MonoBehaviour
 		transform.LookAt(stats.destination[way_index].transform);
 		nav.destination = stats.destination[way_index].transform.position;
 		mySpawner= spawn;
-		CHangeTeamColor();
+		icon.SetActive(true);
+		playerIcon.SetActive(false);
+
+		ChangeTeamColor(icon);
+		ChangeTeamColor(playerIcon);
 		
 	}
 
@@ -206,7 +214,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 			if (!target_attack.activeSelf)
 				StartCoroutine(AttackFin());
 
-			else if (stats.state == MoonHeader.State.Attack)
+			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled ? 0.7f : 1f);
@@ -253,6 +261,8 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	public int Damaged(int dam)
 	{
+		if (stats.state == MoonHeader.State.Invincibility)
+			return stats.health;
 		stats.health -= dam;
 		//Debug.Log("Minion Damaged!! : " +stats.health);
 		if (stats.health <= 0 && stats.state != MoonHeader.State.Dead)
@@ -273,13 +283,19 @@ public class LSM_MinionCtrl : MonoBehaviour
 
     protected IEnumerator AttackFin()
     {
-        target_attack = null;
-        this.stats.state = MoonHeader.State.Normal;
-        nav_ob.enabled = false;
-        yield return new WaitForSeconds(0.5f);
-        nav.enabled = true;
+		if (!PlayerSelect)
+		{
+			target_attack = null;
+			this.stats.state = MoonHeader.State.Normal;
+			nav_ob.enabled = false;
+			yield return new WaitForSeconds(0.5f);
+			nav.enabled = true;
+		}
     }
-    public void CHangeTeamColor()
+
+	public void ChangeTeamColor() { ChangeTeamColor(icon); }
+
+    public void ChangeTeamColor(GameObject obj)
 	{
 		Color dummy_color;
 		switch (stats.team)
@@ -295,7 +311,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 				break;
 			default: dummy_color = Color.gray; break;
 		}
-		icon.GetComponent<Renderer>().material.color = dummy_color;
+		obj.GetComponent<Renderer>().material.color = dummy_color;
 	}
 
 	// 플레이어가 해당 미니언에게 강령
@@ -304,6 +320,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 		PlayerSelect = true;
 		nav.enabled = false;
 		nav_ob.enabled = true;
+
+		icon.SetActive(false);
+		playerIcon.SetActive(true);
 		
 		//stats.team = MoonHeader.Team.Blue;
 	}
@@ -315,6 +334,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 		PlayerSelect = false;
 		nav_ob.enabled = false;
 		nav.enabled = true;
-		
-	}
+
+        icon.SetActive(true);
+        playerIcon.SetActive(false);
+
+    }
 }

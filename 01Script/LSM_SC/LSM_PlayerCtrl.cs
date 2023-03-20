@@ -5,6 +5,8 @@ using TMPro;
 
 public class LSM_PlayerCtrl : MonoBehaviour
 {
+    private float MapCamBaseSize = 40;
+
     public GameObject mySpawner;
     private Camera mapCamCamera;
 
@@ -20,6 +22,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
     public GameObject minionStatsPannel;
     private LSM_MinionCtrl subTarget_minion;
     private TextMeshProUGUI minionStatsPannel_txt;
+    private GameObject playerMinion;
 
     private GameObject mapcamSub_Target, mapsubcam_target;
 	private void Start()
@@ -28,7 +31,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         zoomIn = ZoomInMinion();
         is_zoomIn = false;
         MapCam.transform.position = mapCamBasePosition;
-        MapCam.GetComponent<Camera>().orthographicSize = 40;
+        MapCam.GetComponent<Camera>().orthographicSize = MapCamBaseSize;
         minionStatsPannel.SetActive(false);
         minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
         
@@ -39,6 +42,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         ClickEv();
         MapEv();
         SubMapCamMove();
+        PlayerInMinion();
     }
 
     private void MapEv()
@@ -56,7 +60,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
             if (!ReferenceEquals(mapcamSub_Target, null) && (scroll != 0 || move_f != Vector3.zero))
             {
-                subTarget_minion.CHangeTeamColor();
+                subTarget_minion.ChangeTeamColor();
                 mapcamSub_Target = null;
                 is_zoomIn = false;
                 StopCoroutine(zoomIn);
@@ -65,9 +69,42 @@ public class LSM_PlayerCtrl : MonoBehaviour
         }
     }
 
+    // 플레이어가 해당 미니언에 빙의/강림 하고있다면 실행
+    private void PlayerInMinion()
+    {
+        if (state == MoonHeader.PlayerState.Selected)
+        {
+            MainCam.transform.position = mapsubcam_target.transform.position;
+            MainCam.transform.rotation = mapsubcam_target.transform.rotation;
+
+            if (!playerMinion.activeSelf)
+            {
+                Debug.Log("Minion active false");
+                StartCoroutine(AttackPathSelectSetting());
+
+            }
+        }
+    }
+
+    public IEnumerator AttackPathSelectSetting()
+    {
+        state = MoonHeader.PlayerState.None;
+        yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
+        playerMinion = null;
+        MainCam.SetActive(false);
+        MapCam.SetActive(true);
+        MapCam.transform.position = mapCamBasePosition;
+        mapCamCamera.orthographicSize = MapCamBaseSize;
+        MapSubCam.SetActive(true);
+        is_zoomIn = false;
+        subTarget_minion= null;
+        GameManager.Instance.mapUI.SetActive(true);
+        StartCoroutine(GameManager.Instance.ScreenFade(true));
+    }
+
     private void ClickEv()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && state == MoonHeader.PlayerState.None)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
@@ -93,7 +130,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
                             if (!ReferenceEquals(mapcamSub_Target, null))
                             {
                                 if (!ReferenceEquals(mapcamSub_Target, hit.transform.gameObject))
-                                    subTarget_minion.CHangeTeamColor();
+                                    subTarget_minion.ChangeTeamColor();
                             }
 
                             if (ReferenceEquals(mapcamSub_Target, null) || 
@@ -118,6 +155,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         }
     }
 
+    // 미니언의 보는 시점으로 카메라를 보냄.
     private void SubMapCamMove()
     {
         if (!ReferenceEquals(mapcamSub_Target, null) && !is_zoomIn){
@@ -139,6 +177,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         }
     }
 
+    // 맵에서 해당 미니언에게 가까워지는 코드
     private IEnumerator ZoomInMinion()
     {
         
@@ -155,11 +194,39 @@ public class LSM_PlayerCtrl : MonoBehaviour
         minionStatsPannel.SetActive(true);
     }
 
+    // select버튼 클릭 시 
     public void SelectPlayerMinion()
     {
-        if (!ReferenceEquals(mapcamSub_Target, null))
+        if (!ReferenceEquals(mapcamSub_Target, null) && state == MoonHeader.PlayerState.None)
         {
+            state = MoonHeader.PlayerState.Possession;
             subTarget_minion.PlayerConnect();
+            playerMinion = subTarget_minion.transform.gameObject;
+            StartCoroutine(ZoomPossession());
+            GameManager.Instance.mapUI.SetActive(false);
         }
+    }
+
+    // 빙의 코루틴
+    private IEnumerator ZoomPossession()
+    {
+        StartCoroutine(GameManager.Instance.ScreenFade(false));
+        float originSize = mapCamCamera.orthographicSize;
+        subTarget_minion.stats.state = MoonHeader.State.Invincibility;
+
+        minionStatsPannel.SetActive(false);
+        for (int i = 0; i < 100; i++)
+        {
+            yield return new WaitForSeconds(0.01f);
+            mapCamCamera.orthographicSize = Mathf.Lerp(originSize, 5, 0.01f * i);
+        }
+        mapCamCamera.transform.gameObject.SetActive(false);
+        MapSubCam.transform.gameObject.SetActive(false);
+        MainCam.SetActive(true);
+        StartCoroutine(GameManager.Instance.ScreenFade(true));
+        state = MoonHeader.PlayerState.Selected;
+        yield return new WaitForSeconds(3f);
+
+        subTarget_minion.stats.state = MoonHeader.State.Normal;
     }
 }

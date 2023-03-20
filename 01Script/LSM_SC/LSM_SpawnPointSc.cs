@@ -36,7 +36,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			
 		}
 		parentSpawner = transform.parent.gameObject;
-		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.canvas.transform);
+		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
 		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
 	}
 
