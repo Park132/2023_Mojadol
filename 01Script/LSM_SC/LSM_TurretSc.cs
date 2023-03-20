@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/* 2023_03_20_HSH_수정사항 : 터렛이 팀에 종속 시 Scene에서도 Color가 변경되도록 함.
+ * ㄴ 터렛 피격 시 분홍색으로 하이라이트(DamagedEffect())
+ */
+
 public class LSM_TurretSc : MonoBehaviour
 {
 
@@ -12,6 +17,8 @@ public class LSM_TurretSc : MonoBehaviour
 	private float timer, timer_attack;
 	private float searchRadius;
 	[SerializeField]private GameObject target;
+
+	public int TurretBelong;
 
 	private void Start()
 	{
@@ -24,11 +31,13 @@ public class LSM_TurretSc : MonoBehaviour
 		timer = 0;
 		searchRadius = 10f;
 		target = null;
-	}
+
+    }
 
 	private void ChangeColor()
 	{
         Color dummy_c = Color.white;
+
         switch (stats.team)
         {
             case MoonHeader.Team.Red:
@@ -42,6 +51,7 @@ public class LSM_TurretSc : MonoBehaviour
                 break;
         }
         mark.GetComponent<Renderer>().material.color = dummy_c;
+		transform.Find("Sphere").gameObject.GetComponent<Renderer>().material.color = dummy_c;	//소속 변경 시 UI에서 뿐만 아니라 Scene에서도 색상 변경
     }
 
 	private void Update()
@@ -57,6 +67,8 @@ public class LSM_TurretSc : MonoBehaviour
 	public void Damaged(int dam, MoonHeader.Team t)
 	{
 		this.stats.Health -= dam;
+		StartCoroutine(DamagedEffect());
+
 		if (this.stats.Health <= 0) {
 			this.stats.team = t;
 			this.stats.Health = 10;
@@ -64,8 +76,20 @@ public class LSM_TurretSc : MonoBehaviour
 		}
 	}
 
-	// ���� ���� ���� ���� �ִ����� Ȯ���ϴ� �ڵ�.
-	private void SearchingTarget()
+    private IEnumerator DamagedEffect()
+    {
+        Color damaged = new Color(255 / 255f, 150 / 255f, 150 / 255f);
+        Color recovered = Color.white;
+        
+        transform.gameObject.GetComponent<Renderer>().material.color = damaged;
+
+        yield return new WaitForSeconds(0.25f);
+
+        transform.gameObject.GetComponent<Renderer>().material.color = recovered;
+    }
+
+    // 일정 범위 내에 적이 있는지를 확인하는 코드.
+    private void SearchingTarget()
 	{
 		if (ReferenceEquals(target, null)){
 			timer += Time.deltaTime;

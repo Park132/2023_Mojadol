@@ -51,7 +51,7 @@ public class MoonHeader : MonoBehaviour
 		public int Health;
 		public int Atk;
 
-		public TurretStats(int h, int a) { team = Team.Yellow; Health = h; Atk = a; }
+		public TurretStats(int h, int a) { team = Team.Yellow; Health = h; Atk = a;}
 
 	}
 }

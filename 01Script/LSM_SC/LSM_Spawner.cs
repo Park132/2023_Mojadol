@@ -86,12 +86,17 @@ public class LSM_Spawner : MonoBehaviour
 							// 가장 처음 소환되는 미니언은 덩치
 							if (spawnpoints[i].summon_ == 0)
 							{ dummy = PoolManager.Instance.Get_Minion(0); }
-							else { dummy = PoolManager.Instance.Get_Minion(0); }
+							else 
+							{ 
+								dummy = PoolManager.Instance.Get_Minion(0); 
+							}
 
 							dummy.transform.position = spawnpoints[i].path.transform.position;
 							//dummy.transform.parent = this.transform;
 							LSM_MinionCtrl dummy_ctrl = dummy.GetComponent<LSM_MinionCtrl>();
 							dummy_ctrl.MonSetting(spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>().Ways, team, this.GetComponent<LSM_Spawner>());
+							dummy_ctrl.minionBelong = i;
+							dummy_ctrl.minionType = i % 2;	//미니언의 타입을 결정
 
 							spawnpoints[i].summon_++;
 							wave_Minions_Num++;

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -933,6 +933,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1142772913429187299, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
+      propertyPath: TurretBelong
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1142772913429187301, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_Name
       value: Turret
@@ -1086,6 +1090,10 @@ PrefabInstance:
     - target: {fileID: 1142772913429187298, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1142772913429187299, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
+      propertyPath: TurretBelong
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1142772913429187301, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_Name
@@ -2227,6 +2235,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1142772913429187299, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
+      propertyPath: TurretBelong
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1142772913429187301, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_Name
       value: Turret
@@ -3314,6 +3326,10 @@ PrefabInstance:
     - target: {fileID: 1142772913429187298, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1142772913429187299, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
+      propertyPath: TurretBelong
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1142772913429187301, guid: e5e87eb8dddc9d4429f2df837b6801f2, type: 3}
       propertyPath: m_Name
