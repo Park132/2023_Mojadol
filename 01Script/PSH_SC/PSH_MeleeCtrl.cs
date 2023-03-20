@@ -17,6 +17,11 @@ public class PSH_MeleeCtrl : MonoBehaviour
             other.GetComponent<PSH_PlayerFPSCtrl>().Health -= thisdamage;
             if (isSkill)
                 other.GetComponent<PSH_PlayerFPSCtrl>().movespeed -= 3.0f;
+
+            if (isSkill)
+                fpsc.growth[1] += thisdamage;
+            else
+                fpsc.growth[0] += thisdamage;
         }
     }
 }

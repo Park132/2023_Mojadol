@@ -28,6 +28,7 @@ public class PSH_SwordProjectile : MonoBehaviour
         if(collision.transform.tag == "Player")
         {
             collision.transform.GetComponent<PSH_PlayerFPSCtrl>().Health -= damage;
+            head.gameObject.GetComponent<PSH_PlayerFPSCtrl>().growth[2] += damage;
         }
 
         Destroy(this.gameObject);

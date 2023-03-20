@@ -47,6 +47,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     // 타이머
     private float timer = 0.0f;
 
+    // 성장 관련 변수
+    public float[] growth = new float[] { 0.0f, 0.0f, 0.0f };
+    //                                   기본공격, q, e
+
     // 근접 캐릭 관련해서 만듬
     // Start is called before the first frame update
     void Start()
@@ -91,6 +95,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
             EskillActive();
         }
 
+        Debug.Log($"growth : {growth[0]}, {growth[1]}, {growth[2]}");
     }
 
     private void LateUpdate()
@@ -255,6 +260,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
 
                 GameObject sprefab = Instantiate(swordball_prefab, attackRange.transform.position, attackRange.transform.rotation);
                 sprefab.gameObject.GetComponent<PSH_SwordProjectile>().damage = eDamage;
+                sprefab.gameObject.GetComponent<PSH_SwordProjectile>().head = this.gameObject;
 
                 eDamage = 25.0f;
                 timer = 0.0f;
@@ -272,4 +278,6 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     }
 
     // UI
+    
+
 }
