@@ -223,12 +223,14 @@ public class LSM_MinionCtrl : MonoBehaviour
 			if (!target_attack.activeSelf)
 				StartCoroutine(AttackFin());
 
-			else if (stats.state == MoonHeader.State.Attack)
+			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled ? 0.7f : 1f);
-				nav.enabled = false; nav_ob.enabled = false;
-				nav_ob.enabled = !dummy_cant_attack; nav.enabled = dummy_cant_attack;
+
+				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
+				else { nav.enabled = false; nav_ob.enabled = true; }
+
 
 
 				if (!dummy_cant_attack)
