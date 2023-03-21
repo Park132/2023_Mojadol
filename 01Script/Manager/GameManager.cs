@@ -27,11 +27,9 @@ public class GameManager : MonoBehaviour
 	public TextMeshProUGUI turnText;
 	private GameObject[] spawnPoints;
 
-	//public GameObject MainCam, MapCam, MapSubCam;
-
-	//public Vector3 mapCamBasePosition;
 	public GameObject canvas;
-	public GameObject selectAttackPathUI;
+	public GameObject selectAttackPathUI, mapUI;
+	private Image screen;
 	public LSM_PlayerCtrl[] player;
 
 	private void Awake_Function()
@@ -44,6 +42,10 @@ public class GameManager : MonoBehaviour
 		selectAttackPathUI = GameObject.Find("AttackPathUIs");
 		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(timerSc.TimerOut);
 		selectAttackPathUI.SetActive(false);
+		mapUI = GameObject.Find("MapUIs");
+
+		screen = GameObject.Find("Screen").GetComponent<Image>();
+		screen.transform.SetAsLastSibling();
 	}
 
 	private void Start()
@@ -68,6 +70,7 @@ public class GameManager : MonoBehaviour
 			{
 				// 플레이어가 각각 공격로를 설정 턴
 				case MoonHeader.GameState.SettingAttackPath:
+					StartCoroutine(ScreenFade(true));
 					state = MoonHeader.ManagerState.Processing;
 					SettingAttack();
 					SettingTurnText();
@@ -158,6 +161,20 @@ public class GameManager : MonoBehaviour
 			case MoonHeader.GameState.Gaming:
 				turnText.text = "Game";
 				break;
+		}
+	}
+
+	public IEnumerator ScreenFade(bool inout)
+	{
+		float origin = inout ? 1 : 0, alpha = 0.01f * (inout ? -1 : 1);
+
+		screen.color = new Color(0, 0, 0, origin);
+
+		for (int i = 0; i < 100; i++)
+		{
+			yield return new WaitForSeconds(0.01f);
+			origin += alpha;
+			screen.color = new Color(0, 0, 0, origin);
 		}
 	}
 }

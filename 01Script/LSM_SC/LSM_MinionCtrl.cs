@@ -22,7 +22,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	private NavMeshObstacle nav_ob;
 
 	public GameObject CameraPosition;
-	public GameObject icon;
+	public GameObject icon, playerIcon;
 
 	[SerializeField]protected GameObject target_attack;
 	[SerializeField]
@@ -54,7 +54,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 
         icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
         icon.transform.localPosition = new Vector3(0, 60, 0);
-		
+		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
+		playerIcon.SetActive(false);
+
 		searchRadius = 17f;
 		minAtkRadius = 14f;
 		maxAtkRadius = 18f;
@@ -114,10 +116,15 @@ public class LSM_MinionCtrl : MonoBehaviour
 		transform.LookAt(stats.destination[way_index].transform);
 		nav.destination = stats.destination[way_index].transform.position;
 		mySpawner= spawn;
-		CHangeTeamColor();
-		
+		icon.SetActive(true);
+		playerIcon.SetActive(false);
+
+		ChangeTeamColor();
+		ChangeTeamColor(playerIcon);
 	}
 
+	// 웨이포인트 트리거에 닿았다면 발동하는 함수.
+	// 해당 웨이포인트와 미니언의 현재 목적지가 같은지 확인하는 함수 구현.
     private void OnTriggerEnter(Collider other)
     {
 		if (other.CompareTag("WayPoint") && stats.state != MoonHeader.State.Dead)
@@ -171,9 +178,11 @@ public class LSM_MinionCtrl : MonoBehaviour
 					{
 						bool different_Team = false;
 						if (hit.transform.CompareTag("Minion"))	
-						{different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team) && hit.transform.GetComponent<LSM_MinionCtrl>().minionBelong == minionBelong; }	//자신과 같은 공격로의 미니언만 대상으로 지정
+						{different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team) 
+								&& hit.transform.GetComponent<LSM_MinionCtrl>().minionBelong == minionBelong; }	//자신과 같은 공격로의 미니언만 대상으로 지정
 						else if (hit.transform.CompareTag("Turret"))
-						{different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team) && hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;}	//자신과 같은 공격로의 터렛만 대상으로 지정
+						{different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team) 
+								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;}	//자신과 같은 공격로의 터렛만 대상으로 지정
 
 						if (different_Team)
 						{
@@ -218,9 +227,8 @@ public class LSM_MinionCtrl : MonoBehaviour
 			{
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled ? 0.7f : 1f);
-
-				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
-				else { nav.enabled = false; nav_ob.enabled = true; }
+				nav.enabled = false; nav_ob.enabled = false;
+				nav_ob.enabled = !dummy_cant_attack; nav.enabled = dummy_cant_attack;
 
 
 				if (!dummy_cant_attack)
@@ -261,6 +269,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	public int Damaged(int dam)
 	{
+		if (stats.state == MoonHeader.State.Invincibility)
+			return stats.health;
+
 		stats.health -= dam;
 		StartCoroutine(DamagedEffect());
 
@@ -300,13 +311,18 @@ public class LSM_MinionCtrl : MonoBehaviour
 
     protected IEnumerator AttackFin()
     {
-        target_attack = null;
-        this.stats.state = MoonHeader.State.Normal;
-        nav_ob.enabled = false;
-        yield return new WaitForSeconds(0.5f);
-        nav.enabled = true;
+		if (!PlayerSelect)
+		{
+			target_attack = null;
+			this.stats.state = MoonHeader.State.Normal;
+			nav_ob.enabled = false;
+			yield return new WaitForSeconds(0.5f);
+			nav.enabled = true;
+		}
     }
-    public void CHangeTeamColor()
+	public void ChangeTeamColor() { ChangeTeamColor(icon); }
+
+    public void ChangeTeamColor(GameObject obj)
 	{
 		Color dummy_color;
 		switch (stats.team)
@@ -322,7 +338,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 				break;
 			default: dummy_color = Color.gray; break;
 		}
-		icon.GetComponent<Renderer>().material.color = dummy_color;
+		obj.GetComponent<Renderer>().material.color = dummy_color;
 		this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
 	}
 
@@ -332,6 +348,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 		PlayerSelect = true;
 		nav.enabled = false;
 		nav_ob.enabled = true;
+
+		icon.SetActive(false);
+		playerIcon.SetActive(true);
 		
 		//stats.team = MoonHeader.Team.Blue;
 	}
@@ -343,6 +362,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 		PlayerSelect = false;
 		nav_ob.enabled = false;
 		nav.enabled = true;
-		
+
+		icon.SetActive(true);
+		playerIcon.SetActive(false);
+		MyDestination();
 	}
 }

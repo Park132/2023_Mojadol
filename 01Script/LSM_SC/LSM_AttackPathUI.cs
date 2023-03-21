@@ -22,7 +22,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 
 	private void OnEnable()
 	{
-		sl.gameObject.SetActive(true);
+		sl.gameObject.SetActive(GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath);
 	}
 
 	private void Update()
