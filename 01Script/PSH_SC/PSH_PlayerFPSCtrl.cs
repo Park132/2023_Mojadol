@@ -13,6 +13,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     public float Health = 100.0f;
     private float basicdamage = 20.0f;
     public float currentdamage = 20.0f;
+    private float basicattackDelay = 1.0f;
 
     // 공격기능 관련 변수
     public GameObject handpos;
@@ -28,6 +29,11 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     private float ePlusDamage = 0.0f;
     private bool ePressed = false;
     private bool canUseE = true;
+
+    // 스킬 레벨업 변수
+    private int basicLevel = 1;
+    private int qLevel = 1;
+    private int eLevel = 1;
 
     // 이동 관련 변수
     public bool canMove = true; // 움직일 수 있는지 없는지
@@ -70,7 +76,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         // 기본공격
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
-            StartCoroutine(BasicAttack(1.0f));
+            StartCoroutine(BasicAttack(basicattackDelay));
             StartCoroutine(BasicAttackVolume(0.2f));
         }
 
@@ -271,5 +277,41 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         canUseE = true;
     }
 
-    // UI
+    void LevelFunc(float attackExp, float qExp, float eExp)
+    {
+        if (attackExp > 50.0f)
+            basicLevel = 2;
+        else if (attackExp > 100.0f)
+            basicLevel = 3;
+
+        if(qExp > 50.0f)
+            qLevel = 2;
+        else if (qExp > 70.0f)
+            qLevel = 3;
+
+        if(eExp > 30.0f)
+            eLevel = 2;
+        else if (eExp > 50.0f)
+            eLevel = 3;
+
+        switch(basicLevel)
+        {
+            case 1:
+                break;
+            case 2:
+                basicattackDelay = 0.7f;
+                break;
+            case 3:
+                basicattackDelay = 0.3f;
+                break;
+        }
+
+        switch (qLevel)
+        {
+            case 1:
+                break;
+
+        }
+    }
+    
 }
