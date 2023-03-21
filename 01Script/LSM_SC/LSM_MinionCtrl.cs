@@ -20,6 +20,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	private Rigidbody rigid;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
+	private Renderer[] bodies;
 
 	public GameObject CameraPosition;
 	public GameObject icon, playerIcon;
@@ -51,6 +52,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 		target_attack = null;
 		nav.stoppingDistance = 3f;
 		stats = new MoonHeader.MinionStats();
+		bodies = this.transform.GetComponentsInChildren<Renderer>();
 
         icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
         icon.transform.localPosition = new Vector3(0, 60, 0);
@@ -118,6 +120,8 @@ public class LSM_MinionCtrl : MonoBehaviour
 		mySpawner= spawn;
 		icon.SetActive(true);
 		playerIcon.SetActive(false);
+		rigid.angularVelocity = Vector3.zero;
+		rigid.velocity = Vector3.zero;
 
 		ChangeTeamColor();
 		ChangeTeamColor(playerIcon);
@@ -178,8 +182,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 					{
 						bool different_Team = false;
 						if (hit.transform.CompareTag("Minion"))	
-						{different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team) 
-								&& hit.transform.GetComponent<LSM_MinionCtrl>().minionBelong == minionBelong; }	//자신과 같은 공격로의 미니언만 대상으로 지정
+						{ different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team); }	//자신과 같은 공격로의 미니언만 대상으로 지정
 						else if (hit.transform.CompareTag("Turret"))
 						{different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team) 
 								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;}	//자신과 같은 공격로의 터렛만 대상으로 지정
@@ -214,6 +217,9 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	}
 
+	// 미니언이 살아있으며, 타겟을 찾았다면 해당 함수를 실행.
+	// 원래 공격할때 NavAgent를 비활성화, NavObstacle을 활성화 하였으나, 이를 실행하면 NavMesh를 통한 길찾기를 실시간으로 다시 반복하는 문제가있음.
+	// 그러므로 NavAgent의 Priority를 하강시키는 것으로 해당 미니언을 밀치지 않게 설정.
 	private void Attack()
 	{
 		if (timer_Attack <= ATTACK_DELAY) { timer_Attack += Time.deltaTime; }
@@ -226,11 +232,12 @@ public class LSM_MinionCtrl : MonoBehaviour
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
 				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
-				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.enabled ? 0.7f : 1f);
+				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.isStopped ? 1f : 0.7f);
 
-				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
-				else { nav.enabled = false; nav_ob.enabled = true; }
-
+				//if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
+				//else { nav.enabled = false; nav_ob.enabled = true; }
+				if (!dummy_cant_attack) { nav.isStopped = true; nav.avoidancePriority = 30; }
+				else { nav.isStopped = false; nav.avoidancePriority = 50; }
 
 
 				if (!dummy_cant_attack)
@@ -271,7 +278,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	public int Damaged(int dam)
 	{
-		if (stats.state == MoonHeader.State.Invincibility)
+		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
 			return stats.health;
 
 		stats.health -= dam;
@@ -294,6 +301,10 @@ public class LSM_MinionCtrl : MonoBehaviour
 		this.gameObject.SetActive(false);
 	}
 
+	/// <summary>
+	/// //////////
+	/// </summary>
+	/// <returns></returns>
 	private IEnumerator DamagedEffect()
 	{
 		Color damaged = new Color(255/255f, 150/255f, 150/255f);
