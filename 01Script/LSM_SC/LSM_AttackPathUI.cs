@@ -16,7 +16,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 	{
 		num.text = "0";
 		num.text = sl.value.ToString();
-		mapcam = GameManager.Instance.player[0].MapCam.GetComponent<Camera>();
+		mapcam = GameManager.Instance.mainPlayer.MapCam.GetComponent<Camera>();
 		transform.SetAsFirstSibling();
 	}
 

@@ -11,9 +11,16 @@ public class MoonHeader : MonoBehaviour
 	// 매니저의 현재 상태를 나타내기 위해 사용
 	public enum ManagerState { Ready, Processing, End };
 	public enum SpawnerState { None, Setting, Spawn };
-	public enum PlayerState { None, Selected , Possession};
+	public enum State_P { None, Selected , Possession};
 	public enum Team { Red = 0, Blue = 1, Yellow = 2 };
 	public enum State { Normal, Dead, Attack, Invincibility};
+
+	[SerializeField]
+	public struct PlayerState
+	{
+		public State_P statep;
+		public Team team;
+	}
 
 	[Serializable]
 	public struct MinionStats

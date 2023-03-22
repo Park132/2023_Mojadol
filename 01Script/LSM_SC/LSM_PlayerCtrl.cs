@@ -10,7 +10,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
     public GameObject mySpawner;
     private Camera mapCamCamera;
 
-    public MoonHeader.PlayerState state;
+    public MoonHeader.PlayerState player;
 
     private float wheelSpeed = 15f;
     private float map_move = 1f;
@@ -34,7 +34,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
         MapCam.GetComponent<Camera>().orthographicSize = MapCamBaseSize;
         minionStatsPannel.SetActive(false);
         minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
-        
+        player.statep = MoonHeader.State_P.None;
+
     }
 
 	void Update()
@@ -47,7 +48,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
     private void MapEv()
     {
-        if (state == MoonHeader.PlayerState.None)
+        if (player.statep == MoonHeader.State_P.None)
         {
             float scroll = Input.GetAxis("Mouse ScrollWheel") * wheelSpeed;
             mapCamCamera.orthographicSize = Mathf.Min(60, Mathf.Max(15, mapCamCamera.orthographicSize - scroll));
@@ -72,7 +73,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
     // 플레이어가 해당 미니언에 빙의/강림 하고있다면 실행 
     private void PlayerInMinion()
     {
-        if (state == MoonHeader.PlayerState.Selected)
+        if (player.statep == MoonHeader.State_P.Selected)
         {
             MainCam.transform.position = mapsubcam_target.transform.position;
             MainCam.transform.rotation = mapsubcam_target.transform.rotation;
@@ -88,7 +89,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
     public IEnumerator AttackPathSelectSetting()
     {
-        state = MoonHeader.PlayerState.None;
+        player.statep = MoonHeader.State_P.None;
         yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
         playerMinion = null;
         MainCam.SetActive(false);
@@ -104,7 +105,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
     private void ClickEv()
     {
-        if (Input.GetMouseButtonDown(0) && state == MoonHeader.PlayerState.None)
+        if (Input.GetMouseButtonDown(0) && player.statep == MoonHeader.State_P.None)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
@@ -196,9 +197,9 @@ public class LSM_PlayerCtrl : MonoBehaviour
     // select버튼 클릭 시 
     public void SelectPlayerMinion()
     {
-        if (!ReferenceEquals(mapcamSub_Target, null) && state == MoonHeader.PlayerState.None)
+        if (!ReferenceEquals(mapcamSub_Target, null) && player.statep == MoonHeader.State_P.None)
         {
-            state = MoonHeader.PlayerState.Possession;
+            player.statep = MoonHeader.State_P.Possession;
             subTarget_minion.PlayerConnect();
             playerMinion = subTarget_minion.transform.gameObject;
             StartCoroutine(ZoomPossession());
@@ -224,7 +225,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         MapSubCam.transform.gameObject.SetActive(false);
         MainCam.SetActive(true);
         StartCoroutine(GameManager.Instance.ScreenFade(true));
-        state = MoonHeader.PlayerState.Selected;
+        player.statep = MoonHeader.State_P.Selected;
         yield return new WaitForSeconds(3f);
 
         subTarget_minion.stats.state = MoonHeader.State.Normal;

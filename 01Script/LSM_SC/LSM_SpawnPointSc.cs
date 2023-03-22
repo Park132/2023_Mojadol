@@ -10,6 +10,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	public int number;
 	public bool isClicked;
 	public GameObject parentSpawner;
+	private LSM_Spawner parentSpawnerSC;
 
 	public GameObject pathUI;
 
@@ -28,17 +29,24 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	private void Start()
 	{
 		isClicked = false;
-		Paths = new GameObject[Ways.Length];
-		for (int i = 0; i < Paths.Length; i++)
+        parentSpawner = transform.parent.gameObject;
+		parentSpawnerSC = parentSpawner.GetComponent<LSM_Spawner>();
+
+
+		if (GameManager.Instance.mainPlayer.player.team == parentSpawnerSC.team)
 		{
-			Paths[i] = GameObject.Instantiate(PrefabManager.Instance.icons[1], transform);
-			Paths[i].GetComponent<LSM_AttackPath>().SetVariable(this.gameObject, number);
-			
+			Paths = new GameObject[Ways.Length];
+			for (int i = 0; i < Paths.Length; i++)
+			{
+				Paths[i] = GameObject.Instantiate(PrefabManager.Instance.icons[1], transform);
+				Paths[i].GetComponent<LSM_AttackPath>().SetVariable(this.gameObject, number);
+
+			}
+
+			pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
+			pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
 		}
-		parentSpawner = transform.parent.gameObject;
-		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
-		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
-	}
+    }
 
 	//public void Click(bool change) { isClicked = change; }
 

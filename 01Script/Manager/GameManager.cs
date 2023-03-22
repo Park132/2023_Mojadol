@@ -30,10 +30,15 @@ public class GameManager : MonoBehaviour
 	public GameObject canvas;
 	public GameObject selectAttackPathUI, mapUI;
 	private Image screen;
-	public LSM_PlayerCtrl[] player;
+	public LSM_PlayerCtrl[] players;
+	public LSM_PlayerCtrl mainPlayer;
 
 	private void Awake_Function()
 	{
+		GameObject[] playerdummys = GameObject.FindGameObjectsWithTag("Player");
+		players = new LSM_PlayerCtrl[playerdummys.Length];
+		for (int i = 0; i < playerdummys.Length; i++) players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
+
 		state = MoonHeader.ManagerState.Ready;
 		timerSc = this.GetComponent<LSM_TimerSc>();
 		numOfPlayer = 1;
