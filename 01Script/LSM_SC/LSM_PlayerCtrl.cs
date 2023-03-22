@@ -2,15 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 public class LSM_PlayerCtrl : MonoBehaviour
 {
+    
+    public MoonHeader.PlayerState player;
     private float MapCamBaseSize = 40;
 
     public GameObject mySpawner;
     private Camera mapCamCamera;
-
-    public MoonHeader.PlayerState player;
 
     private float wheelSpeed = 15f;
     private float map_move = 1f;

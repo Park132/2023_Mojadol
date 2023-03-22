@@ -15,7 +15,7 @@ public class MoonHeader : MonoBehaviour
 	public enum Team { Red = 0, Blue = 1, Yellow = 2 };
 	public enum State { Normal, Dead, Attack, Invincibility};
 
-	[SerializeField]
+	[Serializable]
 	public struct PlayerState
 	{
 		public State_P statep;

@@ -23,7 +23,7 @@ public class LSM_Spawner : MonoBehaviour
 	//public byte num_attack;
 	public float delay;
 
-	private void Start()
+	private void Awake()
 	{
 		state = MoonHeader.SpawnerState.None;
 
@@ -42,7 +42,7 @@ public class LSM_Spawner : MonoBehaviour
 		delay = 0;
 		wave_Minions_Num = 0;
 		selectedNum = 0;
-		MAX_NUM_MINION = 9;
+		MAX_NUM_MINION = 0;
 		
 	}
 
@@ -109,8 +109,10 @@ public class LSM_Spawner : MonoBehaviour
 					if (delay > BASEWAVEDELAY)
 					{
 						wave_Minions_Num = 0;
+						MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum;
 						for (int i = 0; i < spawnpoints.Length; i++)
 						{
+							spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i];
 							spawnpoints[i].summon_ = 0;
 						}
 						
@@ -123,6 +125,7 @@ public class LSM_Spawner : MonoBehaviour
 
 	public void ChangeTurn()
 	{
+		if (GameManager.Instance.mainPlayer.player.team != this.team) return;
 		bool change_dummy = false;
 		// 현재 공격로 지정 턴일때
 		if (GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath)
@@ -143,37 +146,20 @@ public class LSM_Spawner : MonoBehaviour
 		}
 	}
 
-	public void PathUI_ChangeMaxValue()
-	{
-		selectedNum = 0;
-		foreach (MoonHeader.SpawnerPaths item in spawnpoints)
-		{
-			selectedNum += item.num;
-		}
-
-		foreach (MoonHeader.SpawnerPaths item in spawnpoints)
-		{
-			item.path.GetComponent<LSM_SpawnPointSc>().pathUI.GetComponent<LSM_AttackPathUI>().sl.maxValue =
-				item.num + MAX_NUM_MINION - selectedNum;
-		}
-	}
-
+	// 공격로 선택이 끝난 ㅎ이후 공격로에 얼만큼 지정을 하였는지 확인.
 	public void CheckingSelectMon()
 	{
 		state = MoonHeader.SpawnerState.None;
-		while (true)
+		GameManager.Instance.teamManagers[(int)this.team].CheckingSelectMon();
+		if (wave_Minions_Num <= 0)
 		{
-			if (selectedNum == MAX_NUM_MINION)
-				break;
-
-			int minNum = int.MaxValue, index = -1;
+			wave_Minions_Num = 0;
+			MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum;
 			for (int i = 0; i < spawnpoints.Length; i++)
 			{
-				if (spawnpoints[i].num < minNum)
-				{ index = i; minNum = spawnpoints[i].num; }
+				spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i];
+				spawnpoints[i].summon_ = 0;
 			}
-			selectedNum++; spawnpoints[index].num++;
 		}
-		
 	}
 }

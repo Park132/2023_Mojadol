@@ -38,6 +38,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 			else if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
 			{
 				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.transform.position);
+				num.text = parentSpawner.spawnpoints[spawnPoint.number].num.ToString();
 			}
 			this.transform.localScale = Vector3.one * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 40) * 0.015f));
 		}
@@ -50,7 +51,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 		parentSpawner = sp.parentSpawner.GetComponent<LSM_Spawner>();
 
 
-		sl.maxValue = parentSpawner.MAX_NUM_MINION;
+		sl.maxValue = GameManager.Instance.teamManagers[(int)parentSpawner.team].MaximumSpawnNum;
 
 	}
 
@@ -58,9 +59,10 @@ public class LSM_AttackPathUI : MonoBehaviour
 	{
 		if (!ReferenceEquals(spawnPoint, null))
 		{
-			parentSpawner.spawnpoints[spawnPoint.number].num = (int)sl.value;
+			GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number] = (int)sl.value;
+			//parentSpawner.spawnpoints[spawnPoint.number].num = (int)sl.value;
 			num.text = sl.value.ToString();
-			parentSpawner.PathUI_ChangeMaxValue();
+			GameManager.Instance.teamManagers[(int)parentSpawner.team].PathUI_ChangeMaxValue();
 		}
 	}
 

@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -344,6 +344,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87cd7a996e6810648823eb6b71ce5969, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player:
+    statep: 0
+    team: 0
   mySpawner: {fileID: 1724237250}
   MainCam: {fileID: 1719182003}
   MapCam: {fileID: 963194225}
@@ -366,7 +369,7 @@ Transform:
   - {fileID: 1678421082}
   - {fileID: 1719182006}
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &197447592
 GameObject:
@@ -515,7 +518,7 @@ GameObject:
   - component: {fileID: 221452381}
   m_Layer: 0
   m_Name: TeamManager
-  m_TagString: Untagged
+  m_TagString: TeamManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -533,6 +536,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   team: 0
+  this_teamPlayers: []
+  this_teamSpawner: {fileID: 0}
+  MaximumSpawnNum: 0
+  AttackPathNumber: 
+  selectedNumber: 0
 --- !u!4 &221452382
 Transform:
   m_ObjectHideFlags: 0
@@ -656,6 +664,7 @@ MonoBehaviour:
   mapUI: {fileID: 0}
   players: []
   mainPlayer: {fileID: 28501396}
+  teamManagers: []
 --- !u!4 &254482921
 Transform:
   m_ObjectHideFlags: 0
@@ -1086,6 +1095,56 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 493581668}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &518772371
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 518772373}
+  - component: {fileID: 518772372}
+  m_Layer: 0
+  m_Name: TeamManager (1)
+  m_TagString: TeamManager
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &518772372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518772371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf54fc781dde694fb5f6a360c3ff763, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  team: 1
+  this_teamPlayers: []
+  this_teamSpawner: {fileID: 0}
+  MaximumSpawnNum: 0
+  AttackPathNumber: 
+  selectedNumber: 0
+--- !u!4 &518772373
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518772371}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &520367879
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2361,7 +2420,7 @@ Transform:
   - {fileID: 1591069036}
   - {fileID: 522884288}
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1063998098
 PrefabInstance:
@@ -3150,7 +3209,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1352368584
 GameObject:
@@ -3396,7 +3455,7 @@ RectTransform:
   - {fileID: 1774670240}
   - {fileID: 1469738302}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -4119,7 +4178,7 @@ Transform:
   - {fileID: 2001630163}
   - {fileID: 1251984118}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1724237252
 MonoBehaviour:

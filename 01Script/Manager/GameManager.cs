@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
 	private Image screen;
 	public LSM_PlayerCtrl[] players;
 	public LSM_PlayerCtrl mainPlayer;
+	public TeamManager[] teamManagers;
 
 	private void Awake_Function()
 	{
@@ -51,6 +52,10 @@ public class GameManager : MonoBehaviour
 
 		screen = GameObject.Find("Screen").GetComponent<Image>();
 		screen.transform.SetAsLastSibling();
+		GameObject[] teammdummy = GameObject.FindGameObjectsWithTag("TeamManager");
+		teamManagers = new TeamManager[teammdummy.Length];
+		foreach (GameObject t in teammdummy)
+		{ teamManagers[(int)t.GetComponent<TeamManager>().team] = t.GetComponent<TeamManager>(); }
 	}
 
 	private void Start()
