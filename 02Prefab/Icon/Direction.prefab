@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4411347342687418766}
   - component: {fileID: 4411347342687418767}
   - component: {fileID: 4411347342687418764}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: Direction
   m_TagString: AttackPath
   m_Icon: {fileID: 0}

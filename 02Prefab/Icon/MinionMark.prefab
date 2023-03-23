@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 9005910878970929666}
   - component: {fileID: 1073260566681133780}
   - component: {fileID: 1119053972738719847}
-  m_Layer: 6
+  m_Layer: 8
   m_Name: MinionMark
   m_TagString: Untagged
   m_Icon: {fileID: 0}

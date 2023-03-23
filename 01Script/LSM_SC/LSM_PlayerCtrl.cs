@@ -76,8 +76,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
     {
         if (player.statep == MoonHeader.State_P.Selected)
         {
-            MainCam.transform.position = mapsubcam_target.transform.position;
-            MainCam.transform.rotation = mapsubcam_target.transform.rotation;
+            //MainCam.transform.position = mapsubcam_target.transform.position;
+            //MainCam.transform.rotation = mapsubcam_target.transform.rotation;
 
             if (ReferenceEquals(playerMinion,null))
             {

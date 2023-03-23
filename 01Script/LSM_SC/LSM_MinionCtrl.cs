@@ -12,15 +12,15 @@ public class LSM_MinionCtrl : MonoBehaviour
 {
 	public MoonHeader.MinionStats stats;
 	public LSM_Spawner mySpawner;
-	private bool PlayerSelect;
+	private bool PlayerSelect, once_changeRound;
 	[SerializeField]private int way_index;
 
-	float MAXIMUMVELOCITY = 3f, SEARCHTARGET_DELAY = 1.5f, ATTACK_DELAY = 2f;
+	float MAXIMUMVELOCITY = 3f, SEARCHTARGET_DELAY = 1f, ATTACK_DELAY = 2f;
 
 	private Rigidbody rigid;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
-	private Renderer[] bodies;
+	private Renderer[] bodies;	// 색상을 변경할 렌더러.
 
 	public GameObject CameraPosition;
 	public GameObject icon, playerIcon;
@@ -61,7 +61,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 		// 디버그용 미리 설정. 현재 Melee
 		searchRadius = 14f;
-		minAtkRadius = 8f;
+		minAtkRadius = 10f;
 		maxAtkRadius = 16f;
     }
 	private void Start()
@@ -79,11 +79,13 @@ public class LSM_MinionCtrl : MonoBehaviour
 					nav.isStopped = true;
 				rigid.velocity = Vector3.zero;
 				rigid.angularVelocity = Vector3.zero;
+				once_changeRound = false;
 			}
-			else
+			else if (!once_changeRound)
 			{
 				if (nav.enabled)
 					nav.isStopped = false;
+				once_changeRound = true;
 			}
 
 			// 디버그용. 현재 상호작용 관련이 존재하지 않아 미니언들의 행동이 이상하여 최대 속도를 조정.
@@ -197,12 +199,13 @@ public class LSM_MinionCtrl : MonoBehaviour
 						{
 							dummyDistance = hit_dummy_distance;
 							target_attack = hit.transform.gameObject;
-							if (nav.enabled)
-								nav.destination = target_attack.transform.position;
 						}
-
 					}
 				}
+
+				if (nav.enabled && !ReferenceEquals(target_attack, null))
+					nav.destination = target_attack.transform.position;
+				else if (nav.enabled && nav.isStopped) { nav.isStopped = false; }
 			}
 		}
 
@@ -237,7 +240,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
-				// 만약 타겟의 위치가 공격 가능 범위보다 멀리 있다면, navmesh를 활성화, navObstacle을 비활성화
+				
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.isStopped ? 1f : 0.7f);
 
 				//if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
@@ -249,7 +252,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 				if (!dummy_cant_attack)
 				{
 					this.transform.LookAt(target_attack.transform.position);
-					this.transform.rotation = Quaternion.Euler(0, this.transform.rotation.eulerAngles.y, 0);
+					this.transform.rotation = Quaternion.Euler(Vector3.Scale(this.transform.rotation.eulerAngles, Vector3.up));
 					if (timer_Attack >= ATTACK_DELAY)
 					{
 						timer_Attack = 0;
@@ -258,7 +261,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 						{
 							case "Minion":
 								LSM_MinionCtrl dummy_ctrl = target_attack.GetComponent<LSM_MinionCtrl>();
-								dummy_ctrl.Damaged(this.stats.Atk);
+								dummy_ctrl.Damaged(this.stats.Atk, this.transform.position);
 
 								break;
 							case "Turret":
@@ -281,14 +284,16 @@ public class LSM_MinionCtrl : MonoBehaviour
 	}
 
 	
-
-	public int Damaged(int dam)
+	// 미니언이 데미지를 받을 때 사용하는 함수.
+	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
+	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐.
+	public int Damaged(int dam, Vector3 origin)
 	{
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
 			return stats.health;
 
 		stats.health -= dam;
-		StartCoroutine(DamagedEffect());
+		StartCoroutine(DamagedEffect(origin));
 
 		//Debug.Log("Minion Damaged!! : " +stats.health);
 		if (stats.health <= 0 && stats.state != MoonHeader.State.Dead)
@@ -307,26 +312,22 @@ public class LSM_MinionCtrl : MonoBehaviour
 		this.gameObject.SetActive(false);
 	}
 
-	/// <summary>
-	/// //////////
-	/// </summary>
-	/// <returns></returns>
-	private IEnumerator DamagedEffect()
+	// LSM 변경. 모든 적의 공격이 미니언의 앞에서만 오지 않을 수 있음.
+	// 그러므로 해당 미니언의 위치를 받아와 방향 벡터를 얻고, 그 방향벡터로 일정 힘의 크기로 AddForce
+	private IEnumerator DamagedEffect(Vector3 origin)
 	{
-		Color damaged = new Color(255/255f, 150/255f, 150/255f);
-		Color recovered = Color.white;
-        Vector3 knockbackDirection = new Vector3(0f, 1000f, -1000f);
+		Color damagedColor = new Color32(255, 150, 150, 255);
+		
+        Vector3 knockbackDirection = (Vector3.Scale(this.transform.position,Vector3.one-Vector3.up)- Vector3.Scale(origin, Vector3.one-Vector3.up)).normalized;
 
-        transform.Find("Cylinder").gameObject.GetComponent<Renderer>().material.color = damaged;
-        transform.Find("Head").gameObject.GetComponent<Renderer>().material.color = damaged;
-        this.GetComponent<Rigidbody>().AddRelativeForce(knockbackDirection * 300 * Time.deltaTime);
-
+		foreach (Renderer r in bodies)
+		{ r.material.color = damagedColor; }
+		this.rigid.AddForce(knockbackDirection * 500);
 
         yield return new WaitForSeconds(0.25f);
-
-        transform.Find("Cylinder").gameObject.GetComponent<Renderer>().material.color = recovered;
-        transform.Find("Head").gameObject.GetComponent<Renderer>().material.color = recovered;
-    }
+		foreach (Renderer r in bodies)
+		{ r.material.color = Color.white; }
+	}
 
     protected IEnumerator AttackFin()
     {
@@ -334,13 +335,16 @@ public class LSM_MinionCtrl : MonoBehaviour
 		{
 			target_attack = null;
 			this.stats.state = MoonHeader.State.Normal;
-			nav_ob.enabled = false;
+			//nav_ob.enabled = false;
 			yield return new WaitForSeconds(0.5f);
-			nav.enabled = true;
+			//nav.enabled = true;
+			//nav.isStopped = false;
+			timer_Searching = SEARCHTARGET_DELAY;
 		}
     }
 	public void ChangeTeamColor() { ChangeTeamColor(icon); }
 
+	// 시작 혹은 생성할 때 미니언의 아이콘 등의 색상을 변경.
     public void ChangeTeamColor(GameObject obj)
 	{
 		Color dummy_color;
@@ -359,6 +363,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 		}
 		obj.GetComponent<Renderer>().material.color = dummy_color;
 		this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
+		// Scene 즉 게임 화면에서 팀마다 색상이 변하는 것은... 나중에 파티클이나 이펙트로 하는건 어떤지? 이에 대한 내용은 일단 유지... 허나 데미지 받으면 흰색.
 	}
 
 	// 플레이어가 해당 미니언에게 강령

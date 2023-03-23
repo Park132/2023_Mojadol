@@ -27,9 +27,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1142772912307966701}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.383, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 1.88, z: 0}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1142772913429187298}
   m_RootOrder: 0
@@ -215,6 +215,7 @@ MonoBehaviour:
     Health: 0
     Atk: 0
   target: {fileID: 0}
+  TurretBelong: 0
 --- !u!208 &1142772913429187311
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -225,7 +226,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 0
-  m_Extents: {x: 0.8, y: 2.5, z: 0.8}
+  m_Extents: {x: 0.4, y: 2.5, z: 0.4}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1

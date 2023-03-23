@@ -138,7 +138,7 @@ public class LSM_TurretSc : MonoBehaviour
 					LSM_MinionCtrl dummyMinion = target.GetComponent<LSM_MinionCtrl>();
 					if (dummyMinion.stats.team != this.stats.team)
 					{
-						dummyMinion.Damaged(stats.Atk);
+						dummyMinion.Damaged(stats.Atk, transform.position);
 						if (dummyMinion.stats.health <= 0)
 							target = null;
 					}
