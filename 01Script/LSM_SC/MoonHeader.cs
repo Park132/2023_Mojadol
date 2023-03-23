@@ -13,7 +13,9 @@ public class MoonHeader : MonoBehaviour
 	public enum SpawnerState { None, Setting, Spawn };
 	public enum State_P { None, Selected , Possession};
 	public enum Team { Red = 0, Blue = 1, Yellow = 2 };
+	// 아래는 미니언용 enum class
 	public enum State { Normal, Dead, Attack, Invincibility};
+	public enum MonType { Melee,  };
 
 	[Serializable]
 	public struct PlayerState
@@ -31,11 +33,14 @@ public class MoonHeader : MonoBehaviour
 		public int health;
 		public float speed;
 		public int Atk;
+		public MonType type;
 		
 		public GameObject[] destination;
 
 		public void Setting(int mh, float sp, int atk, GameObject[] des, Team t)
-		{ maxHealth = mh; health = mh; speed = sp; destination = des; team = t; state = State.Normal; Atk = atk; }
+		{ this.Setting(mh,sp,atk,des,t,MonType.Melee); }
+		public void Setting(int mh, float sp, int atk, GameObject[] des, Team t, MonType type_d)
+		{ maxHealth = mh; health = mh; speed = sp; destination = des; team = t; state = State.Normal; Atk = atk; type = type_d; }
 		
 
 	}

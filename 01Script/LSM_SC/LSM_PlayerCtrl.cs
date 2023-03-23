@@ -79,7 +79,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
             MainCam.transform.position = mapsubcam_target.transform.position;
             MainCam.transform.rotation = mapsubcam_target.transform.rotation;
 
-            if (!playerMinion.activeSelf)
+            if (ReferenceEquals(playerMinion,null))
             {
                 Debug.Log("Minion active false");
                 StartCoroutine(AttackPathSelectSetting());
@@ -157,6 +157,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         }
     }
 
+    // TopView 상태의 미리보기창 카메라 구문.
     private void SubMapCamMove()
     {
         if (!ReferenceEquals(mapcamSub_Target, null) && !is_zoomIn){
@@ -169,8 +170,9 @@ public class LSM_PlayerCtrl : MonoBehaviour
             }
             else
             {
+                // 미니언 미리보기 창 글씨.
                 minionStatsPannel_txt.text = string.Format("Minion : {0}\nHealth : {1}\nATK : {2}",
-                                "none", subTarget_minion.stats.health, subTarget_minion.stats.Atk);
+                                subTarget_minion.stats.type, subTarget_minion.stats.health, subTarget_minion.stats.Atk);
                 MapCam.transform.position = (mapcamSub_Target.transform.position + Vector3.up * 95);
                 MapSubCam.transform.position = mapsubcam_target.transform.position;
                 MapSubCam.transform.rotation = mapsubcam_target.transform.rotation;
@@ -225,10 +227,22 @@ public class LSM_PlayerCtrl : MonoBehaviour
         mapCamCamera.transform.gameObject.SetActive(false);
         MapSubCam.transform.gameObject.SetActive(false);
         MainCam.SetActive(true);
+
         StartCoroutine(GameManager.Instance.ScreenFade(true));
         player.statep = MoonHeader.State_P.Selected;
+        yield return new WaitForSeconds(0.5f);
+        // 기존의 미니언을 비활성화한 후 플레이어 전용 프리펩 소환.
+        playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
+        playerMinion.transform.position = subTarget_minion.transform.position;
+        playerMinion.transform.rotation = subTarget_minion.transform.rotation;
+        PSH_PlayerFPSCtrl player_dummy = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+        player_dummy.playerCamera = MainCam.GetComponent<Camera>();
+        mapsubcam_target = player_dummy.camerapos;
+
+        subTarget_minion.transform.gameObject.SetActive(false);
+
         yield return new WaitForSeconds(3f);
 
-        subTarget_minion.stats.state = MoonHeader.State.Normal;
+        //subTarget_minion.stats.state = MoonHeader.State.Normal;
     }
 }

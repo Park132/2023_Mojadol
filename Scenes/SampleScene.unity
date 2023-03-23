@@ -642,6 +642,8 @@ MonoBehaviour:
   - {fileID: 2537342976170478779, guid: d235a58de6ec06645b9ca4628d05f746, type: 3}
   - {fileID: 5839500482625192984, guid: 06cc77bbdf01d954e8e1cbe60d92c6bf, type: 3}
   - {fileID: 5839500482625192984, guid: 0df279190cf16f74f81298212b07ef7b, type: 3}
+  players:
+  - {fileID: 4752272835364512656, guid: 33ac5eece6f0e474e91c126ba985a51c, type: 3}
 --- !u!114 &254482920
 MonoBehaviour:
   m_ObjectHideFlags: 0

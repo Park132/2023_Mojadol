@@ -59,9 +59,10 @@ public class LSM_MinionCtrl : MonoBehaviour
 		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
 		playerIcon.SetActive(false);
 
-		searchRadius = 17f;
-		minAtkRadius = 14f;
-		maxAtkRadius = 18f;
+		// 디버그용 미리 설정. 현재 Melee
+		searchRadius = 14f;
+		minAtkRadius = 8f;
+		maxAtkRadius = 16f;
     }
 	private void Start()
 	{
@@ -102,6 +103,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	}
 	
 	// 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
+	// 모든 변수 초기화
 	public void MonSetting(GameObject[] way, MoonHeader.Team t, LSM_Spawner spawn)
 	{
 		nav_ob.enabled = false;
@@ -112,12 +114,16 @@ public class LSM_MinionCtrl : MonoBehaviour
 		target_attack = null;
         way_index = 0;
         // maxhealth, speed, atk, paths, team
-        stats.Setting(10,50f,3, way, t);
+		// 현재 개발중이므로 미리 설정해둠.
+        stats.Setting(10,50f,3, way, t, MoonHeader.MonType.Melee);
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
 		transform.LookAt(stats.destination[way_index].transform);
 		nav.destination = stats.destination[way_index].transform.position;
-		mySpawner= spawn;
+		nav.avoidancePriority = 50;
+		nav.isStopped = false;
+
+		mySpawner = spawn;
 		icon.SetActive(true);
 		playerIcon.SetActive(false);
 		rigid.angularVelocity = Vector3.zero;
