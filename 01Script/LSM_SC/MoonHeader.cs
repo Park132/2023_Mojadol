@@ -67,3 +67,9 @@ public class MoonHeader : MonoBehaviour
 
 	}
 }
+
+
+public interface IActor
+{
+	int Damaged(int dam, Vector3 origin, MoonHeader.Team t);
+}

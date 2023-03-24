@@ -12,6 +12,7 @@ using UnityEngine.AI;
 
 public class HSH_LSM_Minion_Base : MonoBehaviour
 {
+	/*
 	public MoonHeader.MinionStats stats;
 	public LSM_Spawner mySpawner;
 	protected bool PlayerSelect;
@@ -346,4 +347,5 @@ public class HSH_LSM_Minion_Base : MonoBehaviour
 		nav.enabled = true;
 		
 	}
+	*/
 }

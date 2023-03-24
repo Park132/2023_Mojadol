@@ -8,35 +8,35 @@ using UnityEngine.AI;
  *
  */
 
-public class LSM_MinionCtrl : MonoBehaviour
+public class LSM_MinionCtrl : MonoBehaviour, IActor
 {
 	public MoonHeader.MinionStats stats;
 	public LSM_Spawner mySpawner;
 	private bool PlayerSelect, once_changeRound;
-	[SerializeField]private int way_index;
+	[SerializeField] private int way_index;
 
 	float MAXIMUMVELOCITY = 3f, SEARCHTARGET_DELAY = 1f, ATTACK_DELAY = 2f;
 
 	private Rigidbody rigid;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
-	private Renderer[] bodies;	// 색상을 변경할 렌더러.
+	private Renderer[] bodies;  // 색상을 변경할 렌더러.
 
 	public GameObject CameraPosition;
 	public GameObject icon, playerIcon;
 
-	[SerializeField]protected GameObject target_attack;
+	[SerializeField] protected GameObject target_attack;
 	[SerializeField]
 	protected float searchRadius, minAtkRadius, maxAtkRadius;
 	private float timer_Searching, timer_Attack;
 
 	public int minionBelong;    //Spawner.cs에서 자기가 몇 번 공격로 소속인지 받아옴
-	public int minionType;	//0이면 원거리, 1이면 근거리 미니언
+	public int minionType;  //0이면 원거리, 1이면 근거리 미니언
 
 
 	private void OnEnable()
 	{
-		
+
 		nav_ob.enabled = false;
 		nav.enabled = false;
 	}
@@ -54,8 +54,8 @@ public class LSM_MinionCtrl : MonoBehaviour
 		stats = new MoonHeader.MinionStats();
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
 
-        icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
-        icon.transform.localPosition = new Vector3(0, 60, 0);
+		icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
+		icon.transform.localPosition = new Vector3(0, 60, 0);
 		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
 		playerIcon.SetActive(false);
 
@@ -63,7 +63,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 		searchRadius = 14f;
 		minAtkRadius = 10f;
 		maxAtkRadius = 16f;
-    }
+	}
 	private void Start()
 	{
 
@@ -75,7 +75,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 			// 현재 게임의 진행 상태가 어떻게 되는지 확인 후, 상태를 변경.
 			if (GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
 			{
-				if(nav.enabled)
+				if (nav.enabled)
 					nav.isStopped = true;
 				rigid.velocity = Vector3.zero;
 				rigid.angularVelocity = Vector3.zero;
@@ -100,10 +100,10 @@ public class LSM_MinionCtrl : MonoBehaviour
 			MyDestination();
 		}
 
-		
+
 
 	}
-	
+
 	// 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
 	// 모든 변수 초기화
 	public void MonSetting(GameObject[] way, MoonHeader.Team t, LSM_Spawner spawn)
@@ -114,10 +114,10 @@ public class LSM_MinionCtrl : MonoBehaviour
 		timer_Searching = 0;
 		timer_Attack = 0;
 		target_attack = null;
-        way_index = 0;
-        // maxhealth, speed, atk, paths, team
+		way_index = 0;
+		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-        stats.Setting(10,50f,3, way, t, MoonHeader.MonType.Melee);
+		stats.Setting(10, 50f, 3, way, t, MoonHeader.MonType.Melee);
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
 		transform.LookAt(stats.destination[way_index].transform);
@@ -137,17 +137,17 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	// 웨이포인트 트리거에 닿았다면 발동하는 함수.
 	// 해당 웨이포인트와 미니언의 현재 목적지가 같은지 확인하는 함수 구현.
-    private void OnTriggerEnter(Collider other)
-    {
+	private void OnTriggerEnter(Collider other)
+	{
 		if (other.CompareTag("WayPoint") && stats.state != MoonHeader.State.Dead)
 		{
 			CheckingTurretTeam(other.transform.gameObject);
 		}
-    }
+	}
 
 
-    // 미니언이 다음 길로 넘어가는 것을 구현한 함수
-    public void MyDestination()
+	// 미니언이 다음 길로 넘어가는 것을 구현한 함수
+	public void MyDestination()
 	{
 		if (ReferenceEquals(target_attack, null) && nav.enabled)
 		{
@@ -157,15 +157,15 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	private void CheckingTurretTeam(GameObject obj)
 	{
-        if (stats.destination[way_index].Equals(obj))
-        {
-            LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
-            if (dummySc.stats.Health <= 0 || dummySc.stats.team == this.stats.team)
-            {
-                way_index++;
-            }
-        }
-    }
+		if (stats.destination[way_index].Equals(obj))
+		{
+			LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
+			if (dummySc.stats.Health <= 0 || dummySc.stats.team == this.stats.team)
+			{
+				way_index++;
+			}
+		}
+	}
 
 	// 미니언이 주변을 탐색하는 함수.
 	private void SearchingTarget()
@@ -189,11 +189,18 @@ public class LSM_MinionCtrl : MonoBehaviour
 					if (dummyDistance > hit_dummy_distance)
 					{
 						bool different_Team = false;
-						if (hit.transform.CompareTag("Minion"))	
-						{ different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team); }	//자신과 같은 공격로의 미니언만 대상으로 지정
+
+						if (hit.transform.CompareTag("Minion"))
+						{ different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team); }   //자신과 같은 공격로의 미니언만 대상으로 지정
 						else if (hit.transform.CompareTag("Turret"))
-						{different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team) 
-								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;}	//자신과 같은 공격로의 터렛만 대상으로 지정
+						{
+							different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team)
+								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;
+						}   //자신과 같은 공격로의 터렛만 대상으로 지정
+						else if (hit.transform.CompareTag("PlayerMinion"))
+						{
+							different_Team = (stats.team != hit.transform.GetComponent<PSH_PlayerFPSCtrl>().team);
+						}
 
 						if (different_Team)
 						{
@@ -211,7 +218,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 		if (!ReferenceEquals(target_attack, null) && !PlayerSelect && nav.enabled)
 		{
-			
+
 			nav.destination = target_attack.transform.position;
 			// 타겟이 MaxDistance이상 떨어져있다면 null
 			if (Vector3.Distance(target_attack.transform.position, this.transform.position) > maxAtkRadius)
@@ -240,12 +247,12 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
-				
+
 				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.isStopped ? 1f : 0.7f);
 
 				//if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
 				//else { nav.enabled = false; nav_ob.enabled = true; }
-				if (!dummy_cant_attack) { nav.isStopped = true; nav.avoidancePriority = 30; }
+				if (!dummy_cant_attack) { nav.isStopped = true; nav.avoidancePriority = 10; }
 				else { nav.isStopped = false; nav.avoidancePriority = 50; }
 
 
@@ -260,19 +267,17 @@ public class LSM_MinionCtrl : MonoBehaviour
 						switch (target_attack.tag)
 						{
 							case "Minion":
-								LSM_MinionCtrl dummy_ctrl = target_attack.GetComponent<LSM_MinionCtrl>();
-								dummy_ctrl.Damaged(this.stats.Atk, this.transform.position);
+								Attack_other<LSM_MinionCtrl>(target_attack);
 
 								break;
 							case "Turret":
-								LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
-								if (dummy_Sc.stats.team != stats.team)
-									dummy_Sc.Damaged(this.stats.Atk, this.stats.team);
-								else
-								{
-									CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin());
-								}
+								LSM_TurretSc dummy_Sc = Attack_other<LSM_TurretSc>(target_attack);
+								if (dummy_Sc.stats.team == stats.team)
+								{CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); }
 
+								break;
+							case "PlayerMinion":
+								Attack_other<PSH_PlayerFPSCtrl>(target_attack);
 								break;
 						}
 
@@ -283,14 +288,22 @@ public class LSM_MinionCtrl : MonoBehaviour
 
 	}
 
+	private T Attack_other<T>(GameObject other) where T : IActor {
+		T Script = other.GetComponent<T>();
+		Script.Damaged(this.stats.Atk, this.transform.position, this.stats.team);
+		return Script;
+	}
+
 	
 	// 미니언이 데미지를 받을 때 사용하는 함수.
 	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
 	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐.
-	public int Damaged(int dam, Vector3 origin)
+	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
 	{
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
 			return stats.health;
+		else if (t == this.stats.team)
+			return 0;
 
 		stats.health -= dam;
 		StartCoroutine(DamagedEffect(origin));
@@ -318,7 +331,7 @@ public class LSM_MinionCtrl : MonoBehaviour
 	{
 		Color damagedColor = new Color32(255, 150, 150, 255);
 		
-        Vector3 knockbackDirection = (Vector3.Scale(this.transform.position,Vector3.one-Vector3.up)- Vector3.Scale(origin, Vector3.one-Vector3.up)).normalized;
+        Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized;
 
 		foreach (Renderer r in bodies)
 		{ r.material.color = damagedColor; }

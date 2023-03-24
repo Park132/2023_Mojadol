@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PSH_PlayerFPSCtrl : MonoBehaviour
+public class PSH_PlayerFPSCtrl : MonoBehaviour, IActor
 {
     // 근접 플레이어 구현
     // 플레이어 상태
@@ -53,6 +53,15 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
     // 타이머
     private float timer = 0.0f;
 
+    // LSM 변경 아래 추가 변수 /*
+
+    public MoonHeader.Team team;
+    private Rigidbody rigid;
+    
+    // LSM */
+
+
+
     // 근접 캐릭 관련해서 만듬
     // Start is called before the first frame update
     void Start()
@@ -61,6 +70,9 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
         attackRange.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
+        // LSM
+        rigid = GetComponent<Rigidbody>();
+        //
     }
 
     // Update is called once per frame
@@ -313,5 +325,19 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour
 
         }
     }
-    
+
+
+    // LSM Damaged 추가.
+    public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
+    {
+        if (t == team)
+            return 0;
+        Debug.Log("Player Minion Damaged!!");
+        Health -= dam;
+        // 넉백이 되는 방향벡터를 구함.
+        Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one-Vector3.up).normalized;
+        float scale_knock = 300f;
+        rigid.AddForce(direction_knock*scale_knock);
+        return (int)this.Health;
+    }
 }

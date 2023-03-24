@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class HSH_Minion_Melee : HSH_LSM_Minion_Base
 {
+    /*
     protected override void Awake()
     {
         base.Awake();
@@ -75,5 +76,5 @@ public class HSH_Minion_Melee : HSH_LSM_Minion_Base
         }
     }
 
-    
+    */
 }

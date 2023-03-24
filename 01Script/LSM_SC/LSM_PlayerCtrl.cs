@@ -55,7 +55,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
             mapCamCamera.orthographicSize = Mathf.Min(60, Mathf.Max(15, mapCamCamera.orthographicSize - scroll));
 
             Vector3 mapcampPosition = MapCam.transform.position;
-            Vector3 move_f = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical")) * map_move;
+            Vector3 move_f = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")) * map_move;
             MapCam.transform.position = new Vector3(
                 mapcampPosition.x+ move_f.x, mapcampPosition.y,
                 mapcampPosition.z+ move_f.z);

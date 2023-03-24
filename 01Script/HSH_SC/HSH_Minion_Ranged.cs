@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class HSH_Minion_Ranged : HSH_LSM_Minion_Base
-{
+{/*
     protected void OnEnable()
     {
         base.OnEnable();
@@ -18,5 +18,5 @@ public class HSH_Minion_Ranged : HSH_LSM_Minion_Base
     protected void LateUpdate()
     {
         base.LateUpdate();
-    }
+    }*/
 }

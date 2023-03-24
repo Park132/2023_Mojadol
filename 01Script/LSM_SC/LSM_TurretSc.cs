@@ -7,7 +7,7 @@ using UnityEngine;
  * ㄴ 터렛 피격 시 분홍색으로 하이라이트(DamagedEffect())
  */
 
-public class LSM_TurretSc : MonoBehaviour
+public class LSM_TurretSc : MonoBehaviour, IActor
 {
 
 	private float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
@@ -64,8 +64,10 @@ public class LSM_TurretSc : MonoBehaviour
 
 	}
 
-	public void Damaged(int dam, MoonHeader.Team t)
+	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
 	{
+		if (t == this.stats.team)
+			return this.stats.Health;
 		this.stats.Health -= dam;
 		StartCoroutine(DamagedEffect());
 
@@ -74,6 +76,7 @@ public class LSM_TurretSc : MonoBehaviour
 			this.stats.Health = 10;
 			ChangeColor();
 		}
+		return this.stats.Health;
 	}
 
     private IEnumerator DamagedEffect()
@@ -138,7 +141,7 @@ public class LSM_TurretSc : MonoBehaviour
 					LSM_MinionCtrl dummyMinion = target.GetComponent<LSM_MinionCtrl>();
 					if (dummyMinion.stats.team != this.stats.team)
 					{
-						dummyMinion.Damaged(stats.Atk, transform.position);
+						dummyMinion.Damaged(stats.Atk, transform.position, this.stats.team);
 						if (dummyMinion.stats.health <= 0)
 							target = null;
 					}
