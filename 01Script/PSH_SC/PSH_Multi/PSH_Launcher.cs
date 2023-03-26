@@ -26,6 +26,10 @@ namespace Com.MyCompany.Game // ´Ù¸¥ °³¹ßÀÚ ÄÚµå¿ÍÀÇ Ãæµ¹À» ¸·±âÀ§ÇØ ÁöÁ¤Çß´ÙÇÏ³
 
         #endregion
 
+        #region 4¹ø °ÔÀÓ¸Å´ÏÀú~~¿¡¼­ ÀÛ¼ºµÈ º¯¼öµé
+        bool isConnecting;
+        #endregion
+
         #region MonoBehaviour Callbacks
 
         void Awake()
@@ -48,6 +52,7 @@ namespace Com.MyCompany.Game // ´Ù¸¥ °³¹ßÀÚ ÄÚµå¿ÍÀÇ Ãæµ¹À» ¸·±âÀ§ÇØ ÁöÁ¤Çß´ÙÇÏ³
 
         public void Connect() // ³»°¡ ±â¼úÇÑ °ÔÀÓ ·ë¿¡ ÀÔÀåÇÏ´Â ÇÔ¼ö
         {
+            isConnecting = true;
             if(PhotonNetwork.IsConnected) 
             {
                 PhotonNetwork.JoinRandomRoom();
@@ -75,8 +80,11 @@ namespace Com.MyCompany.Game // ´Ù¸¥ °³¹ßÀÚ ÄÚµå¿ÍÀÇ Ãæµ¹À» ¸·±âÀ§ÇØ ÁöÁ¤Çß´ÙÇÏ³
         public override void OnConnectedToMaster()
         {
             // base.OnConnectedToMaster();
-            Debug.Log("OnConnectedToMaster() executed");
-            PhotonNetwork.JoinRandomRoom();
+            if(isConnecting)
+            {
+                Debug.Log("OnConnectedToMaster() executed");
+                PhotonNetwork.JoinRandomRoom();
+            }
         }
         #region OnConnectedToMaster() ¼³¸í
         /*
@@ -115,6 +123,15 @@ namespace Com.MyCompany.Game // ´Ù¸¥ °³¹ßÀÚ ÄÚµå¿ÍÀÇ Ãæµ¹À» ¸·±âÀ§ÇØ ÁöÁ¤Çß´ÙÇÏ³
         {
             // base.OnJoinedRoom();
             Debug.Log("Room Joined!");
+
+            #region 4¹ø °ÔÀÓ ¸Å´ÏÀú¿¡¼­ ÀÛ¼ºµÊ
+            if(PhotonNetwork.CurrentRoom.PlayerCount == 1) // ÀÌ°Í¸¸ ÀÛ¼ºÇÏ¸ç ´Ù½Ã ·Îºñ·Î µ¹¾Æ°¥½Ã ÀÚµ¿À¸·Î ´Ù½Ã °ÔÀÓ¿¬°áÇÏ°ÔµÊ ±×·¡¼­ Launcher¿¡ ºÎ¿ïº¯¼ö¸¦ ÇÏ³ª Ãß°¡ÇÕ´Ï´Ù(isConnecting)
+            {
+                Debug.Log("Room for 1 loaded!");
+
+                PhotonNetwork.LoadLevel("PSH_M_Room_for_1");
+            }
+            #endregion
         }
         #endregion
     }
