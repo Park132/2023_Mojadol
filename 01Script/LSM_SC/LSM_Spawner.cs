@@ -8,6 +8,9 @@ public class LSM_Spawner : MonoBehaviour
 {
 	float BASEDELAY = 1.5f;
 	float BASEWAVEDELAY = 10f;
+	int BASEMINIONMULTIPLER = 5;
+	int BASEMAXIMUMMELEE = 3;
+
 	public int MAX_NUM_MINION ;
 	public MoonHeader.Team team;
 
@@ -83,8 +86,8 @@ public class LSM_Spawner : MonoBehaviour
 						if (spawnpoints[i].num > spawnpoints[i].summon_)
 						{
 							GameObject dummy;
-							// 가장 처음 소환되는 미니언은 덩치
-							if (spawnpoints[i].summon_ == 0)
+							// 근접 미니언의 소환 수보다 적게 소환됐다면, 근접.
+							if (spawnpoints[i].summon_ % BASEMINIONMULTIPLER <= BASEMAXIMUMMELEE)
 							{ dummy = PoolManager.Instance.Get_Minion(0); }
 							else 
 							{ 
@@ -109,12 +112,7 @@ public class LSM_Spawner : MonoBehaviour
 					if (delay > BASEWAVEDELAY)
 					{
 						wave_Minions_Num = 0;
-						MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum;
-						for (int i = 0; i < spawnpoints.Length; i++)
-						{
-							spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i];
-							spawnpoints[i].summon_ = 0;
-						}
+						SettingPath_MinionSpawn();
 						
 					}
 				}
@@ -154,12 +152,17 @@ public class LSM_Spawner : MonoBehaviour
 		if (wave_Minions_Num <= 0)
 		{
 			wave_Minions_Num = 0;
-			MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum;
-			for (int i = 0; i < spawnpoints.Length; i++)
-			{
-				spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i];
-				spawnpoints[i].summon_ = 0;
-			}
+			SettingPath_MinionSpawn();
+		}
+	}
+
+	private void SettingPath_MinionSpawn()
+	{
+		MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum * BASEMINIONMULTIPLER;
+		for (int i = 0; i < spawnpoints.Length; i++)
+		{
+			spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i] * BASEMINIONMULTIPLER;
+			spawnpoints[i].summon_ = 0;
 		}
 	}
 }
