@@ -18,8 +18,9 @@ public class TeamManager : MonoBehaviour
 
 	private void Start()
 	{
+		// µð¹ö±ë¿ë
 		selectedNumber = 0;
-		MaximumSpawnNum = 9;
+		MaximumSpawnNum = 3;
 		this_teamPlayers = new List<LSM_PlayerCtrl>();
 		GameObject[] dummyplayer = GameObject.FindGameObjectsWithTag("Player");
 		foreach (GameObject p in dummyplayer) {
