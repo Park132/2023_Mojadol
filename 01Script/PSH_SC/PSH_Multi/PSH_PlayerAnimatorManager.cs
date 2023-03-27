@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Photon.Pun;
+
 // 5번 플레이어 만들기
 // 이건 그냥 얘네들이 PlayerCtrl스크립트 만드는 건데
 // 작성방법이 나랑은 많이 다르게 만들길래 신기해서 넣어놓고 주석달았음
@@ -9,7 +11,7 @@ using UnityEngine;
 // 여기서는 중간에 CameraWork스크립트는 그냥 카메라 동작과 관련된 스크립트더라구요
 namespace Com.MyCompany.Game
 {
-    public class PSH_PlayerAnimatorManager : MonoBehaviour
+    public class PSH_PlayerAnimatorManager : MonoBehaviourPun
     {
         #region Private Fields
         [SerializeField]
@@ -32,6 +34,13 @@ namespace Com.MyCompany.Game
         // Update is called once per frame
         void Update()
         {
+            // 7번 플레이어 네트워킹
+            // 인스턴스가 client에서 제어되고 있다면 PhotonView.IsMine 은 true
+            // 그러니까 물리적으로 이 컴퓨터 앞에서 플레이하는 사람을 나타냄
+            if(photonView.IsMine == false && PhotonNetwork.IsConnected == true)
+            {
+                return; // 연결은 됐지만 로컬플레이어가 아니라면 아무것도 안함
+            }
             if(!animator)
             {
                 return;
