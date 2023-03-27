@@ -60,9 +60,9 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		playerIcon.SetActive(false);
 
 		// 디버그용 미리 설정. 현재 Melee
-		searchRadius = 10f;
-		minAtkRadius = 9f;
-		maxAtkRadius = 13f;
+		searchRadius = 14f;
+		minAtkRadius = 10f;
+		maxAtkRadius = 16f;
 	}
 	private void Start()
 	{
@@ -70,24 +70,31 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	}
 	private void LateUpdate()
 	{
-		// 현재 게임의 진행 상태가 어떻게 되는지 확인 후, 상태를 변경.
-		if (once_changeRound&&GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
+		if (stats.state != MoonHeader.State.Dead && !ReferenceEquals(mySpawner, null))
 		{
-			if (nav.enabled)
-			{ nav.velocity = Vector3.zero; nav.isStopped = true; }
-			rigid.velocity = Vector3.zero;
-			rigid.angularVelocity = Vector3.zero;
-			once_changeRound = false;
-		}
-		else if (!once_changeRound && GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
-		{
-			if (nav.enabled)
-				nav.isStopped = false;
-			once_changeRound = true;
-		}
+			// 현재 게임의 진행 상태가 어떻게 되는지 확인 후, 상태를 변경.
+			if (GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
+			{
+				if (nav.enabled)
+					nav.isStopped = true;
+				rigid.velocity = Vector3.zero;
+				rigid.angularVelocity = Vector3.zero;
+				once_changeRound = false;
+			}
+			else if (!once_changeRound)
+			{
+				if (nav.enabled)
+					nav.isStopped = false;
+				once_changeRound = true;
+			}
 
-		if (stats.state != MoonHeader.State.Dead && !ReferenceEquals(mySpawner, null) && once_changeRound )
-		{
+			// 디버그용. 현재 상호작용 관련이 존재하지 않아 미니언들의 행동이 이상하여 최대 속도를 조정.
+			if (MAXIMUMVELOCITY < Vector3.Magnitude(rigid.velocity))
+			{
+				//rigid.velocity = rigid.velocity.normalized * MAXIMUMVELOCITY;
+				rigid.velocity = Vector3.zero;
+			}
+
 			SearchingTarget();
 			Attack();
 			MyDestination();
@@ -115,7 +122,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 
 		transform.LookAt(stats.destination[way_index].transform);
 		nav.destination = stats.destination[way_index].transform.position;
-		//nav.avoidancePriority = 50;
+		nav.avoidancePriority = 50;
 		nav.isStopped = false;
 
 		mySpawner = spawn;
@@ -139,14 +146,12 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	}
 
 
-	// 미니언이 다음 길로 넘어가는 것을 구현한 함수. NavObstacle을 사용하기 위해 목표 지점을 1/2정도의 위치로 이동하게 설정.
+	// 미니언이 다음 길로 넘어가는 것을 구현한 함수
 	public void MyDestination()
 	{
 		if (ReferenceEquals(target_attack, null) && nav.enabled)
 		{
-			Vector3 destination_direction = (stats.destination[way_index].transform.position - this.transform.position).normalized;
-			float destination_distance = Vector3.Distance(stats.destination[way_index].transform.position, this.transform.position);
-			nav.destination = this.transform.position + (destination_direction * (destination_distance * 0.5f));
+			nav.destination = stats.destination[way_index].transform.position;
 		}
 	}
 
@@ -166,7 +171,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	private void SearchingTarget()
 	{
 		// 현재 미니언이 타겟을 확인 하였는지.
-		if (ReferenceEquals(target_attack, null) && !PlayerSelect && stats.state == MoonHeader.State.Normal)
+		if (ReferenceEquals(target_attack, null) && !PlayerSelect)
 		{
 
 			timer_Searching += Time.deltaTime;
@@ -205,12 +210,9 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 					}
 				}
 
-				// 타겟을 찾았으며, 이동중이라면..
 				if (nav.enabled && !ReferenceEquals(target_attack, null))
 					nav.destination = target_attack.transform.position;
-				// 
-				//else if (ReferenceEquals(target_attack,null) && nav.enabled && nav.isStopped) { nav.isStopped = false; }
-				else if (ReferenceEquals(target_attack,null) && !nav.enabled) { nav_ob.enabled = false; nav.enabled = true; }
+				else if (nav.enabled && nav.isStopped) { nav.isStopped = false; }
 			}
 		}
 
@@ -234,11 +236,10 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	// 미니언이 살아있으며, 타겟을 찾았다면 해당 함수를 실행.
 	// 원래 공격할때 NavAgent를 비활성화, NavObstacle을 활성화 하였으나, 이를 실행하면 NavMesh를 통한 길찾기를 실시간으로 다시 반복하는 문제가있음.
 	// 그러므로 NavAgent의 Priority를 하강시키는 것으로 해당 미니언을 밀치지 않게 설정.
-	// 또 다시 변경... NavObstacle을 사용. 
 	private void Attack()
 	{
 		if (timer_Attack <= ATTACK_DELAY) { timer_Attack += Time.deltaTime; }
-		
+
 		if (!ReferenceEquals(target_attack, null))
 		{
 			if (!target_attack.activeSelf)
@@ -247,15 +248,13 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
 
-				//bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.isStopped ? 1f : 0.7f);
-				//if (!dummy_cant_attack) { nav.isStopped = true; nav.avoidancePriority = 10; }
-				//else { nav.isStopped = false; nav.avoidancePriority = 50; }
+				bool dummy_cant_attack = Vector3.Distance(target_attack.transform.position, this.transform.position) > minAtkRadius * (nav.isStopped ? 1f : 0.7f);
 
-				bool dummy_cant_attack = Vector3.Distance(Vector3.Scale(target_attack.transform.position, Vector3.one-Vector3.up), Vector3.Scale(this.transform.position,Vector3.one-Vector3.up))
-					> minAtkRadius * (nav.enabled ? 0.7f : 1f);
+				//if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
+				//else { nav.enabled = false; nav_ob.enabled = true; }
+				if (!dummy_cant_attack) { nav.isStopped = true; nav.avoidancePriority = 10; }
+				else { nav.isStopped = false; nav.avoidancePriority = 50; }
 
-				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
-				else { nav.enabled = false; nav_ob.enabled = true; rigid.velocity = Vector3.zero; }
 
 				if (!dummy_cant_attack)
 				{
@@ -320,8 +319,8 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	private IEnumerator DeadProcessing()
 	{
 		stats.state = MoonHeader.State.Dead;
-		if (nav.enabled)
-		{nav.velocity = Vector3.zero; nav.isStopped = true; }
+		if(nav.enabled)
+			nav.isStopped = true;
 		yield return new WaitForSeconds(0.5f);
 		this.gameObject.SetActive(false);
 	}
@@ -332,11 +331,11 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	{
 		Color damagedColor = new Color32(255, 150, 150, 255);
 		
-        //Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized * 500 + Vector3.up * 100;
+        Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized;
 
 		foreach (Renderer r in bodies)
 		{ r.material.color = damagedColor; }
-		//this.rigid.AddForce(knockbackDirection);
+		this.rigid.AddForce(knockbackDirection * 500);
 
         yield return new WaitForSeconds(0.25f);
 		foreach (Renderer r in bodies)
@@ -348,12 +347,10 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		if (!PlayerSelect)
 		{
 			target_attack = null;
-			
-			nav_ob.enabled = false;
-			yield return new WaitForSeconds(0.5f);
 			this.stats.state = MoonHeader.State.Normal;
-			nav.enabled = true;
-			
+			//nav_ob.enabled = false;
+			yield return new WaitForSeconds(0.5f);
+			//nav.enabled = true;
 			//nav.isStopped = false;
 			timer_Searching = SEARCHTARGET_DELAY;
 		}

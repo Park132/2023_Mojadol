@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	public static float SELECTATTACKPATHTIME = 10f, ROUNDTIME = 50f;
+	public static float SELECTATTACKPATHTIME = 10f, ROUNDTIME = 1000f;
 
 	public MoonHeader.ManagerState state;
 	public MoonHeader.GameState gameState;
