@@ -4,22 +4,24 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
+// 공격로 비율 지정에 사용되는 아이콘 스크립트.
 public class LSM_AttackPathUI : MonoBehaviour
 {
-    public TextMeshProUGUI num;
-    public Slider sl;
-	public LSM_Spawner parentSpawner;
-	public LSM_SpawnPointSc spawnPoint;
-	private Camera mapcam;
+    public TextMeshProUGUI num;				// 표시되는 숫자.
+    public Slider sl;						// 슬라이더
+	public LSM_Spawner parentSpawner;		// 해당 UI가 사용되는 마스터스포너
+	public LSM_SpawnPointSc spawnPoint;		// 해당 UI가 사용되는 스폰포인트
+	private Camera mapcam;					// 맵을 볼때 사용되는 카메라
 
 	private void Start()
 	{
-		num.text = "0";
+		//num.text = "0";
 		num.text = sl.value.ToString();
 		mapcam = GameManager.Instance.mainPlayer.MapCam.GetComponent<Camera>();
-		transform.SetAsFirstSibling();
+		//transform.SetAsFirstSibling();	// 해당 UI가 다른 UI를 가리지 않기 위해 가장 상단으로 위치. 해당 부분은 EmptyObject내에 자식 오브젝트로 생성하기에 필요없는 부분이 되었음.
 	}
 
+	// 다시 UI가 활성화 될 경우, 현재 게임 상태 중 공격로 설정 턴에 슬라이더를 표시하도록 구현.
 	private void OnEnable()
 	{
 		sl.gameObject.SetActive(GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath);
@@ -27,14 +29,16 @@ public class LSM_AttackPathUI : MonoBehaviour
 
 	private void Update()
 	{
-
+		// 생성 후 초기화를 하기 전에 실행되는 것을 방지.
 		if (!ReferenceEquals(spawnPoint, null))
 		{
+			// 게임 시작 전, 공격로 선택 중에 스폰포인트와 첫번째 웨이포인트 사이에 UI를 위치하도록 구현.
 			if (GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath || 
 				GameManager.Instance.gameState == MoonHeader.GameState.StartGame)
 			{
 				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
 			}
+			// 게임 중, 스폰포인트의 위치에 UI를 위치하도록 구현.
 			else if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
 			{
 				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.transform.position);
@@ -45,6 +49,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 		
 	}
 
+	// 초기화함수. 스폰포인트에서 해당 UI를 생성 후 UI가 소속된 마스터 스포너와, 스폰포인트를 저장하도록 구현.
 	public void SetParent(LSM_SpawnPointSc sp)
 	{
 		spawnPoint = sp;
@@ -55,6 +60,8 @@ public class LSM_AttackPathUI : MonoBehaviour
 
 	}
 
+	// 슬라이더의 값이 변할 경우 발동되는 함수.
+	// 해당하는 팀의 매니저에서 값을 변경하도록 설정.
 	public void ChangeValue()
 	{
 		if (!ReferenceEquals(spawnPoint, null))
@@ -62,9 +69,11 @@ public class LSM_AttackPathUI : MonoBehaviour
 			GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number] = (int)sl.value;
 			//parentSpawner.spawnpoints[spawnPoint.number].num = (int)sl.value;
 			num.text = sl.value.ToString();
+			// 팀매니저에 존재하는 최대값 변경 함수 호출.
 			GameManager.Instance.teamManagers[(int)parentSpawner.team].PathUI_ChangeMaxValue();
 		}
 	}
 
+	// 슬라이더 비활성화
 	public void InvisibleSlider(bool change) { sl.gameObject.SetActive(change); }
 }
