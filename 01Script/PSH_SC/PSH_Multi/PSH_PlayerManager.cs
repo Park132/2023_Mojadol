@@ -41,6 +41,9 @@ namespace Com.MyCompany.Game
         [SerializeField]
         private GameObject beams; // 게임 오브젝트로 만든 빔
         bool isFiring;
+
+        [SerializeField]
+        private GameObject playerUiPrefab;
         #endregion
 
         #region Public Fields
@@ -85,11 +88,24 @@ namespace Com.MyCompany.Game
                 Debug.LogError("<Color=Red><a>Missing</a></Color> CameraWork Component on playerPrefab.", this);
             }
 
+            if(playerUiPrefab != null)
+            {
+                GameObject _uiGo = Instantiate(playerUiPrefab);
+                _uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+            }
+            else
+            {
+                Debug.LogWarning("<Color=Red><a>Missing</a></Color> PlayerUiPrefab reference on player Prefab.", this);
+            }
+
+            // 경기장의 크기는 플레이어 수에 따라 변하는데 플레이어가 경기장 크기의 제한에 가까울 경우가 발생 가능(이 예제게임의 특징 때문임
+            // 경기장의 중심부로 플레이어들의 위치를 재조정하는 것 -> 게임플레이와 레벨 디자인에 이슈가 발생
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += (scene, loadingMode) =>
             {
-                // this.CalledOnLevelWasLoaded(scene.buildIndex);
+                this.CalledOnLevelWasLoaded(scene.buildIndex); // 커스텀 함수
             };
         }
+
 
         void Update()
         {
@@ -137,6 +153,21 @@ namespace Com.MyCompany.Game
             Health -= 0.1f * Time.deltaTime;
         }
 
+
+        // 플레이어들이 아레나 밖에 있는지 체크한다, 그렇다면 안전구역 주위에 스폰되게함
+        void CalledOnLevelWasLoaded(int level)
+        {
+            // 플레이어 수에 따라 UI프리팹 생성
+            GameObject _uiGo = Instantiate(this.playerUiPrefab);
+            _uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+
+            // 레이캐스트를 통해 공중에 떠있는지 아닌지를 확인
+            if (!Physics.Raycast(transform.position, -Vector3.up, 5f))
+            {
+                transform.position = new Vector3(0f, 5f, 0f);
+            }
+        }
+        
         #endregion
 
         #region Custom
