@@ -6,7 +6,7 @@ using System;
 
 public class LSM_PlayerCtrl : MonoBehaviour
 {
-    
+    public string playerName;
     public MoonHeader.PlayerState player;
     private float MapCamBaseSize = 40;
 
@@ -145,7 +145,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
                                 StopCoroutine(zoomIn);
                                 zoomIn = ZoomInMinion();
                                 StartCoroutine(zoomIn);
-                                subTarget_minion.icon.GetComponent<Renderer>().material.color = Color.green;
+                                //subTarget_minion.icon.GetComponent<Renderer>().material.color = Color.green;
+                                subTarget_minion.PlayerSelected();
                             }
 
                             //GameManager.Instance.MapCam.GetComponent<Camera>().orthographicSize = 20;

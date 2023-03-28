@@ -86,18 +86,17 @@ public class LSM_Spawner : MonoBehaviour
 						if (spawnpoints[i].num > spawnpoints[i].summon_)
 						{
 							GameObject dummy;
+							MoonHeader.MonType monT;
 							// 근접 미니언의 소환 수보다 적게 소환됐다면, 근접.
-							if (spawnpoints[i].summon_ % BASEMINIONMULTIPLER <= BASEMAXIMUMMELEE)
-							{ dummy = PoolManager.Instance.Get_Minion(0); }
+							if (spawnpoints[i].summon_ % BASEMINIONMULTIPLER < BASEMAXIMUMMELEE)
+							{ dummy = PoolManager.Instance.Get_Minion(0); monT = MoonHeader.MonType.Melee; }
 							else 
-							{ 
-								dummy = PoolManager.Instance.Get_Minion(0); 
-							}
+							{ dummy = PoolManager.Instance.Get_Minion(1); monT = MoonHeader.MonType.Range; }
 
 							dummy.transform.position = spawnpoints[i].path.transform.position;
 							//dummy.transform.parent = this.transform;
 							LSM_MinionCtrl dummy_ctrl = dummy.GetComponent<LSM_MinionCtrl>();
-							dummy_ctrl.MonSetting(spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>().Ways, team, this.GetComponent<LSM_Spawner>());
+							dummy_ctrl.MonSetting(spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>().Ways, team, this.GetComponent<LSM_Spawner>(), monT);
 							dummy_ctrl.minionBelong = i;
 							//dummy_ctrl.minionType = spawnpoints[i].summon_ % 2;	//미니언의 타입을 결정
 

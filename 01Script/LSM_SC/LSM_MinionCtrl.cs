@@ -23,7 +23,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 	private Renderer[] bodies;  // 색상을 변경할 렌더러.
 
 	public GameObject CameraPosition;
-	public GameObject icon, playerIcon;
+	private GameObject icon, playerIcon;
 
 	[SerializeField] protected GameObject target_attack;
 	[SerializeField]
@@ -60,9 +60,9 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		playerIcon.SetActive(false);
 
 		// 디버그용 미리 설정. 현재 Melee
-		searchRadius = 10f;
-		minAtkRadius = 9f;
-		maxAtkRadius = 13f;
+		//searchRadius = 10f;
+		//minAtkRadius = 9f;
+		//maxAtkRadius = 13f;
 	}
 	private void Start()
 	{
@@ -99,7 +99,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 
 	// 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
 	// 모든 변수 초기화
-	public void MonSetting(GameObject[] way, MoonHeader.Team t, LSM_Spawner spawn)
+	public void MonSetting(GameObject[] way, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
 	{
 		nav_ob.enabled = false;
 		nav.enabled = true;
@@ -110,7 +110,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		way_index = 0;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 50f, 3, way, t, MoonHeader.MonType.Melee);
+		stats.Setting(10, 50f, 3, way, t, typeM);
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
 		transform.LookAt(stats.destination[way_index].transform);
@@ -406,5 +406,11 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		icon.SetActive(true);
 		playerIcon.SetActive(false);
 		MyDestination();
+	}
+
+	// 플레이어가 해당 미니언을 탑뷰일 때 선택하였을 경우.
+	public void PlayerSelected()
+	{
+		this.icon.GetComponent<Renderer>().material.color = Color.green;
 	}
 }

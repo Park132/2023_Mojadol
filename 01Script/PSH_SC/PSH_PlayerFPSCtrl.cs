@@ -55,8 +55,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, IActor
 
     // LSM 변경 아래 추가 변수 /*
 
+    public string playerName;
     public MoonHeader.Team team;
     private Rigidbody rigid;
+
     
     // LSM */
 
@@ -326,6 +328,13 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, IActor
         }
     }
 
+    // LSM Spawn Setting
+    public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname)
+    {
+        team = t;
+        Health = monHealth * 10;
+        playerName = pname;
+    }
 
     // LSM Damaged 추가.
     public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
@@ -338,6 +347,14 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, IActor
         Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one-Vector3.up).normalized;
         float scale_knock = 300f;
         rigid.AddForce(direction_knock*scale_knock);
+        if (this.Health <= 0)
+            StartCoroutine(DeadProcessing());
         return (int)this.Health;
+    }
+    // LSM DeadProcessing
+    public IEnumerator DeadProcessing()
+    {
+        GameManager.Instance.PlayerMinionRemover(team, playerName);
+        yield return new WaitForSeconds(0.5f);
     }
 }

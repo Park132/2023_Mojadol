@@ -344,6 +344,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87cd7a996e6810648823eb6b71ce5969, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerName: 
   player:
     statep: 0
     team: 0
@@ -636,6 +637,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minions:
   - {fileID: 8887907667050671287, guid: cb994eb333d5ae64185bce212c70e360, type: 3}
+  - {fileID: 8887907667050671287, guid: 08dea0b7c67160c45b0b5d40a023c386, type: 3}
   icons:
   - {fileID: 5839500482625192984, guid: f0c074379f04f984bbcd337271cced30, type: 3}
   - {fileID: 4411347342687418753, guid: 952d4d6d6f50472468cb54559ec3048b, type: 3}
@@ -661,6 +663,7 @@ MonoBehaviour:
   timerSc: {fileID: 0}
   numOfPlayer: 0
   turnText: {fileID: 533215073}
+  wayPoints: []
   canvas: {fileID: 1409379792}
   selectAttackPathUI: {fileID: 0}
   mapUI: {fileID: 0}
@@ -4269,6 +4272,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minions:
   - {fileID: 8887907667050671287, guid: cb994eb333d5ae64185bce212c70e360, type: 3}
+  - {fileID: 8887907667050671287, guid: 08dea0b7c67160c45b0b5d40a023c386, type: 3}
 --- !u!4 &1850861373
 Transform:
   m_ObjectHideFlags: 0
