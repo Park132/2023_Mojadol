@@ -7,25 +7,29 @@ using UnityEngine;
  * ㄴ 터렛 피격 시 분홍색으로 하이라이트(DamagedEffect())
  */
 
-public class LSM_TurretSc : MonoBehaviour, IActor
+// 포탑에 대하여 간단하게 구현
+public class LSM_TurretSc : MonoBehaviour, I_Actor
 {
-
+	// 포탑의 탐색, 공격에 대한 딜레이 상수화 혹시 모를 변경에 대비하여 const는 생략
 	private float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
 
-    public MoonHeader.TurretStats stats;
-	private GameObject mark;
-	private float timer, timer_attack;
-	private float searchRadius;
-	[SerializeField]private GameObject target;
+    public MoonHeader.S_TurretStats stats;			// 터렛의 상태에 대한 구조체
+	private GameObject mark;						// TopView에서 플레이어에게 보여질 아이콘
+	private float timer, timer_attack;				// 탐색, 공격에 사용될 타이머
+	private float searchRadius;						// 탐색 범위
+	[SerializeField]private GameObject target;		// 공격 타겟
 
-	public int TurretBelong;
+	public int TurretBelong;						// 터렛의 위치
 
 	private void Start()
 	{
+		// 초기화
 		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
 		mark.transform.localPosition = Vector3.up * 10;
 		// health, atk
-		stats = new MoonHeader.TurretStats(10,6);
+		
+		// 디버그용으로 미리 설정.
+		stats = new MoonHeader.S_TurretStats(10,6);
 		ChangeColor();
 
 		timer = 0;
@@ -34,6 +38,7 @@ public class LSM_TurretSc : MonoBehaviour, IActor
 
     }
 
+	// 팀에 해당하는 색으로 변경.
 	private void ChangeColor()
 	{
         Color dummy_c = Color.white;
@@ -56,6 +61,7 @@ public class LSM_TurretSc : MonoBehaviour, IActor
 
 	private void Update()
 	{
+		// 게임 중일때만 실행되도록 설정
 		if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
 		{
 			SearchingTarget();
@@ -64,6 +70,8 @@ public class LSM_TurretSc : MonoBehaviour, IActor
 
 	}
 
+	// I_Actor 인터페이스에 포함되어잇는 함수.
+	// 공격을 받을 시 데미지를 입음.
 	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
 	{
 		if (t == this.stats.team)
@@ -79,6 +87,7 @@ public class LSM_TurretSc : MonoBehaviour, IActor
 		return this.stats.Health;
 	}
 
+	// 데미지를 입을 경우 색상 변경.
     private IEnumerator DamagedEffect()
     {
         Color damaged = new Color(255 / 255f, 150 / 255f, 150 / 255f);
@@ -94,13 +103,16 @@ public class LSM_TurretSc : MonoBehaviour, IActor
     // 일정 범위 내에 적이 있는지를 확인하는 코드.
     private void SearchingTarget()
 	{
+		// 타겟이 존재하지 않을 때만 탐색.
 		if (ReferenceEquals(target, null)){
 			timer += Time.deltaTime;
 			if (timer >= SEARCHINGDELAY && ReferenceEquals(target, null))
 			{
 				timer = 0;
+				// 구형 캐스트를 사용하여 탐지.
 				RaycastHit[] hits = Physics.SphereCastAll(transform.position, searchRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Minion"));
 
+				// 가장 가까운 미니언을 찾는 함수.
                 float minDistance = float.MaxValue;
                 foreach (RaycastHit hit in hits)
 				{
@@ -125,6 +137,8 @@ public class LSM_TurretSc : MonoBehaviour, IActor
 		else timer = 0;
 	}
 
+	// 공격 함수.
+	// 현재 미니언만 공격이 가능하도록 설정되어있음. 후에 플레이어블 미니언 또한 가능하도록 설정할것임.
 	private void AttackTarget()
 	{
 		if (timer_attack < ATTACKDELAY) timer_attack += Time.deltaTime;

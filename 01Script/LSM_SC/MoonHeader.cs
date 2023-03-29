@@ -21,14 +21,14 @@ public class MoonHeader : MonoBehaviour
 											// Melee: 근접, Range: 원거리
 
 	[Serializable]
-	public struct PlayerState	// 플레이어 관련 구조체.
+	public struct S_PlayerState	// 플레이어 관련 구조체.
 	{
 		public State_P statep;	// 현재 플레이어의 상태에 대한 변수
 		public Team team;		// 현재 플레이어의 팀
 	}
 
 	[Serializable]
-	public struct MinionStats		// 미니언의 상태에 관련된 구조체.
+	public struct S_MinionStats		// 미니언의 상태에 관련된 구조체.
 	{
 		public State state;			// 미니언의 현재 상태를 나타내는 변수
 		public Team team;			// 미니언의 팀
@@ -50,31 +50,31 @@ public class MoonHeader : MonoBehaviour
 	}
 
 	[Serializable]
-	public struct SpawnerPaths	// 해당 스포너가 갖고 있는 스폰포인트에 대한 구조체. 배열로 해당 구조체를 사용.
+	public struct S_SpawnerPaths    // 해당 스포너가 갖고 있는 스폰포인트에 대한 구조체. 배열로 해당 구조체를 사용.
 	{
 		public GameObject path;	// 스폰포인트. 해당 스포너가 갖고잇는 스폰포인트 중 하나.
 		public int num;			// 한 웨이브 당 해당 스폰포인트가 소환하는 최대 마릿수.
 		public int summon_;		// 해당 스폰포인트가 현 웨이브에 소환한 마릿수. 웨이브가 끝나면 0으로 초기화.
 
-		public SpawnerPaths(GameObject p ) { path = p; num = 0; summon_ = 0; }		// 생성자. p: 스폰포인트.
+		public S_SpawnerPaths(GameObject p ) { path = p; num = 0; summon_ = 0; }		// 생성자. p: 스폰포인트.
 		
 	}
 
 	[Serializable]
-	public struct TurretStats	// 터렛(포탑)의 상태에 대한 구조체.
+	public struct S_TurretStats	// 터렛(포탑)의 상태에 대한 구조체.
 	{
 		public Team team;		// 터렛의 팀.
 		public int Health;		// 터렛의 최대 체력.
 		public int Atk;			// 터렛의 공격력
 
-		public TurretStats(int h, int a) { team = Team.Yellow; Health = h; Atk = a;}		// 생성자. h: 최대체력, a: 공격력,  팀은 처음 시작 시 중립.
+		public S_TurretStats(int h, int a) { team = Team.Yellow; Health = h; Atk = a;}		// 생성자. h: 최대체력, a: 공격력,  팀은 처음 시작 시 중립.
 
 	}
 }
 
 
 // 인터페이스.
-public interface IActor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
+public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
 	int Damaged(int dam, Vector3 origin, MoonHeader.Team t);	// 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
 }

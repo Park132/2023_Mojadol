@@ -6,17 +6,19 @@ using UnityEngine;
 // 팀 별 마스터 스포너!!
 public class LSM_Spawner : MonoBehaviour
 {
+	// 소환에 대한 상수 설정.
 	float BASEDELAY = 1.5f;
 	float BASEWAVEDELAY = 10f;
 	int BASEMINIONMULTIPLER = 5;
 	int BASEMAXIMUMMELEE = 3;
 
+	// 최대 소환 가능한 수
 	public int MAX_NUM_MINION ;
 	public MoonHeader.Team team;
 
-	public MoonHeader.SpawnerState state;
+	public MoonHeader.SpawnerState state;			// 스포너의 현재 상태에 대한 enum
 	//public GameObject[] way;
-	public MoonHeader.SpawnerPaths[] spawnpoints;
+	public MoonHeader.S_SpawnerPaths[] spawnpoints;	// 스포너와 연결된 스폰포인트
 	
 
 
@@ -31,17 +33,18 @@ public class LSM_Spawner : MonoBehaviour
 		state = MoonHeader.SpawnerState.None;
 
 		//GameObject[] ways = GameObject.FindGameObjectsWithTag("SpawnPoint");
+		// 스폰포인트를 받아오는 구문.
 		List<GameObject> ways = new List<GameObject>();
 		foreach (Transform tr in gameObject.GetComponentsInChildren<Transform>())
 		{
 			if (tr.CompareTag("SpawnPoint"))
 				ways.Add(tr.gameObject);
 		}
-		spawnpoints = new MoonHeader.SpawnerPaths[ways.Count];
+		spawnpoints = new MoonHeader.S_SpawnerPaths[ways.Count];
 		for (int i = 0; i < ways.Count; i++)
-		{ spawnpoints[i] = new MoonHeader.SpawnerPaths(ways[i]); }
+		{ spawnpoints[i] = new MoonHeader.S_SpawnerPaths(ways[i]); }
 
-		//num_attack = 0;
+		// 변수 초기화
 		delay = 0;
 		wave_Minions_Num = 0;
 		selectedNum = 0;
@@ -57,18 +60,21 @@ public class LSM_Spawner : MonoBehaviour
 
 	
 
+	// 현재 스포너의 상태를 확인하며 스포너의 동작을 하는 함수
 	private void CheckingSpawn()
 	{
 		// 현재 스포너의 상태가 공격로 선택이라면 선택
 		if (state == MoonHeader.SpawnerState.Setting)
 		{
+			/*
 			selectedNum = 0;
 			foreach (MoonHeader.SpawnerPaths item in spawnpoints)
 			{
 				selectedNum += item.num;
 			}
-
+			*/
 		}
+		// 스폰이 가능한 상태라면
 		else if (state == MoonHeader.SpawnerState.Spawn)
 		{
 			// 게임이 진행중일 경우 소환.
@@ -83,6 +89,7 @@ public class LSM_Spawner : MonoBehaviour
 
 					for (int i = 0; i < spawnpoints.Length; i++)
 					{
+						// 현 웨이브에 소환한 미니언의 마릿수 확인.
 						if (spawnpoints[i].num > spawnpoints[i].summon_)
 						{
 							GameObject dummy;
@@ -95,6 +102,7 @@ public class LSM_Spawner : MonoBehaviour
 
 							dummy.transform.position = spawnpoints[i].path.transform.position;
 							//dummy.transform.parent = this.transform;
+							// 미니언 세팅
 							LSM_MinionCtrl dummy_ctrl = dummy.GetComponent<LSM_MinionCtrl>();
 							dummy_ctrl.MonSetting(spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>().Ways, team, this.GetComponent<LSM_Spawner>(), monT);
 							dummy_ctrl.minionBelong = i;
@@ -120,6 +128,7 @@ public class LSM_Spawner : MonoBehaviour
 
 	}
 
+	//턴이 변경될때마다 게임매니저에서 호출
 	public void ChangeTurn()
 	{
 		if (GameManager.Instance.mainPlayer.player.team != this.team) return;
@@ -131,7 +140,8 @@ public class LSM_Spawner : MonoBehaviour
 		else
 		{change_dummy = false;}
 
-		foreach (MoonHeader.SpawnerPaths item in spawnpoints)
+		// 공격로 설정을 위한 UI에 대하여, 슬라이더의 표시 여부를 확인.
+		foreach (MoonHeader.S_SpawnerPaths item in spawnpoints)
 		{
 			LSM_SpawnPointSc dummy = item.path.GetComponent<LSM_SpawnPointSc>();
             LSM_AttackPathUI dummy_path_ui = dummy.pathUI.GetComponent<LSM_AttackPathUI>();
@@ -143,7 +153,7 @@ public class LSM_Spawner : MonoBehaviour
 		}
 	}
 
-	// 공격로 선택이 끝난 ㅎ이후 공격로에 얼만큼 지정을 하였는지 확인.
+	// 공격로 선택이 끝난 이후 공격로에 얼만큼 지정을 하였는지 확인.
 	public void CheckingSelectMon()
 	{
 		state = MoonHeader.SpawnerState.None;
@@ -155,6 +165,7 @@ public class LSM_Spawner : MonoBehaviour
 		}
 	}
 
+	// 팀매니저에서 유저의 설정값이 저장되어있기에, 팀매니저에서 받아와야함.
 	private void SettingPath_MinionSpawn()
 	{
 		MAX_NUM_MINION = GameManager.Instance.teamManagers[(int)this.team].MaximumSpawnNum * BASEMINIONMULTIPLER;

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PSH_PlayerFPSCtrl : MonoBehaviour, IActor
+public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
 {
     // 근접 플레이어 구현
     // 플레이어 상태

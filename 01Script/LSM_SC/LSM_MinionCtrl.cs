@@ -10,9 +10,9 @@ using UnityEngine.AI;
 
 // 미니언 스크립트.
 // 후에 근접, 원거리 등의 미니언들은 해당 스크립트를 상속받고 할 생각임.
-public class LSM_MinionCtrl : MonoBehaviour, IActor
+public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 {
-	public MoonHeader.MinionStats stats;			// 미니언의 상태에 대한 구조체.
+	public MoonHeader.S_MinionStats stats;			// 미니언의 상태에 대한 구조체.
 	public LSM_Spawner mySpawner;					// 미니언의 마스터 스포너.
 	private bool PlayerSelect, once_changeRound;	// PlayerSelect: 플레이어가 해당 미니언에 강령하였는지, once_changeRound: 라운드 변경 시 한번만 실행되도록.
 	[SerializeField] private int way_index;			// 현재 미니언에 저장된 경로 중 몇번째를 목표로 삼는지.
@@ -57,7 +57,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 		timer_Attack = 0;
 		target_attack = null;
 		nav.stoppingDistance = 3f;
-		stats = new MoonHeader.MinionStats();
+		stats = new MoonHeader.S_MinionStats();
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
 
 		// 아이콘 생성 및 변수 저장.
@@ -321,7 +321,7 @@ public class LSM_MinionCtrl : MonoBehaviour, IActor
 
 	// Generic 변수를 사용하여 해당 구문을 함수화. IActor 인터페이스는 현재 player, turret, minion가 구현하고있음.
 	// 따라서 Damaged를 호출이 가능함.
-	private T Attack_other<T>(GameObject other) where T : IActor {
+	private T Attack_other<T>(GameObject other) where T : I_Actor {
 		T Script = other.GetComponent<T>();
 		Script.Damaged(this.stats.Atk, this.transform.position, this.stats.team);
 		return Script;
