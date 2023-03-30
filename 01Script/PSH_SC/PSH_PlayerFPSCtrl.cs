@@ -56,7 +56,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // LSM 변경 아래 추가 변수 /*
 
     public string playerName;
-    public MoonHeader.Team team;
+    public MoonHeader.S_ActorState actorHealth;
     private Rigidbody rigid;
 
     
@@ -331,15 +331,16 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // LSM Spawn Setting
     public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname)
     {
-        team = t;
-        Health = monHealth * 10;
+        //Health = monHealth * 10;
+        // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
+        actorHealth = new MoonHeader.S_ActorState(monHealth * 10, 10, t);
         playerName = pname;
     }
 
     // LSM Damaged 추가.
     public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
     {
-        if (t == team)
+        if (t == actorHealth.team)
             return 0;
         Debug.Log("Player Minion Damaged!!");
         Health -= dam;
@@ -354,7 +355,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // LSM DeadProcessing
     public IEnumerator DeadProcessing()
     {
-        GameManager.Instance.PlayerMinionRemover(team, playerName);
+        GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
         yield return new WaitForSeconds(0.5f);
     }
 }

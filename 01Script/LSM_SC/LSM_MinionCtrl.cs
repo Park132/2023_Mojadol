@@ -119,7 +119,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		way_index = 0;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 50f, 3, way, t, typeM);
+		stats.Setting(10, 100f, 3, way, t, typeM);
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
 		// 스폰포인트에 저장된 공격로로 목적지 지정.
@@ -171,7 +171,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		if (stats.destination[way_index].Equals(obj))
 		{
 			LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
-			if (dummySc.stats.Health <= 0 || dummySc.stats.team == this.stats.team)
+			if (dummySc.stats.actorHealth.health <= 0 || dummySc.stats.actorHealth.team == this.stats.actorHealth.team)
 			{
 				way_index++;
 			}
@@ -202,15 +202,15 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 						bool different_Team = false;
 
 						if (hit.transform.CompareTag("Minion"))
-						{ different_Team = (stats.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.team); }   //자신과 같은 공격로의 미니언만 대상으로 지정
+						{ different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_MinionCtrl>().stats.actorHealth.team); }   //자신과 같은 공격로의 미니언만 대상으로 지정
 						else if (hit.transform.CompareTag("Turret"))
 						{
-							different_Team = (stats.team != hit.transform.GetComponent<LSM_TurretSc>().stats.team)
+							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_TurretSc>().stats.actorHealth.team)
 								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;
 						}   //자신과 같은 공격로의 터렛만 대상으로 지정
 						else if (hit.transform.CompareTag("PlayerMinion"))
 						{
-							different_Team = (stats.team != hit.transform.GetComponent<PSH_PlayerFPSCtrl>().team);
+							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<PSH_PlayerFPSCtrl>().actorHealth.team);
 						}
 
 						// 팀이 같지 않으며, 가까운 경우 타겟으로 적용.
@@ -303,7 +303,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 								break;
 							case "Turret":
 								LSM_TurretSc dummy_Sc = Attack_other<LSM_TurretSc>(target_attack);
-								if (dummy_Sc.stats.team == stats.team)
+								if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team)
 								{CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); }
 
 								break;
@@ -323,7 +323,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 따라서 Damaged를 호출이 가능함.
 	private T Attack_other<T>(GameObject other) where T : I_Actor {
 		T Script = other.GetComponent<T>();
-		Script.Damaged(this.stats.Atk, this.transform.position, this.stats.team);
+		Script.Damaged(this.stats.actorHealth.Atk, this.transform.position, this.stats.actorHealth.team);
 		return Script;
 	}
 
@@ -335,20 +335,20 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	{
 		// 죽음 혹은 무적 상태일 경우 데미지를 입지않음. 바로 return
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
-			return stats.health;
-		else if (t == this.stats.team)
-			return 0;
+			return stats.actorHealth.health;
+		else if (t == this.stats.actorHealth.team)
+			return -1;
 
-		stats.health -= dam;
+		stats.actorHealth.health -= dam;
 		StartCoroutine(DamagedEffect(origin));
 
 		//Debug.Log("Minion Damaged!! : " +stats.health);
 		// 체력이 0 이하라면 DeadProcessing
-		if (stats.health <= 0 && stats.state != MoonHeader.State.Dead)
+		if (stats.actorHealth.health <= 0 && stats.state != MoonHeader.State.Dead)
 		{
 			StartCoroutine(DeadProcessing());
 		}
-		return stats.health;
+		return stats.actorHealth.health;
 	}
 
 	// 체력이 0 이하일 경우 호출.
@@ -405,7 +405,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
     public void ChangeTeamColor(GameObject obj)
 	{
 		Color dummy_color;
-		switch (stats.team)
+		switch (stats.actorHealth.team)
 		{
 			case MoonHeader.Team.Red:
 				dummy_color = Color.red;

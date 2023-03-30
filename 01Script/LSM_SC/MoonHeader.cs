@@ -17,11 +17,22 @@ public class MoonHeader : MonoBehaviour
 	
 	public enum State { Normal, Dead, Attack, Invincibility};	// 미니언의 현재 상태를 나타내기 위해 사용.
 																// Normal: 현재 생존, Dead: 죽음, Attack: 공격하는 중, Invincibility: 무적 상태.
-	public enum MonType { Melee, Range };	// 몬스터 타입
+	public enum MonType { Melee, Range };   // 몬스터 타입
 											// Melee: 근접, Range: 원거리
 
 	[Serializable]
-	public struct S_PlayerState	// 플레이어 관련 구조체.
+	public struct S_ActorState		// 모든 액터들이 갖는 구조체. 체력, 공격력, 팀 등을 갖고있게 설정.
+	{
+		public Team team;
+		public int maxHealth;
+		public int health;
+		public int Atk;
+
+		public S_ActorState(int hp, int at, Team t) { team = t; maxHealth = hp; health = maxHealth; Atk = at; }
+	}
+
+	[Serializable]
+	public struct S_PlayerState	// 플레이어 관련 구조체. TopView상태의 플레이어 관련 구조체
 	{
 		public State_P statep;	// 현재 플레이어의 상태에 대한 변수
 		public Team team;		// 현재 플레이어의 팀
@@ -31,20 +42,21 @@ public class MoonHeader : MonoBehaviour
 	public struct S_MinionStats		// 미니언의 상태에 관련된 구조체.
 	{
 		public State state;			// 미니언의 현재 상태를 나타내는 변수
-		public Team team;			// 미니언의 팀
-		public int maxHealth;		// 미니언의 최대 체력.
-		public int health;			// 미니언의 체력.
+		//public Team team;			// 미니언의 팀
+		//public int maxHealth;		// 미니언의 최대 체력.
+		//public int health;			// 미니언의 체력.
 		public float speed;			// 이동 속도
-		public int Atk;				// 공격력
-		public MonType type;		// 타입 -> 근접, 원거리 구현
-		
+		//public int Atk;				// 공격력
+		public MonType type;        // 타입 -> 근접, 원거리 구현
+		public S_ActorState actorHealth;
+
 		public GameObject[] destination;	// 미니언의 이동 경로. 배열로 받아옴.
 
 		public void Setting(int mh, float sp, int atk, GameObject[] des, Team t)	// 아래 함수의 오버로드. MonType 관련 매개변수를 받지 않음.
 		{ this.Setting(mh,sp,atk,des,t,MonType.Melee); }
 		public void Setting(int mh, float sp, int atk, GameObject[] des, Team t, MonType type_d)	// 미니언이 소환될 때의 기초 설정을 위한 함수. 
 																									// mh: 최대 체력, sp: 스피드, atk: 공격력, des: 스포너로부터 받아올 이동경로, t: 미니언의 팀, type_d: 미니언의 타입
-		{ maxHealth = mh; health = mh; speed = sp; destination = des; team = t; state = State.Normal; Atk = atk; type = type_d; }
+		{ speed = sp; destination = des; state = State.Normal; type = type_d; actorHealth = new S_ActorState(mh, atk, t); }
 		
 
 	}
@@ -63,11 +75,12 @@ public class MoonHeader : MonoBehaviour
 	[Serializable]
 	public struct S_TurretStats	// 터렛(포탑)의 상태에 대한 구조체.
 	{
-		public Team team;		// 터렛의 팀.
-		public int Health;		// 터렛의 최대 체력.
-		public int Atk;			// 터렛의 공격력
+		//public Team team;		// 터렛의 팀.
+		//public int Health;		// 터렛의 최대 체력.
+		//public int Atk;         // 터렛의 공격력
+		public S_ActorState actorHealth;
 
-		public S_TurretStats(int h, int a) { team = Team.Yellow; Health = h; Atk = a;}		// 생성자. h: 최대체력, a: 공격력,  팀은 처음 시작 시 중립.
+		public S_TurretStats(int h, int a) { actorHealth = new S_ActorState(h, a, Team.Yellow); }		// 생성자. h: 최대체력, a: 공격력,  팀은 처음 시작 시 중립.
 
 	}
 }
@@ -76,5 +89,7 @@ public class MoonHeader : MonoBehaviour
 // 인터페이스.
 public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
+	
 	int Damaged(int dam, Vector3 origin, MoonHeader.Team t);	// 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
 }
+

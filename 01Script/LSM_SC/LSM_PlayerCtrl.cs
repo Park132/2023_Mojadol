@@ -8,6 +8,7 @@ using System;
 // TopView에서의 플레이어 컨트롤
 public class LSM_PlayerCtrl : MonoBehaviour
 {
+    public bool isMainPlayer;               // 현재 게임중인 플레이어인지 확인.
     public string playerName;               // 멀티에서의 플레이어 이름
     public MoonHeader.S_PlayerState player;   // 플레이어 상태에 대한 구조체
     const float MapCamBaseSize = 40;        // TopView 카메라의 OrthogonalSize
@@ -39,15 +40,19 @@ public class LSM_PlayerCtrl : MonoBehaviour
         minionStatsPannel.SetActive(false);
         minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
         player.statep = MoonHeader.State_P.None;
-
+        if (isMainPlayer)
+        { MapCam.SetActive(true); MapSubCam.SetActive(true); }
     }
 
 	void Update()
     {
-        ClickEv();
-        MapEv();
-        SubMapCamMove();
-        PlayerInMinion();
+        if (isMainPlayer)
+        {
+            ClickEv();
+            MapEv();
+            SubMapCamMove();
+            PlayerInMinion();
+        }
     }
 
     // TopView때의 맵 이벤트
@@ -99,18 +104,21 @@ public class LSM_PlayerCtrl : MonoBehaviour
     // 플레이어의 현 상태를 리셋. 공격로 선택턴이 시작하였을때 사용
     public IEnumerator AttackPathSelectSetting()
     {
-        player.statep = MoonHeader.State_P.None;
-        yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
-        playerMinion = null;
-        MainCam.SetActive(false);
-        MapCam.SetActive(true);
-        MapCam.transform.position = mapCamBasePosition;
-        mapCamCamera.orthographicSize = MapCamBaseSize;
-        MapSubCam.SetActive(true);
-        is_zoomIn = false;
-        subTarget_minion = null;
-        GameManager.Instance.mapUI.SetActive(true);
-        StartCoroutine(GameManager.Instance.ScreenFade(true));
+        if (isMainPlayer)
+        {
+            player.statep = MoonHeader.State_P.None;
+            yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
+            playerMinion = null;
+            MainCam.SetActive(false);
+            MapCam.SetActive(true);
+            MapCam.transform.position = mapCamBasePosition;
+            mapCamCamera.orthographicSize = MapCamBaseSize;
+            MapSubCam.SetActive(true);
+            is_zoomIn = false;
+            subTarget_minion = null;
+            GameManager.Instance.mapUI.SetActive(true);
+            StartCoroutine(GameManager.Instance.ScreenFade(true));
+        }
     }
 
     // TopView에서의 클릭 이벤트
@@ -184,7 +192,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
             {
                 // 미니언 미리보기 창 글씨.
                 minionStatsPannel_txt.text = string.Format("Minion : {0}\nHealth : {1}\nATK : {2}",
-                                subTarget_minion.stats.type, subTarget_minion.stats.health, subTarget_minion.stats.Atk);
+                                subTarget_minion.stats.type, subTarget_minion.stats.actorHealth.health, subTarget_minion.stats.actorHealth.Atk);
                 MapCam.transform.position = (mapcamSub_Target.transform.position + Vector3.up * 95);
                 MapSubCam.transform.position = mapsubcam_target.transform.position;
                 MapSubCam.transform.rotation = mapsubcam_target.transform.rotation;

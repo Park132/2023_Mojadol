@@ -47,10 +47,11 @@ public class GameManager : MonoBehaviour
 	private void Awake_Function()
 	{
 		// 모든 플레이어들을 저장하는 중. FindGameObjectsWithTag를 사용하여 오브젝트를 찾고, 해당 스크립트를 저장하게 구현.
-		// 이 부분 이전에 플레이어를 소환하는 절차가 필요!
+		// 이 부분 이전에 플레이어를 소환하는 절차가 필요!, 로컬 플레이어또한 필요.
 		GameObject[] playerdummys = GameObject.FindGameObjectsWithTag("Player");
 		players = new LSM_PlayerCtrl[playerdummys.Length];
 		for (int i = 0; i < playerdummys.Length; i++) players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
+		mainPlayer.isMainPlayer = true;
 
 		// 기존 게임매니저의 상태 초기화. Default값 Ready.
 		state = MoonHeader.ManagerState.Ready;
@@ -144,6 +145,12 @@ public class GameManager : MonoBehaviour
 					gameState = MoonHeader.GameState.StartGame;
 					selectAttackPathUI.SetActive(false);
 					break;
+				// 게임 턴이 종료되었다면.
+				case MoonHeader.GameState.Gaming:
+					StartCoroutine(mainPlayer.AttackPathSelectSetting());
+					state = MoonHeader.ManagerState.Ready;
+					gameState = MoonHeader.GameState.SettingAttackPath;
+					break;
 			}
 		}
 	}
@@ -171,7 +178,7 @@ public class GameManager : MonoBehaviour
 		{ gameState = MoonHeader.GameState.Gaming; state = MoonHeader.ManagerState.Ready; }						// 게임의 상태를 게임 중으로 변경. 게임매니저의 상태를 준비중으로 변경.
 
 		else if (gameState == MoonHeader.GameState.Gaming && state == MoonHeader.ManagerState.Processing)		// 게임 도중에 타이머가 종료되었을 경우.
-		{gameState = MoonHeader.GameState.SettingAttackPath; state = MoonHeader.ManagerState.Ready; }			// 게임의 상태를 공격로 설정으로 변경. 게임매니저의 상태를 준비중으로 변경.
+		{state = MoonHeader.ManagerState.End; }			// 게임의 상태를 공격로 설정으로 변경. 게임매니저의 상태를 준비중으로 변경.
 	}
 
 	// 현재 게임의 상태를 나타내는 UI의 텍스트를 변경. 해당 함수는 디버그용으로 간략하게 구현.

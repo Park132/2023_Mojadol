@@ -54,7 +54,7 @@ public class LSM_TimerSc : MonoBehaviour
 	// 매개변수가 하나 있는 타이머 시작 -> 제한시간이 존재하며, 해당 시간이 흐르면 TimeStop함수가 호출
 	public void TimerStart(float maxTime) { TimerStart(maxTime, false); }
 	// 매개변수가 두개 있는 타이머 시작 -> 제한시간이 존재하며, bool값을 true로 선언할 경우 제한 시간초에서 점차 줄어드는 타이머가 실행.
-	public void TimerStart(float maxTime, bool rev) { timer = (reverse? maxTime : 0); limitTimeSetting = true; reverse = rev; TimerStart(); }
+	public void TimerStart(float maxTime, bool rev) { timer = (rev? maxTime : 0); limitS = (rev? 0:maxTime); limitTimeSetting = true; reverse = rev; TimerStart(); }
 
 	// 타이머가 정상적으로 종료될 경우 타이머 관련 변수를 초기화.
 	public void TimerStop() { timer = 0; timerPannel.SetActive(false); startTimer = false; limitTimeSetting = false; limitS = 0; reverse = false; }
