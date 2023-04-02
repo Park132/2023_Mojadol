@@ -37,6 +37,8 @@ public class LSM_AttackPathUI : MonoBehaviour
 				GameManager.Instance.gameState == MoonHeader.GameState.StartGame)
 			{
 				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
+				//num.text = GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number].ToString();
+				num.text = sl.value.ToString();
 			}
 			// 게임 중, 스폰포인트의 위치에 UI를 위치하도록 구현.
 			else if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)

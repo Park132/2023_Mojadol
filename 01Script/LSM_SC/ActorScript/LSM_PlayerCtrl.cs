@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System;
 
@@ -22,14 +23,17 @@ public class LSM_PlayerCtrl : MonoBehaviour
     private bool is_zoomIn;                 // 선택한 미니언에게 확대하고 있는지
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
 
-    public GameObject MainCam, MapCam, MapSubCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
+    public GameObject MainCam, MapCam, MapSubCam, MiniMapCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
     public Vector3 mapCamBasePosition;                  // TopView카메라의 초기위치
     public GameObject minionStatsPannel;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
     private LSM_MinionCtrl subTarget_minion;            // 타겟으로 지정한 미니언의 스크립트
     private TextMeshProUGUI minionStatsPannel_txt;      // 미니언 스탯을 표기하는 UI - 그 중 텍스트.
     private GameObject playerMinion;                    // 플레이어가 선택한 미니언.
+    private PSH_PlayerFPSCtrl playerMinionCtrl;         // 플레이어 미니언의 스크립트
+    private GameObject playerWatchingTarget;            // 플레이어미니언이 보는 미니언 혹은 여러가지.
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
+
 	private void Start()
 	{
         mapCamCamera = MapCam.GetComponent<Camera>();
@@ -39,9 +43,10 @@ public class LSM_PlayerCtrl : MonoBehaviour
         MapCam.GetComponent<Camera>().orthographicSize = MapCamBaseSize;
         minionStatsPannel.SetActive(false);
         minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
+        playerWatchingTarget = null;
         player.statep = MoonHeader.State_P.None;
         if (isMainPlayer)
-        { MapCam.SetActive(true); MapSubCam.SetActive(true); }
+        { MapCam.SetActive(true); MapSubCam.SetActive(true);  }
     }
 
 	void Update()
@@ -52,7 +57,14 @@ public class LSM_PlayerCtrl : MonoBehaviour
             MapEv();
             SubMapCamMove();
             PlayerInMinion();
+            debugging();
         }
+    }
+
+    private void debugging()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+            GameManager.Instance.DisplayAdd("Test~~");
     }
 
     // TopView때의 맵 이벤트
@@ -92,10 +104,36 @@ public class LSM_PlayerCtrl : MonoBehaviour
             //MainCam.transform.position = mapsubcam_target.transform.position;
             //MainCam.transform.rotation = mapsubcam_target.transform.rotation;
             // 플레이어가 선택한 상태였으나, 플레이어의 미니언이 사라졋다면 초기화
-            if (ReferenceEquals(playerMinion,null))
+            if (!playerMinion.activeSelf)
             {
                 Debug.Log("Minion active false");
                 StartCoroutine(AttackPathSelectSetting());
+                Cursor.lockState = CursorLockMode.None;
+            }
+            // 플레이어 미니언이 살아있을 경우 아래 구문이 실행.
+            else
+            {
+                // 미니맵캠을 플레이어 위치로 이동.
+                MiniMapCam.transform.position = Vector3.Scale(playerMinion.transform.position, Vector3.one-Vector3.up) + Vector3.up*95;
+
+                // 메인카메라를 기중. 메인카메라가 보고있는 방향으로 레이를 쏴, 미니언 혹은 플레이어, 터렛 등을 식별.
+                // 이후 게임UI에 정보를 전달.
+                RaycastHit hit;
+                Debug.DrawRay(MainCam.transform.position, MainCam.transform.forward * 10, Color.green, 0.1f);
+                if (Physics.Raycast(MainCam.transform.position, MainCam.transform.forward, out hit, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret")))
+                {
+                    Debug.Log("Player Searching! : " +hit.transform.name);
+                    if (!ReferenceEquals(hit.transform.gameObject,playerWatchingTarget))
+                    {
+                        playerWatchingTarget = hit.transform.gameObject;
+                        GameManager.Instance.gameUI_SC.enableTargetUI(true, playerWatchingTarget);
+                    }
+                }
+                else if (!ReferenceEquals(playerWatchingTarget, null))
+                {
+                    playerWatchingTarget = null;
+                    GameManager.Instance.gameUI_SC.enableTargetUI(false);
+                }
 
             }
         }
@@ -110,6 +148,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
             yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
             playerMinion = null;
             MainCam.SetActive(false);
+            MiniMapCam.SetActive(false);
             MapCam.SetActive(true);
             MapCam.transform.position = mapCamBasePosition;
             mapCamCamera.orthographicSize = MapCamBaseSize;
@@ -153,8 +192,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
                                     subTarget_minion.ChangeTeamColor();
                             }
                             // 클릭된 미니언에 대하여.. 카메라의 위치를 이동 및 고정. 천천히 줌인하는 코루틴 실행
-                            else if (//ReferenceEquals(mapcamSub_Target, null) || (!ReferenceEquals(mapcamSub_Target, null)&& 
-                                !ReferenceEquals(mapcamSub_Target,hit.transform.gameObject)) {
+                            if (ReferenceEquals(mapcamSub_Target, null) || (!ReferenceEquals(mapcamSub_Target, null)&& 
+                                !ReferenceEquals(mapcamSub_Target,hit.transform.gameObject))) {
                                 is_zoomIn = true;
                                 subTarget_minion = hit.transform.GetComponent<LSM_MinionCtrl>();
                                 mapcamSub_Target = hit.transform.gameObject;
@@ -248,23 +287,42 @@ public class LSM_PlayerCtrl : MonoBehaviour
         mapCamCamera.transform.gameObject.SetActive(false);
         MapSubCam.transform.gameObject.SetActive(false);
         MainCam.SetActive(true);
+        MiniMapCam.SetActive(true);
 
-        StartCoroutine(GameManager.Instance.ScreenFade(true));
-        player.statep = MoonHeader.State_P.Selected;
         yield return new WaitForSeconds(0.5f);
         // 기존의 미니언을 비활성화한 후 플레이어 전용 프리펩 소환.
 
-        playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
+        playerMinion = PoolManager.Instance.Get_PlayerMinion(0);
+        //playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
         playerMinion.transform.position = subTarget_minion.transform.position;
         playerMinion.transform.rotation = subTarget_minion.transform.rotation;
+        playerMinion.name = playerName;
+        GameManager.Instance.playerMinions[(int)player.team].Add(playerMinion);
+        playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+
+        // 카메라 지정. 및 초기세팅
         PSH_PlayerFPSCtrl player_dummy = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+        player_dummy.SpawnSetting(player.team, subTarget_minion.stats.actorHealth.health, playerName, this.GetComponent<LSM_PlayerCtrl>());
         player_dummy.playerCamera = MainCam.GetComponent<Camera>();
         mapsubcam_target = player_dummy.camerapos;
+        GameManager.Instance.gameUI.SetActive(true);
+        GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl.GetComponent<I_Actor>());
 
         subTarget_minion.transform.gameObject.SetActive(false);
+        StartCoroutine(GameManager.Instance.ScreenFade(true));
+        player.statep = MoonHeader.State_P.Selected;
+        Cursor.lockState = CursorLockMode.Locked;
 
         yield return new WaitForSeconds(3f);
 
         //subTarget_minion.stats.state = MoonHeader.State.Normal;
+    }
+
+    public void PlayerMinionDeadProcessing()
+    {
+        if (isMainPlayer) {
+            Cursor.lockState = CursorLockMode.None;
+            GameManager.Instance.gameUI.SetActive(false);
+        }
     }
 }

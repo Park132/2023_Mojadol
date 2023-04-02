@@ -24,6 +24,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	private Rigidbody rigid;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
+	private IEnumerator navenable_IE;   // StopCorutine을 사용하기 위한 변수
+	private bool is_attackFinish_Act;
 
 	private Renderer[] bodies;  // 색상을 변경할 렌더러.
 
@@ -37,6 +39,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 	public int minionBelong;    //Spawner.cs에서 자기가 몇 번 공격로 소속인지 받아옴
 	public int minionType;  //0이면 원거리, 1이면 근거리 미니언
+
+	public bool debugging_minion; // 디버깅 확인용...
 
 	// 다시 활성화할 경우 Obstacle 비활성화, Agent 활성화
 	private void OnEnable()
@@ -56,14 +60,16 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		timer_Searching = 0;
 		timer_Attack = 0;
 		target_attack = null;
-		nav.stoppingDistance = 3f;
+		nav.stoppingDistance = 1f;
 		stats = new MoonHeader.S_MinionStats();
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
+		navenable_IE = NavEnable(true);
 
 		// 아이콘 생성 및 변수 저장.
 		icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
 		icon.transform.localPosition = new Vector3(0, 60, 0);
 		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
+		playerIcon.transform.localPosition = new Vector3(0, 60, 0);
 		playerIcon.SetActive(false);
 
 		// 디버그용 미리 설정. 현재 Melee
@@ -117,9 +123,11 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		timer_Attack = 0;
 		target_attack = null;
 		way_index = 0;
+		is_attackFinish_Act = false;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 100f, 3, way, t, typeM);
+		stats.Setting(10, 4f, 3, way, t, typeM);
+		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
 		// 스폰포인트에 저장된 공격로로 목적지 지정.
@@ -212,6 +220,10 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 						{
 							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<PSH_PlayerFPSCtrl>().actorHealth.team);
 						}
+						else if (hit.transform.CompareTag("Nexus"))
+						{
+							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_NexusSC>().stats.actorHealth.team);
+						}
 
 						// 팀이 같지 않으며, 가까운 경우 타겟으로 적용.
 						if (different_Team)
@@ -228,7 +240,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				// 
 				//else if (ReferenceEquals(target_attack,null) && nav.enabled && nav.isStopped) { nav.isStopped = false; }
 				// 타겟을 찾지 못하였으며, NavMeshAgent가 비활성화되어있을경우, Obstacle 비활성화, Agent 활성화
-				else if (ReferenceEquals(target_attack,null) && !nav.enabled) { nav_ob.enabled = false; nav.enabled = true; }
+				else if (ReferenceEquals(target_attack,null) && !nav.enabled) {StopCoroutine(navenable_IE); navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
 			}
 		}
 
@@ -237,12 +249,36 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		{
 			// Agent의 목적지를 타겟의 위치로 설정.
 			nav.destination = target_attack.transform.position;
+			
+
+			// 레이캐스트를 쏴서 몸체에 가까이 있는지 확인.
+			RaycastHit[] hits = Physics.RaycastAll(this.transform.position, (target_attack.transform.position - this.transform.position).normalized, maxAtkRadius);
+			//Debug.DrawRay(this.transform.position, (target_attack.transform.position - this.transform.position).normalized * maxAtkRadius, Color.red);
+			float dist = Vector3.Distance(target_attack.transform.position, this.transform.position);
+			foreach (RaycastHit hit in hits)
+			{
+				if ((hit.transform.gameObject.Equals(target_attack)))
+				{
+					/*
+					if (debugging_minion)
+					{
+						Debug.Log("my position = " + this.transform.position + " \n target point position  = " + hit.point + " \n hit.distance = " + hit.distance + 
+						"\n distance < minatk = " +(dist <= minAtkRadius).ToString() +"\n hit.distance < minatk = " + (hit.distance < minAtkRadius)); }*/
+					dist = hit.distance;
+					break;
+				}
+			}
+
 			// 타겟이 MaxDistance이상 떨어져있다면 타겟을 놓아줌. null지정.
-			if (Vector3.Distance(target_attack.transform.position, this.transform.position) > maxAtkRadius)
-			{ StartCoroutine(AttackFin()); }
+			if (dist > maxAtkRadius && stats.state != MoonHeader.State.Thinking && stats.state != MoonHeader.State.Dead)
+			{
+				//Debug.Log("target setting null. : distance : " + Vector3.Distance(target_attack.transform.position, this.transform.position) + "target : " +target_attack.name);
+				Debug.Log("AttackFinish in Far away");
+				StartCoroutine(AttackFin()); 
+			}
 
 			// 만약 타겟과의 거리가 최소 공격 가능 거리보다 적다면 공격 함수 호출.
-			else if (Vector3.Distance(target_attack.transform.position, this.transform.position) <= minAtkRadius)
+			else if (dist <= minAtkRadius)
 			{
 				stats.state = MoonHeader.State.Attack;
 			}
@@ -263,8 +299,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		if (!ReferenceEquals(target_attack, null))
 		{
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
-			if (!target_attack.activeSelf)
-				StartCoroutine(AttackFin());
+			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking && stats.state != MoonHeader.State.Dead)
+			{Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
@@ -275,17 +311,31 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 				// 타겟과의 거리가 minAtkRadius보다 크다면 공격이 불가능.
 				//-> Agent가 켜져있는 경우(타겟을 공격하기 위하여 움직이고 있는 경우)에는 오차 및 약간의 움직임에 대비하여 좀 더 가까이 다가가게 구현.
-				bool dummy_cant_attack = Vector3.Distance(Vector3.Scale(target_attack.transform.position, Vector3.one-Vector3.up), Vector3.Scale(this.transform.position,Vector3.one-Vector3.up))
-					> minAtkRadius * (nav.enabled ? 0.7f : 1f);
+
+				// 레이캐스트를 쏴서 몸체에 가까이 있는지 확인.
+				RaycastHit[] hits = Physics.RaycastAll(this.transform.position, (target_attack.transform.position - this.transform.position).normalized, maxAtkRadius);
+				float dist = Vector3.Distance(target_attack.transform.position, this.transform.position);
+				foreach (RaycastHit hit in hits)
+				{
+					if (hit.transform.gameObject.Equals(target_attack))
+					{
+						dist = Vector3.Distance(hit.point, this.transform.position);
+						break;
+					}
+				}
+
+				bool dummy_cant_attack = dist > minAtkRadius * (nav.enabled ? 0.7f : 1f);
 
 				// 공격이 불가능한 경우, 가능한 경우에 따라 Obstacl, Agent를 활성/비활성.
 				// Agent 및 Obstacle을 동시에 사용한다면 오류 발생 -> 자신 또한 장애물이라 생각하며 자신이 있는 길을 피하려는 모순
 				// 그렇기에 Obstacle과 Agent를 서로 키고 끄고를 하는 것임. 허나 비활성화한다고 바로 비활성화되지는 않은듯함.
 				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함. 간단하게 해결하기 위하여 변환되는 순간 속도를 0으로 설정.
-				if (dummy_cant_attack) { nav_ob.enabled = false; nav.enabled = true; }
-				else { nav.enabled = false; nav_ob.enabled = true; rigid.velocity = Vector3.zero; }
+				if (dummy_cant_attack && !nav.enabled) {Debug.Log("cant attack!"); //StopCoroutine(navenable_IE);
+					navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
+				else if (!dummy_cant_attack && nav.enabled) {Debug.Log("can attack!!"); //StopCoroutine(navenable_IE); 
+					navenable_IE = NavEnable(false); StartCoroutine(navenable_IE); rigid.velocity = Vector3.zero; } //여기 오류. 아마도 공격이 끝나고 계속 불러오는듯.
 
-				// 만약 공격이 가능하다면
+				// 만약 공격이 가능하다면 공격하는 구문
 				if (!dummy_cant_attack)
 				{
 					// y축 rotation만을 변경할 것임.
@@ -303,8 +353,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 								break;
 							case "Turret":
 								LSM_TurretSc dummy_Sc = Attack_other<LSM_TurretSc>(target_attack);
-								if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team)
-								{CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); }
+								if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
+								{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
 
 								break;
 							case "PlayerMinion":
@@ -384,19 +434,45 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 텀이 존재하지 않을 경우, 자신의 너비만큼 순간이동.
     protected IEnumerator AttackFin()
     {
-		if (!PlayerSelect)
+		if (!PlayerSelect && !is_attackFinish_Act)
 		{
+			is_attackFinish_Act = true;
+			Debug.Log("Attack Finish");
+			this.stats.state = MoonHeader.State.Thinking;
+
+			StopCoroutine(navenable_IE);
+			navenable_IE = NavEnable(true);
+			yield return StartCoroutine(navenable_IE);
 			target_attack = null;
-			
-			nav_ob.enabled = false;
-			yield return new WaitForSeconds(0.5f);
 			this.stats.state = MoonHeader.State.Normal;
-			nav.enabled = true;
 			
 			//nav.isStopped = false;
 			timer_Searching = SEARCHTARGET_DELAY;
+			is_attackFinish_Act = false;
 		}
     }
+
+	// NavMesh Agent와 Obstacle을 동시에 키면 오류.
+	// 그렇다고 텀을 안주고 키면 순간이동 버그.
+	// true라면 Agent를 킴.
+	// false라면 Obstacle을 킴.
+	protected IEnumerator NavEnable(bool on)
+	{
+		rigid.velocity = Vector3.zero;
+		if (!on)
+		{
+			nav.enabled = false;
+			yield return new WaitForSeconds(0.1f);
+			nav_ob.enabled = true;
+		}
+		else
+		{
+			nav_ob.enabled = false;
+			yield return new WaitForSeconds(0.1f);
+			nav.enabled = true;
+
+		}
+	}
 
 	// 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
 	public void ChangeTeamColor() { ChangeTeamColor(icon); }
@@ -427,8 +503,9 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	public void PlayerConnect()
 	{
 		PlayerSelect = true;
-		nav.enabled = false;
-		nav_ob.enabled = true;
+
+		navenable_IE = NavEnable(false);
+		StartCoroutine(navenable_IE);
 
 		icon.SetActive(false);
 		playerIcon.SetActive(true);
@@ -454,4 +531,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	{
 		this.icon.GetComponent<Renderer>().material.color = Color.green;
 	}
+
+	public int GetHealth(){return this.stats.actorHealth.health;}
+	public int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
+	public MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
 }

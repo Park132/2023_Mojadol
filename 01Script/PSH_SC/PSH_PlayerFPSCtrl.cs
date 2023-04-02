@@ -6,7 +6,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
 {
     // 근접 플레이어 구현
     // 플레이어 상태
-    enum State { Normal, Attacking, Blocking, Casting, Exhausting};
+    enum State { Normal, Attacking, Blocking, Casting, Exhausting };
     State state = State.Normal;
 
     // 플레이어 변수
@@ -57,11 +57,21 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
 
     public string playerName;
     public MoonHeader.S_ActorState actorHealth;
+    private GameObject playerIcon;
+
     private Rigidbody rigid;
+    private LSM_PlayerCtrl myPlayerCtrl;
 
-    
-    // LSM */
+	// LSM */
 
+	private void Awake()
+	{
+        // LSM
+        rigid = GetComponent<Rigidbody>();
+        playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
+        playerIcon.transform.localPosition = new Vector3(0, 60, 0);
+        //
+    }
 
 
     // 근접 캐릭 관련해서 만듬
@@ -71,10 +81,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         // 공격 구 초기화
         attackRange.SetActive(false);
 
-        Cursor.lockState = CursorLockMode.Locked;
-        // LSM
-        rigid = GetComponent<Rigidbody>();
-        //
+        //Cursor.lockState = CursorLockMode.Locked;
+        
     }
 
     // Update is called once per frame
@@ -82,9 +90,9 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     {
 
         // 이동, 카메라 조작
-        if(canMove)
+        if (canMove)
             Move();
-        if(canSee)
+        if (canSee)
             LookAround();
 
         // 기본공격
@@ -95,7 +103,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         }
 
         // 막기
-        if(canAttack)
+        if (canAttack)
             Block();
 
         // 스킬 1
@@ -163,7 +171,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // 상태이상 회복(이동속도)
     void RecoverMoveSpeed()
     {
-        if(movespeed <= 2.0f)
+        if (movespeed <= 2.0f)
         {
             timer += Time.deltaTime;
 
@@ -184,7 +192,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         handpos.transform.localEulerAngles = new Vector3(0, 0, 0);
         handpos.transform.localEulerAngles += new Vector3(70.0f, 0, 0);
         movespeed = 3.0f;
-        
+
         yield return new WaitForSecondsRealtime(delay);
 
         canAttack = true;
@@ -236,7 +244,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         sword.GetComponent<Collider>().enabled = false;
     }
 
-    IEnumerator QskillCool (float delay)
+    IEnumerator QskillCool(float delay)
     {
         canUseQ = false;
         yield return new WaitForSecondsRealtime(delay);
@@ -246,7 +254,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // 스킬 E
     void EskillActive()
     {
-        if(Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.E))
         {
             state = State.Casting;
             canMove = false;
@@ -254,7 +262,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
             handpos.transform.localPosition = new Vector3(0, 0.1f, 0);
         }
 
-        if(Input.GetKey(KeyCode.E))
+        if (Input.GetKey(KeyCode.E))
         {
             timer += Time.deltaTime;
             if (timer <= 7.0f && ePressed)
@@ -263,9 +271,9 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
             }
         }
 
-        if(Input.GetKeyUp(KeyCode.E))
+        if (Input.GetKeyUp(KeyCode.E))
         {
-            if(ePressed)
+            if (ePressed)
             {
                 state = State.Normal;
                 canMove = true;
@@ -275,6 +283,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
 
                 GameObject sprefab = Instantiate(swordball_prefab, attackRange.transform.position, attackRange.transform.rotation);
                 sprefab.gameObject.GetComponent<PSH_SwordProjectile>().damage = eDamage;
+                sprefab.GetComponent<PSH_SwordProjectile>().script = this.GetComponent<PSH_PlayerFPSCtrl>();
 
                 eDamage = 25.0f;
                 timer = 0.0f;
@@ -298,17 +307,17 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         else if (attackExp > 100.0f)
             basicLevel = 3;
 
-        if(qExp > 50.0f)
+        if (qExp > 50.0f)
             qLevel = 2;
         else if (qExp > 70.0f)
             qLevel = 3;
 
-        if(eExp > 30.0f)
+        if (eExp > 30.0f)
             eLevel = 2;
         else if (eExp > 50.0f)
             eLevel = 3;
 
-        switch(basicLevel)
+        switch (basicLevel)
         {
             case 1:
                 break;
@@ -329,12 +338,15 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     }
 
     // LSM Spawn Setting
-    public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname)
+    public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         //Health = monHealth * 10;
         // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
-        actorHealth = new MoonHeader.S_ActorState(monHealth * 10, 10, t);
+        actorHealth = new MoonHeader.S_ActorState(100, 10, t);
+        actorHealth.health = monHealth * 10;
         playerName = pname;
+        myPlayerCtrl = pctrl;
+        ChangeTeamColor(playerIcon);
     }
 
     // LSM Damaged 추가.
@@ -342,20 +354,48 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     {
         if (t == actorHealth.team)
             return 0;
-        Debug.Log("Player Minion Damaged!!");
-        Health -= dam;
+        actorHealth.health -= dam;
         // 넉백이 되는 방향벡터를 구함.
-        Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one-Vector3.up).normalized;
-        float scale_knock = 300f;
-        rigid.AddForce(direction_knock*scale_knock);
-        if (this.Health <= 0)
+        Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one - Vector3.up).normalized;
+        float scale_knock = 100f;
+        rigid.AddForce(direction_knock * scale_knock);
+        if (this.actorHealth.health <= 0)
             StartCoroutine(DeadProcessing());
-        return (int)this.Health;
+        return (int)actorHealth.health;
     }
     // LSM DeadProcessing
     public IEnumerator DeadProcessing()
     {
+        Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
         yield return new WaitForSeconds(0.5f);
+        this.gameObject.SetActive(false);
+        myPlayerCtrl.PlayerMinionDeadProcessing();
     }
+
+    // 플레이어 아이콘 색변경.
+    public void ChangeTeamColor(GameObject obj)
+    {
+        Color dummy_color;
+        switch (actorHealth.team)
+        {
+            case MoonHeader.Team.Red:
+                dummy_color = Color.red;
+                break;
+            case MoonHeader.Team.Blue:
+                dummy_color = Color.blue;
+                break;
+            case MoonHeader.Team.Yellow:
+                dummy_color = Color.yellow;
+                break;
+            default: dummy_color = Color.gray; break;
+        }
+        obj.GetComponent<Renderer>().material.color = dummy_color;
+    }
+
+
+    // I_Actor 인터페이스에 미리 선언해둔 함수들 구현
+    public int GetHealth() { return this.actorHealth.health; }
+    public int GetMaxHealth() { return this.actorHealth.maxHealth; }
+    public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
 }

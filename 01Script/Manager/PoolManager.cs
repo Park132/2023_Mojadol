@@ -16,11 +16,34 @@ public class PoolManager : MonoBehaviour
 
 	// 프리펩 저장 변수
 	public GameObject[] minions;
+	public GameObject[] playerMinions;
+	public GameObject[] UIs;
+	private GameObject alwaysEnableUI;
 
 	// 풀 저장 변수
 	public List<GameObject>[] poolList_Minion;
+	public List<GameObject>[] poolList_PlayerMinions;
+	public List<GameObject>[] poolList_UIs;
 
-	
+	private void Start()
+	{
+		alwaysEnableUI = GameObject.Find("AlwaysEnableUI");
+		/*
+		for (int i = 0; i < minions.Length; i++)
+		{
+			for (int j = 0; j < 50; j++)
+			{
+				GameObject dummy = Get_Minion(i);
+			}
+		}
+		for (int i = 0; i < minions.Length; i++)
+		{
+			for (int j = 0; j < 50; j++)
+			{
+				poolList_Minion[i][j].SetActive(false);
+			}
+		}*/
+	}
 
 	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
 	private void Awake_Function()
@@ -29,11 +52,19 @@ public class PoolManager : MonoBehaviour
 		poolList_Minion = new List<GameObject>[minions.Length];
 		for (int i = 0; i < poolList_Minion.Length; i++)
 			poolList_Minion[i] = new List<GameObject>();
+		poolList_PlayerMinions = new List<GameObject>[playerMinions.Length];
+		for (int i = 0; i < poolList_PlayerMinions.Length; i++)
+			poolList_PlayerMinions[i] = new List<GameObject>();
+		poolList_UIs = new List<GameObject>[UIs.Length];
+		for (int i = 0; i < poolList_UIs.Length;i++)
+			poolList_UIs[i] = new List<GameObject>();
 	}
 
 	// 미니언의 종류에 맞는 미니언을 반환.
 	public GameObject Get_Minion(int index)
 	{
+		if (minions.Length <= index || index < 0)
+			return null;
 		GameObject result = null;
 
 		// 현재 비활성화 되어있는 미니언이 존재하는지 확인
@@ -57,5 +88,53 @@ public class PoolManager : MonoBehaviour
 		return result;
 	}
 
+	// 플레이어 미니언 반환
+	public GameObject Get_PlayerMinion(int index)
+	{
+		if (index >= playerMinions.Length || index < 0)
+			return null;
+		GameObject result = null;
 
+		foreach (GameObject item in poolList_PlayerMinions[index])
+		{
+			if (!item.activeSelf)
+			{
+				result = item;
+				item.SetActive(true);
+				break;
+			}
+		}
+
+		if (ReferenceEquals(result, null))
+		{
+			result = GameObject.Instantiate(playerMinions[index], this.transform);
+			poolList_PlayerMinions[index].Add(result);
+		}
+		return result;
+	}
+
+	// UI 반환
+	public GameObject Get_UI(int index)
+	{
+		if (index >= UIs.Length || index < 0)
+			return null;
+		GameObject result = null;
+
+		foreach (GameObject item in poolList_UIs[index])
+		{
+			if (!item.activeSelf)
+			{
+				result = item;
+				item.SetActive(true);
+				break;
+			}
+		}
+		if (ReferenceEquals(result, null))
+		{
+			result = GameObject.Instantiate(UIs[index], alwaysEnableUI.transform);
+			poolList_UIs[index].Add(result);
+		}
+		return result;
+	}
+	
 }

@@ -11,7 +11,7 @@ using UnityEngine;
 public class LSM_TurretSc : MonoBehaviour, I_Actor
 {
 	// 포탑의 탐색, 공격에 대한 딜레이 상수화 혹시 모를 변경에 대비하여 const는 생략
-	const float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
+	protected float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
 
     public MoonHeader.S_TurretStats stats;			// 터렛의 상태에 대한 구조체
 	protected GameObject mark;						// TopView에서 플레이어에게 보여질 아이콘
@@ -29,7 +29,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 		// health, atk
 		
 		// 디버그용으로 미리 설정.
-		stats = new MoonHeader.S_TurretStats(10,6);
+		stats = new MoonHeader.S_TurretStats(100,6);
 		ChangeColor();
 
 		timer = 0;
@@ -72,7 +72,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 
 	// I_Actor 인터페이스에 포함되어잇는 함수.
 	// 공격을 받을 시 데미지를 입음.
-	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
+	public virtual int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
 	{
 		if (t == this.stats.actorHealth.team)
 			return this.stats.actorHealth.health;
@@ -110,7 +110,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 			{
 				timer = 0;
 				// 구형 캐스트를 사용하여 탐지.
-				RaycastHit[] hits = Physics.SphereCastAll(transform.position, searchRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Minion") | 1<<LayerMask.NameToLayer("PlayerMinion"));
+				RaycastHit[] hits = Physics.SphereCastAll(transform.position, searchRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Minion"));
 
 				// 가장 가까운 미니언을 찾는 함수.
                 float minDistance = float.MaxValue;
@@ -126,6 +126,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 					}
 					else if (hit.transform.CompareTag("PlayerMinion"))
 					{
+						Debug.Log("Player Find!");
 						PSH_PlayerFPSCtrl dummyCtr = hit.transform.GetComponent<PSH_PlayerFPSCtrl>();
 						dummy_actor = dummyCtr.actorHealth;
 						dummy_bool = true;
@@ -200,4 +201,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 			target = null;
 	}
 
+	public virtual int GetHealth() { return this.stats.actorHealth.health; }
+	public virtual int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
+	public virtual MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
 }

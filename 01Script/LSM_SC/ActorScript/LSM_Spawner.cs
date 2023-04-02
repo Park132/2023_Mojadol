@@ -104,8 +104,9 @@ public class LSM_Spawner : MonoBehaviour
 							//dummy.transform.parent = this.transform;
 							// 미니언 세팅
 							LSM_MinionCtrl dummy_ctrl = dummy.GetComponent<LSM_MinionCtrl>();
-							dummy_ctrl.MonSetting(spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>().Ways, team, this.GetComponent<LSM_Spawner>(), monT);
-							dummy_ctrl.minionBelong = i;
+							LSM_SpawnPointSc dummy_point = spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>();
+							dummy_ctrl.MonSetting(dummy_point.Ways, team, this.GetComponent<LSM_Spawner>(), monT);
+							dummy_ctrl.minionBelong = dummy_point.number;
 							//dummy_ctrl.minionType = spawnpoints[i].summon_ % 2;	//미니언의 타입을 결정
 
 							spawnpoints[i].summon_++;

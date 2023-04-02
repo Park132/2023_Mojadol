@@ -7,16 +7,42 @@ public class PSH_MeleeCtrl : MonoBehaviour
     public GameObject head;
     public bool isSkill = false;
 
-    private void OnTriggerEnter(Collider other)
+    // 자주 쓰일것이니, 미리 변수를 생성.
+    private PSH_PlayerFPSCtrl fpsc;
+
+	private void Start()
+	{
+        fpsc = head.gameObject.GetComponent<PSH_PlayerFPSCtrl>();
+    }
+
+	private void OnTriggerEnter(Collider other)
     {
-        PSH_PlayerFPSCtrl fpsc = head.gameObject.GetComponent<PSH_PlayerFPSCtrl>();
+        
         float thisdamage = fpsc.currentdamage;
 
-        if(other.transform.tag == "Player")
+        if (other.transform.tag == "PlayerMinion")
         {
             other.GetComponent<PSH_PlayerFPSCtrl>().Health -= thisdamage;
             if (isSkill)
                 other.GetComponent<PSH_PlayerFPSCtrl>().movespeed -= 3.0f;
         }
+        // LSM 추가.
+        // 미니언 관련하여 공격이 가능하게 변경.
+        else if (other.transform.CompareTag("Minion"))
+        {
+            LSM_Attack<LSM_MinionCtrl>(other.gameObject);
+        }
+        else if (other.transform.CompareTag("Turret"))
+        {
+            LSM_Attack<LSM_TurretSc>(other.gameObject);
+        }
     }
+
+    private void LSM_Attack<T>(GameObject obj) where T : I_Actor
+    {
+        Debug.Log("Player Attack!");
+        T ctrl = obj.GetComponent<T>();
+        ctrl.Damaged((int)fpsc.currentdamage, fpsc.transform.position, fpsc.actorHealth.team);
+    }
+
 }

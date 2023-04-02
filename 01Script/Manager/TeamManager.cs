@@ -9,7 +9,7 @@ public class TeamManager : MonoBehaviour
     public MoonHeader.Team team;		// 해당 팀매니저의 팀
 
     // 모든 전황을 추가할 것임.
-    int kill, exp;
+    public int kill, exp;
 
 	// 해당 팀의 플레이어는 리스트로, 해당팀의 기지(마스터 스포너) 찾아오기.
     public List<LSM_PlayerCtrl> this_teamPlayers;

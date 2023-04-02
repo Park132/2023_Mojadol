@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3173551231457233108}
   - component: {fileID: 8578437320192596601}
   - component: {fileID: -7180743397189287860}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: swordball
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ SphereCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1616009717459003868}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5

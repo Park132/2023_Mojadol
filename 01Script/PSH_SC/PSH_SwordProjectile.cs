@@ -9,6 +9,9 @@ public class PSH_SwordProjectile : MonoBehaviour
     private float power = 500.0f;
     public float damage = 0.0f;
 
+    // LSM 팀에 대한 정보를 얻어오기 위해.. 쏘아올린 캐릭터의 스크립트를 받아옴.
+    public PSH_PlayerFPSCtrl script;
+
     private void Start()
     {
         this.gameObject.GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * power);
@@ -32,4 +35,34 @@ public class PSH_SwordProjectile : MonoBehaviour
 
         Destroy(this.gameObject);
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+
+        if (other.transform.tag == "PlayerMinion")
+        {
+            other.GetComponent<PSH_PlayerFPSCtrl>().Health -= damage;
+
+        }
+        // LSM 추가.
+        // 미니언 관련하여 공격이 가능하게 변경.
+        else if (other.transform.CompareTag("Minion"))
+        {
+            LSM_Attack<LSM_MinionCtrl>(other.gameObject);
+        }
+        else if (other.transform.CompareTag("Turret"))
+        {
+            LSM_Attack<LSM_TurretSc>(other.gameObject);
+        }
+        Destroy(this.gameObject);
+    }
+
+    private void LSM_Attack<T>(GameObject obj) where T : I_Actor
+    {
+        Debug.Log("Player Attack!");
+        T ctrl = obj.GetComponent<T>();
+        ctrl.Damaged((int)damage, this.transform.position, script.actorHealth.team);
+    }
+
+
 }

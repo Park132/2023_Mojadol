@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1142772912307966697}
   - component: {fileID: 1142772912307966696}
   - component: {fileID: 1142772912307966699}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -111,7 +111,7 @@ GameObject:
   - component: {fileID: 1142772913429187296}
   - component: {fileID: 1142772913429187299}
   - component: {fileID: 1142772913429187311}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Turret
   m_TagString: Turret
   m_Icon: {fileID: 0}
@@ -211,9 +211,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stats:
-    team: 0
-    Health: 0
-    Atk: 0
+    actorHealth:
+      team: 0
+      maxHealth: 0
+      health: 0
+      Atk: 0
   target: {fileID: 0}
   TurretBelong: 0
 --- !u!208 &1142772913429187311

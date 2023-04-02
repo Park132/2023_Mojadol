@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4752272835364512663}
   - component: {fileID: 4752272835364512667}
   - component: {fileID: 4752272835364512666}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: MeleeCharacter
   m_TagString: PlayerMinion
   m_Icon: {fileID: 0}
@@ -127,6 +127,12 @@ MonoBehaviour:
   canSee: 1
   mouseSensitivity: 3
   maxLookAngle: 50
+  playerName: 
+  actorHealth:
+    team: 0
+    maxHealth: 0
+    health: 0
+    Atk: 0
 --- !u!54 &4752272835364512666
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -153,7 +159,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4752272835558145298}
   - component: {fileID: 4752272835558145297}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: trailpos
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -296,7 +302,7 @@ GameObject:
   - component: {fileID: 4752272835741108918}
   - component: {fileID: 4752272835741108919}
   - component: {fileID: 4752272835741108923}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: sword
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -407,7 +413,7 @@ GameObject:
   - component: {fileID: 4752272835889070906}
   - component: {fileID: 4752272835889070905}
   - component: {fileID: 4752272835889070904}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: attackrange
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -465,7 +471,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4752272836294888196}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: hand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -497,7 +503,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4752272836824045665}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: camerapos
   m_TagString: Untagged
   m_Icon: {fileID: 0}

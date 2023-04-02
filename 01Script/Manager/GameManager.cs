@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 10f, ROUNDTIME = 50f;
+	const float SELECTATTACKPATHTIME = 10f, ROUNDTIME = 500f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
@@ -34,14 +34,19 @@ public class GameManager : MonoBehaviour
 	public GameObject[] wayPoints;		// 씬에 존재하는 모든 "웨이포인트"의 모음
 
 	public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
-	public GameObject selectAttackPathUI, mapUI;	// selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
+	public GameObject selectAttackPathUI, mapUI, gameUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
+															// gameUI: 게임 진행 중 표시되는 UI
+	public LSM_GameUI gameUI_SC;
+
 	private Image screen;							// 페이드 IN, OUT을 할 때 사용하는 이미지.
 	public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
 	public LSM_PlayerCtrl mainPlayer;				// 현재 접속하고있는 플레이어를 저장하는 변수
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
 
-	public List<GameObject>[] playerMinions;		// 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
-
+	private List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
+	private List<GameObject> logUIs;
+	private List<string> logUIs_Reservation;
+	private float timer_log;
 
 	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
 	private void Awake_Function()
@@ -68,6 +73,10 @@ public class GameManager : MonoBehaviour
 		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(timerSc.TimerOut);		// 스킵버튼에 해당. 클릭 시 TimerSC에 존재하는 TimerOut함수가 실행되도록 설정.
 		selectAttackPathUI.SetActive(false);
 		mapUI = GameObject.Find("MapUIs");
+		gameUI = GameObject.Find("GameUI");
+		gameUI_SC = gameUI.GetComponent<LSM_GameUI>();
+		gameUI.SetActive(false);
+
 		wayPoints = GameObject.FindGameObjectsWithTag("WayPoint");
 		screen = GameObject.Find("Screen").GetComponent<Image>();
 		screen.transform.SetAsLastSibling();	// 스크린이 다른 UI를 가리도록 가장 마지막에 배치하는 코드.
@@ -79,6 +88,9 @@ public class GameManager : MonoBehaviour
 		// 플레이어 미니언의 리스트 저장.
 		playerMinions = new List<GameObject>[2];	// 팀의 개수만큼 배열의 크기를 지정. 현재 디버깅용으로 2로 설정.
 		for (int i = 0; i < 2; i++) { playerMinions[i] = new List<GameObject>(); }
+		logUIs = new List<GameObject>();				// 로그 표시에 대하여. 5개 이하만 표시하려고 해당 리스트를 생성.
+		logUIs_Reservation = new List<string>();        // 다섯개이상 부터는 예약 리스트를 생성하여 그 리스트 안에 저장.
+		timer_log = 0;
 	}
 
 	private void Start()
@@ -90,7 +102,8 @@ public class GameManager : MonoBehaviour
 
 	private void Update()
 	{
-		Game();	
+		Game();
+		DisplayEnable();
 	}
 
 	// 게임 진행 중 모든 상황을 처리하는 함수.
@@ -147,7 +160,10 @@ public class GameManager : MonoBehaviour
 					break;
 				// 게임 턴이 종료되었다면.
 				case MoonHeader.GameState.Gaming:
+					ScreenFade(false);
 					StartCoroutine(mainPlayer.AttackPathSelectSetting());
+					ChangeRound_AllRemover();
+					Cursor.lockState = CursorLockMode.None;
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.SettingAttackPath;
 					break;
@@ -203,15 +219,20 @@ public class GameManager : MonoBehaviour
 	// 매개변수가 false일 경우 FadeOut (점점 어두워짐.)
 	public IEnumerator ScreenFade(bool inout)
 	{
-		float origin = inout ? 1 : 0, alpha = 0.01f * (inout ? -1 : 1);
-
-		screen.color = new Color(0, 0, 0, origin);
-
-		for (int i = 0; i < 100; i++)
+		if ((inout && screen.color.a >= 0.9f) || (!inout && screen.color.a <= 0.1f))
 		{
-			yield return new WaitForSeconds(0.01f);
-			origin += alpha;
+			int time = 50;
+			float origin = inout ? 1 : 0, alpha = ((float)1 / time ) * (inout ? -1 : 1);
+
 			screen.color = new Color(0, 0, 0, origin);
+
+			for (int i = 0; i < time; i++)
+			{
+				yield return new WaitForSeconds(0.01f);
+				origin += alpha;
+				screen.color = new Color(0, 0, 0, origin);
+			}
+			screen.color = new Color(0, 0, 0, (inout ? 0 : 1));
 		}
 	}
 
@@ -229,21 +250,59 @@ public class GameManager : MonoBehaviour
 
 	// 게임 매니저에 저장되어있는 플레이어 미니언들을 전부 파괴하는 함수.
 	// 보통 게임 라운드가 변경되었을 경우 사용.
-	private void ChangeRound_PlayerRemover()
+	private void ChangeRound_AllRemover()
 	{
 		for (int i = 0; i < playerMinions.Length; i++)
 		{
 			foreach (GameObject obj in playerMinions[i])
 			{
-				// 플레이어 위치에 해당 타입과 같은 미니언을 소환.
-				// 플레이의 팀에 해당하는 팀. 가장 가까운 포탑으로 이동.
-				// 이후 해당 포탑에 해당하는 공격로 이동 목적지를 갖게함. ex: 탑 포탑이라면, 같은 팀의 해당 공격로를 입수.
-				// wayIndex는 해당 포탑 및 웨이포인트를 비교하며 웨이인덱스를 설정.
-
-				//teamManagers[i].this_teamSpawner.
-				GameObject.Destroy(obj);
+				obj.SetActive(false);
 			}
 			playerMinions[i].Clear();
 		}
+		for (int i = 0; i < PoolManager.Instance.minions.Length; i++) {
+			foreach (GameObject minion in PoolManager.Instance.poolList_Minion[i])
+			{
+				if (minion.activeSelf)
+				{
+					LSM_MinionCtrl dummyCtrl = minion.GetComponent<LSM_MinionCtrl>();
+					teamManagers[(int)dummyCtrl.stats.actorHealth.team].exp += dummyCtrl.stats.exp;
+					minion.SetActive(false);
+				}
+			}
+		}
+	}
+
+	// log를 최대 5개 표시하게 관리하기 위한 함수.
+	private void DisplayEnable()
+	{
+		timer_log += Time.deltaTime;
+		if (logUIs.Count <= 5 && logUIs_Reservation.Count > 0 && timer_log >= 1f)
+		{
+			timer_log = 0;
+			GameObject dummy = PoolManager.Instance.Get_UI(0);
+			dummy.GetComponentInChildren<TextMeshProUGUI>().text = logUIs_Reservation[0];
+			dummy.GetComponent<RectTransform>().anchoredPosition = new Vector3(-50, -100, 0);
+			logUIs.Add(dummy);
+			logUIs_Reservation.RemoveAt(0);
+		}
+		
+	}
+	public void DisplayAdd(string content)
+	{
+		logUIs_Reservation.Add(content);
+	}
+	public void DisplayChecking() {
+		for (int i = logUIs.Count-1; i >= 0; i--)
+		{
+			if (!logUIs[i].activeSelf)
+				logUIs.RemoveAt(i);
+		}
+	}
+
+	// 게임이 종료되었을 경우 실행.
+	public void GameEndingProcess()
+	{
+
 	}
 }
