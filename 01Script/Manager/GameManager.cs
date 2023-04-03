@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
 	public LSM_PlayerCtrl mainPlayer;				// 현재 접속하고있는 플레이어를 저장하는 변수
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
 
-	private List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
+	public List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
 	private List<GameObject> logUIs;
 	private List<string> logUIs_Reservation;
 	private float timer_log;
