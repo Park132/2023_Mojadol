@@ -9,12 +9,12 @@ public class LSM_Spawner : MonoBehaviour
 	// 소환에 대한 상수 설정.
 	float BASEDELAY = 1.5f;
 	float BASEWAVEDELAY = 10f;
-	int BASEMINIONMULTIPLER = 5;
-	int BASEMAXIMUMMELEE = 3;
+	int BASEMINIONMULTIPLER = 3;
+	int BASEMAXIMUMMELEE = 2;
 
 	// 최대 소환 가능한 수
 	public int MAX_NUM_MINION ;
-	public MoonHeader.Team team;
+	public MoonHeader.Team team;			// # 팀 설정만 해주면 됨.
 
 	public MoonHeader.SpawnerState state;			// 스포너의 현재 상태에 대한 enum
 	//public GameObject[] way;

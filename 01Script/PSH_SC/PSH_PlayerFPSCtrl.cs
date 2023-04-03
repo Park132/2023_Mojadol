@@ -60,7 +60,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     private GameObject playerIcon;
 
     private Rigidbody rigid;
-    private LSM_PlayerCtrl myPlayerCtrl;
+    public LSM_PlayerCtrl myPlayerCtrl;
+    public MoonHeader.State_P_Minion state_p;
 
 	// LSM */
 
@@ -347,27 +348,35 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         playerName = pname;
         myPlayerCtrl = pctrl;
         ChangeTeamColor(playerIcon);
+        state_p = MoonHeader.State_P_Minion.Normal;
     }
 
     // LSM Damaged 추가.
-    public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
+    public int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
-        if (t == actorHealth.team)
+        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
             return 0;
         actorHealth.health -= dam;
         // 넉백이 되는 방향벡터를 구함.
-        Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one - Vector3.up).normalized;
-        float scale_knock = 100f;
-        rigid.AddForce(direction_knock * scale_knock);
+        //Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one - Vector3.up).normalized;
+        //float scale_knock = 100f;
+        //rigid.AddForce(direction_knock * scale_knock);
         if (this.actorHealth.health <= 0)
-            StartCoroutine(DeadProcessing());
+            StartCoroutine(DeadProcessing(other));
         return (int)actorHealth.health;
     }
     // LSM DeadProcessing
-    public IEnumerator DeadProcessing()
+    public IEnumerator DeadProcessing(GameObject other)
     {
+        state_p = MoonHeader.State_P_Minion.Dead;
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
+        // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
+        if (other.transform.CompareTag("PlayerMinion"))
+        {
+            other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp( 50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+        }
+        GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}",other.gameObject.name, this.name));
         yield return new WaitForSeconds(0.5f);
         this.gameObject.SetActive(false);
         myPlayerCtrl.PlayerMinionDeadProcessing();

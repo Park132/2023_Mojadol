@@ -5,14 +5,15 @@ using UnityEngine;
 
 public class MoonHeader : MonoBehaviour
 {
-	public enum GameState { ChangeRound, SettingAttackPath, StartGame, Gaming };	// 게임의 현재 상태를 나타내기 위해 사용.
+	public enum GameState { ChangeRound, SettingAttackPath, StartGame, Gaming, Ending };	// 게임의 현재 상태를 나타내기 위해 사용.
 																					// ChangeRound: 라운드 변경, SettingAttackPath: 공격로 미니언 지정, StartGame: 게임이 시작하기 전 마무리 세팅, Gaming: 게임진행 중
 	public enum ManagerState { Ready, Processing, End };	// 게임 매니저의 현재 상태를 나타내기 위해 사용. GameState 처리에 도움을 줌.
 															// Ready: 현재 해당 GameState를 진행할 수 있음, Processing: 해당 GameState를 진행 중, End: 해당 GameState를 끝마침.
 	public enum SpawnerState { None, Setting, Spawn };		// 스포너의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안함, Setting: SettingAttackPath 상태일때 스포너를 조정하는 단계, Spawn: 스포너가 동작하는 중.
-	public enum State_P { None, Selected , Possession};		// 플레이어의 현재 상태를 나타내기 위해 사용.
+	public enum State_P { None, Selected , Possession};     // 플레이어의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안하는 중. 주로 TopView 시점에서의 상태, Seleted: 미니언을 클릭한 시점, Possession: 빙의 중.
+	public enum State_P_Minion { Normal, Dead };			// 플레이어미니언의 현재 상태를 나타내기 위해 사용.
 	public enum Team { Red = 0, Blue = 1, Yellow = 2 };		// 팀을 나눌때 사용/
 	
 	public enum State { Normal, Dead, Attack, Invincibility, Thinking};	// 미니언의 현재 상태를 나타내기 위해 사용.
@@ -95,7 +96,7 @@ public class MoonHeader : MonoBehaviour
 // 인터페이스.
 public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
-	int Damaged(int dam, Vector3 origin, MoonHeader.Team t);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
+	int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
 	public int GetHealth();
 	public int GetMaxHealth();
 	public MoonHeader.Team GetTeam();

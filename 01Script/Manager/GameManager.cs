@@ -25,11 +25,13 @@ public class GameManager : MonoBehaviour
 
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
 	public MoonHeader.GameState gameState;		// 현재 게임의 상태 ex: 공격로 설정 시간, 게임 시작 전, 등등
+												// # 게임 시작 전 gameState를 SettingAttackPath로 설정 -> 디버깅용
 
 	public LSM_TimerSc timerSc;			// 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
 	
 	public int numOfPlayer;				// 현재 플레이어의 수.
 	public TextMeshProUGUI turnText;	// 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
+										// # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
 	private GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
 	public GameObject[] wayPoints;		// 씬에 존재하는 모든 "웨이포인트"의 모음
 
@@ -41,6 +43,7 @@ public class GameManager : MonoBehaviour
 	private Image screen;							// 페이드 IN, OUT을 할 때 사용하는 이미지.
 	public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
 	public LSM_PlayerCtrl mainPlayer;				// 현재 접속하고있는 플레이어를 저장하는 변수
+													// # 디버깅시 MainPlayer를 지정해줘야함. 현재 아무 플레이어를 지정.
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
 
 	public List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
@@ -291,6 +294,7 @@ public class GameManager : MonoBehaviour
 	public void DisplayAdd(string content)
 	{
 		logUIs_Reservation.Add(content);
+		Debug.Log(content);
 	}
 	public void DisplayChecking() {
 		for (int i = logUIs.Count-1; i >= 0; i--)
@@ -301,8 +305,14 @@ public class GameManager : MonoBehaviour
 	}
 
 	// 게임이 종료되었을 경우 실행.
-	public void GameEndingProcess()
+	// 매개변수로 받는 팀은 패배 팀.
+	public void GameEndingProcess(MoonHeader.Team t)
 	{
+		ScreenFade(false);
+		gameState = MoonHeader.GameState.Ending;
+		StartCoroutine(mainPlayer.AttackPathSelectSetting());
+		Cursor.lockState = CursorLockMode.None;
+		Debug.Log("Team " +t.ToString() + " Lose");
 
 	}
 }

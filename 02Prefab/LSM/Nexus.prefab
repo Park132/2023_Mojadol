@@ -93,7 +93,7 @@ BoxCollider:
   m_GameObject: {fileID: 845835944307304368}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -191,7 +191,7 @@ SphereCollider:
   m_GameObject: {fileID: 1142772912307966701}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
@@ -206,6 +206,7 @@ GameObject:
   - component: {fileID: 1142772913429187298}
   - component: {fileID: 1142772913429187311}
   - component: {fileID: 3618782605040564011}
+  - component: {fileID: 707059673495258020}
   m_Layer: 10
   m_Name: Nexus
   m_TagString: Nexus
@@ -266,6 +267,20 @@ MonoBehaviour:
       Atk: 0
   target: {fileID: 0}
   TurretBelong: 0
+--- !u!136 &707059673495258020
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1142772913429187301}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 1.5
+  m_Height: 6
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &3237215316887970413
 GameObject:
   m_ObjectHideFlags: 0
@@ -359,7 +374,7 @@ BoxCollider:
   m_GameObject: {fileID: 3237215316887970413}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -456,7 +471,7 @@ BoxCollider:
   m_GameObject: {fileID: 4695575852584297725}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -650,7 +665,7 @@ BoxCollider:
   m_GameObject: {fileID: 7563037602388231880}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -751,7 +766,7 @@ BoxCollider:
   m_GameObject: {fileID: 8947644215628314889}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}

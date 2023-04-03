@@ -41,8 +41,8 @@ public class PSH_SwordProjectile : MonoBehaviour
 
         if (other.transform.tag == "PlayerMinion")
         {
-            other.GetComponent<PSH_PlayerFPSCtrl>().Health -= damage;
-
+            //other.GetComponent<PSH_PlayerFPSCtrl>().Health -= damage;
+            LSM_Attack<PSH_PlayerFPSCtrl>(other.gameObject);
         }
         // LSM 추가.
         // 미니언 관련하여 공격이 가능하게 변경.
@@ -50,18 +50,19 @@ public class PSH_SwordProjectile : MonoBehaviour
         {
             LSM_Attack<LSM_MinionCtrl>(other.gameObject);
         }
-        else if (other.transform.CompareTag("Turret"))
+        else if (other.transform.CompareTag("Turret") || other.transform.CompareTag("Nexus"))
         {
             LSM_Attack<LSM_TurretSc>(other.gameObject);
         }
-        Destroy(this.gameObject);
+        
     }
 
     private void LSM_Attack<T>(GameObject obj) where T : I_Actor
     {
         Debug.Log("Player Attack!");
         T ctrl = obj.GetComponent<T>();
-        ctrl.Damaged((int)damage, this.transform.position, script.actorHealth.team);
+        ctrl.Damaged((int)damage, this.transform.position, script.actorHealth.team, script.gameObject);
+        Destroy(this.gameObject);
     }
 
 

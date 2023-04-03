@@ -146,6 +146,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		// 아이콘 및 몸통 색 팀의 색상에 맞게 변화
 		ChangeTeamColor();
 		ChangeTeamColor(playerIcon);
+		ChangeTeamColor(bodies[0].gameObject);
 	}
 
 	// 웨이포인트 트리거에 닿았다면 발동하는 함수.
@@ -373,7 +374,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 따라서 Damaged를 호출이 가능함.
 	private T Attack_other<T>(GameObject other) where T : I_Actor {
 		T Script = other.GetComponent<T>();
-		Script.Damaged(this.stats.actorHealth.Atk, this.transform.position, this.stats.actorHealth.team);
+		Script.Damaged(this.stats.actorHealth.Atk, this.transform.position, this.stats.actorHealth.team, this.gameObject);
 		return Script;
 	}
 
@@ -381,7 +382,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 미니언이 데미지를 받을 때 사용하는 함수.
 	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
 	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐. // 현재 넉백을 제외하고있음.
-	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t)
+	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		// 죽음 혹은 무적 상태일 경우 데미지를 입지않음. 바로 return
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
@@ -396,18 +397,26 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		// 체력이 0 이하라면 DeadProcessing
 		if (stats.actorHealth.health <= 0 && stats.state != MoonHeader.State.Dead)
 		{
-			StartCoroutine(DeadProcessing());
+			StartCoroutine(DeadProcessing(other));
 		}
 		return stats.actorHealth.health;
 	}
 
 	// 체력이 0 이하일 경우 호출.
 	// 프로토 타입에서는 0.5초이후 비활성화.
-	private IEnumerator DeadProcessing()
+	private IEnumerator DeadProcessing(GameObject other)
 	{
 		stats.state = MoonHeader.State.Dead;
 		if (nav.enabled)
 		{nav.velocity = Vector3.zero; nav.isStopped = true; }
+		if (other.transform.CompareTag("PlayerMinion"))
+		{
+			other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
+			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
+		}
+		
+
 		yield return new WaitForSeconds(0.5f);
 		this.gameObject.SetActive(false);
 	}
@@ -427,6 +436,9 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
         yield return new WaitForSeconds(0.25f);
 		foreach (Renderer r in bodies)
 		{ r.material.color = Color.white; }
+
+		// 첫번째 렌더러 팀색으로 변경.
+		ChangeTeamColor(bodies[0].gameObject);
 	}
 
 	// 공격이 끝났을 때 호출.
@@ -495,7 +507,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 			default: dummy_color = Color.gray; break;
 		}
 		obj.GetComponent<Renderer>().material.color = dummy_color;
-		this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
+		//this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
 		// Scene 즉 게임 화면에서 팀마다 색상이 변하는 것은... 나중에 파티클이나 이펙트로 하는건 어떤지? 이에 대한 내용은 일단 유지... 허나 데미지 받으면 흰색.
 	}
 

@@ -8,7 +8,9 @@ using TMPro;
 public class LSM_TimerSc : MonoBehaviour
 {
 	public GameObject timerPannel;			// 타이머 UI
+											// # Canvas의 자식 오브젝트 중 TimerPannel
     public TextMeshProUGUI timerT;			// 타이머를 표시해줄 UI
+											// # Canvas의 자식 오브젝트 중의 TimerPannel의 자식 오브젝트 Timer
 	public bool startTimer = false, limitTimeSetting, reverse;
     float timer, limitS;
 

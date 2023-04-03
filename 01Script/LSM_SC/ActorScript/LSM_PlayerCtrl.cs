@@ -11,8 +11,9 @@ public class LSM_PlayerCtrl : MonoBehaviour
 {
     public bool isMainPlayer;               // 현재 게임중인 플레이어인지 확인.
     public string playerName;               // 멀티에서의 플레이어 이름
+                                            // # 이름 설정
     public MoonHeader.S_PlayerState player;   // 플레이어 상태에 대한 구조체
-    const float MapCamBaseSize = 40;        // TopView 카메라의 OrthogonalSize
+    const float MapCamBaseSize = 60;        // TopView 카메라의 OrthogonalSize
 
     public GameObject mySpawner;            // 팀의 마스터 스포너
     private Camera mapCamCamera;            // TopView에 사용되는 카메라
@@ -24,8 +25,14 @@ public class LSM_PlayerCtrl : MonoBehaviour
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
 
     public GameObject MainCam, MapCam, MapSubCam, MiniMapCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
+                                                                    // # MainCam    -> Player 자식 오브젝트 중 Camera
+                                                                    // # MapCam     -> Player 자식 오브젝트 중 MapCamera
+                                                                    // # MapSubCam  -> Player 자식 오브젝트 중 MapSubCamera
+                                                                    // # MiniMapCam -> Player 자식 오브젝트 중 MiniMapCam
     public Vector3 mapCamBasePosition;                  // TopView카메라의 초기위치
+                                                        // # Y축만 95로 설정
     public GameObject minionStatsPannel;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
+                                                        // # Canvas의 자식 오브젝트 중 MinionStatpanel
     private LSM_MinionCtrl subTarget_minion;            // 타겟으로 지정한 미니언의 스크립트
     private TextMeshProUGUI minionStatsPannel_txt;      // 미니언 스탯을 표기하는 UI - 그 중 텍스트.
     private GameObject playerMinion;                    // 플레이어가 선택한 미니언.
@@ -33,6 +40,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
     private GameObject playerWatchingTarget;            // 플레이어미니언이 보는 미니언 혹은 여러가지.
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
+
+    private int exp;
 
 	private void Start()
 	{
@@ -47,6 +56,13 @@ public class LSM_PlayerCtrl : MonoBehaviour
         player.statep = MoonHeader.State_P.None;
         if (isMainPlayer)
         { MapCam.SetActive(true); MapSubCam.SetActive(true);  }
+        // 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
+        GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
+        foreach (GameObject s in dummySpawners)
+        {
+            LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
+            if (sSC.team == this.player.team) { mySpawner = s; break; }
+        }
     }
 
 	void Update()
@@ -63,19 +79,18 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
     private void debugging()
     {
-        if (Input.GetKeyDown(KeyCode.A))
-            GameManager.Instance.DisplayAdd("Test~~");
+        
     }
 
     // TopView때의 맵 이벤트
     private void MapEv()
     {
         // 현재 플레이어가 아무 클릭, 이동 등을 하지 않는다면
-        if (player.statep == MoonHeader.State_P.None)
+        if (player.statep == MoonHeader.State_P.None && GameManager.Instance.gameState != MoonHeader.GameState.Ending)
         {
             // 마우스 휠에 따라 확대, 축소
             float scroll = Input.GetAxis("Mouse ScrollWheel") * wheelSpeed;
-            mapCamCamera.orthographicSize = Mathf.Min(60, Mathf.Max(15, mapCamCamera.orthographicSize - scroll));
+            mapCamCamera.orthographicSize = Mathf.Min(MapCamBaseSize + 40, Mathf.Max(MapCamBaseSize-40, mapCamCamera.orthographicSize - scroll));
 
             // 방향키 이동에 따라서 맵의 이동
             Vector3 mapcampPosition = MapCam.transform.position;
@@ -116,7 +131,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
                 // 미니맵캠을 플레이어 위치로 이동.
                 MiniMapCam.transform.position = Vector3.Scale(playerMinion.transform.position, Vector3.one-Vector3.up) + Vector3.up*95;
 
-                // 메인카메라를 기중. 메인카메라가 보고있는 방향으로 레이를 쏴, 미니언 혹은 플레이어, 터렛 등을 식별.
+                // 메인카메라를 기준. 메인카메라가 보고있는 방향으로 레이를 쏴, 미니언 혹은 플레이어, 터렛 등을 식별.
                 // 이후 게임UI에 정보를 전달.
                 RaycastHit hit;
                 Debug.DrawRay(MainCam.transform.position, MainCam.transform.forward * 10, Color.green, 0.1f);
@@ -260,7 +275,8 @@ public class LSM_PlayerCtrl : MonoBehaviour
     // select버튼 클릭 시 
     public void SelectPlayerMinion()
     {
-        if (!ReferenceEquals(mapcamSub_Target, null) && player.statep == MoonHeader.State_P.None)
+        if (!ReferenceEquals(mapcamSub_Target, null) && player.statep == MoonHeader.State_P.None && subTarget_minion.stats.state != MoonHeader.State.Dead &&
+            subTarget_minion.stats.actorHealth.team == this.player.team)
         {
             player.statep = MoonHeader.State_P.Possession;
             subTarget_minion.PlayerConnect();
@@ -324,5 +340,10 @@ public class LSM_PlayerCtrl : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             GameManager.Instance.gameUI.SetActive(false);
         }
+    }
+
+    public void GetExp(int exp_dummy)
+    {
+        exp += exp_dummy;
     }
 }

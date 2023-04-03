@@ -32,17 +32,18 @@ public class PSH_MeleeCtrl : MonoBehaviour
         {
             LSM_Attack<LSM_MinionCtrl>(other.gameObject);
         }
-        else if (other.transform.CompareTag("Turret"))
+        else if (other.transform.CompareTag("Turret") || other.transform.CompareTag("Nexus"))
         {
             LSM_Attack<LSM_TurretSc>(other.gameObject);
         }
+        
     }
 
     private void LSM_Attack<T>(GameObject obj) where T : I_Actor
     {
         Debug.Log("Player Attack!");
         T ctrl = obj.GetComponent<T>();
-        ctrl.Damaged((int)fpsc.currentdamage, fpsc.transform.position, fpsc.actorHealth.team);
+        ctrl.Damaged((int)fpsc.currentdamage, fpsc.transform.position, fpsc.actorHealth.team, fpsc.gameObject);
     }
 
 }

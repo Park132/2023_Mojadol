@@ -8,9 +8,12 @@ using TMPro;
 // 게임 진행 중에 플레이어에게 보이는 UI를 관리하는 스크립트.
 public class LSM_GameUI : MonoBehaviour
 {
-    public Image playerHP, targetHP;
-    public TextMeshProUGUI targetName;
-    public GameObject targetUI, playerUI;
+                                                // # Canvas 안 GameUI의 자식오브젝트
+    public Image playerHP, targetHP;            // # Player의 자식 오브젝트 중 CurrentHP        -> playerHP
+                                                // # Enemy의 자식 오브젝트 중 CurrentHP         -> targetHP
+    public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
+    public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
+                                                // # Player     -> playerUI
     
     private I_Actor player_ac, target_ac;
     private GameObject target_obj;

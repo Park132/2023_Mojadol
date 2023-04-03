@@ -7,6 +7,7 @@ using UnityEngine;
 public class TeamManager : MonoBehaviour
 {
     public MoonHeader.Team team;		// 해당 팀매니저의 팀
+										// # 팀의 개수만큼 오브젝트를 소환. blue, red로 전환.
 
     // 모든 전황을 추가할 것임.
     public int kill, exp;
@@ -23,7 +24,7 @@ public class TeamManager : MonoBehaviour
 	{
 		// 디버깅용
 		selectedNumber = 0;
-		MaximumSpawnNum = 3;
+		MaximumSpawnNum = 6;
 
 		// 해당 팀의 플레이어들을 받아옴. 해당 플레이어를 받아오기전 GameManager에서 플레이어를 생성함을 가정하여 받아오는 중.
 		this_teamPlayers = new List<LSM_PlayerCtrl>();

@@ -6,8 +6,10 @@ using UnityEngine;
 public class LSM_SpawnPointSc : MonoBehaviour
 {
     public GameObject[] Ways;				// 미니언이 갖는 공격로 웨이포인트 지점.
+											// # GameManager의 자식오브젝트에 있는 WayPoint를 하나씩 연결. 연결 시 기즈모를 이용한 실선이 보임. 마지막은 상대팀 스폰포인트.
 	public GameObject[] Paths;				// 공격로를 플레이어에게 화살표로 보여주는 UI둘
 	public int number;						// 스폰포인트의 번호를 알려줌. 
+											// # 스폰포인트마다 번호를 다르게 설정해야함. 0 1 2 로 설정을해야 같은 경로의 포탑을 공격. 팀마다 대칭으로 설정.
 	public bool isClicked;					// 이전 비율로 정하던 때의 변수. 아직은 쓸 일이 없음.
 	public GameObject parentSpawner;		// 이 스폰포인트의 마스터 스포너
 	private LSM_Spawner parentSpawnerSC;	// 마스터 스포너의 스크립트

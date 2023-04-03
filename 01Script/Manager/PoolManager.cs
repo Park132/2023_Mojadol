@@ -15,9 +15,9 @@ public class PoolManager : MonoBehaviour
 	// ///
 
 	// 프리펩 저장 변수
-	public GameObject[] minions;
-	public GameObject[] playerMinions;
-	public GameObject[] UIs;
+	public GameObject[] minions;		// # 0: LSM 폴더 내의 Minion1, 1: LSM 폴더 내의 Minion2
+	public GameObject[] playerMinions;	// # 0: PSH 폴더 내의 MeleeCharacter
+	public GameObject[] UIs;			// # 0: Icon 폴더 내의 display
 	private GameObject alwaysEnableUI;
 
 	// 풀 저장 변수
