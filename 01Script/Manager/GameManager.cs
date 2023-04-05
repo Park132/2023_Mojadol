@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-
+using System;
+using Photon.Pun;
+using Photon.Realtime;
 
 // 전체 게임에 대한 매니저.
 // LSM담당 스크립트지만 톱니바퀴 아이콘이 맘에들어서.. 머쓱
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourPunCallbacks
 {
 	// 싱글톤///
     private static GameManager instance;
@@ -51,23 +53,90 @@ public class GameManager : MonoBehaviour
 	private List<string> logUIs_Reservation;
 	private float timer_log;
 
+	public bool onceStart;
+
+	// private 
+
+	#region Multi Variables Region
+	string gameVersion = "1.0";
+
+	private byte maxPlayersPerRoom = 2;
+	bool isConnecting;
+
+	#endregion
+
+	#region public Multi Methods
+	public void Connect()
+	{
+		isConnecting = true;
+		if (PhotonNetwork.IsConnected)
+		{
+			PhotonNetwork.JoinRandomRoom();
+			Debug.Log($"Room Info : {PhotonNetwork.InRoom}");
+		}
+		else
+		{
+			PhotonNetwork.GameVersion = gameVersion;
+			PhotonNetwork.ConnectUsingSettings();
+		}
+	}
+	#endregion
+
+	#region Multi Callbacks Method Region
+	public override void OnConnectedToMaster()
+	{
+		base.OnConnectedToMaster();
+		if (isConnecting)
+		{
+			PhotonNetwork.JoinRandomRoom();
+		}
+	}
+
+	public override void OnJoinRandomFailed(short returnCode, string message)
+	{
+		RoomOptions default_option = new RoomOptions();
+		default_option.MaxPlayers = maxPlayersPerRoom;
+		default_option.PublishUserId = true;
+
+		PhotonNetwork.CreateRoom(null, default_option);
+	}
+
+	public override void OnJoinedRoom()
+	{
+		base.OnJoinedRoom();
+		if(!PhotonNetwork.IsMasterClient)
+        {
+			mainPlayer=PhotonNetwork.Instantiate("Playerobj", this.transform.position, this.transform.rotation).GetComponent<LSM_PlayerCtrl>();
+		}
+	}
+
+	public override void OnPlayerEnteredRoom(Player newPlayer)
+	{
+		base.OnPlayerEnteredRoom(newPlayer);
+
+		if (PhotonNetwork.IsMasterClient)
+		{
+			Debug.Log($"Room Player Count : {PhotonNetwork.CurrentRoom.PlayerCount}");
+			Debug.Log("PlayerEntered");
+			
+		}
+		else
+			return;
+	}
+
+	#endregion
+
+
 	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
 	private void Awake_Function()
 	{
-		// 모든 플레이어들을 저장하는 중. FindGameObjectsWithTag를 사용하여 오브젝트를 찾고, 해당 스크립트를 저장하게 구현.
-		// 이 부분 이전에 플레이어를 소환하는 절차가 필요!, 로컬 플레이어또한 필요.
-		GameObject[] playerdummys = GameObject.FindGameObjectsWithTag("Player");
-		players = new LSM_PlayerCtrl[playerdummys.Length];
-		for (int i = 0; i < playerdummys.Length; i++) players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
-		mainPlayer.isMainPlayer = true;
 
-		// 기존 게임매니저의 상태 초기화. Default값 Ready.
-		state = MoonHeader.ManagerState.Ready;
 		// 게임매니저에 존재하는 TimerSC를 받아옴.
 		timerSc = this.GetComponent<LSM_TimerSc>();
 
-		// 디버깅용으로 플레이어를 한명으로 설정.
-		numOfPlayer = 1;
+		logUIs = new List<GameObject>();                // 로그 표시에 대하여. 5개 이하만 표시하려고 해당 리스트를 생성.
+		logUIs_Reservation = new List<string>();        // 다섯개이상 부터는 예약 리스트를 생성하여 그 리스트 안에 저장.
+		timer_log = 0;
 
 		// 해당 변수에 맞는 게임 오브젝트들을 저장.
 		spawnPoints = GameObject.FindGameObjectsWithTag("Spawner");
@@ -88,25 +157,66 @@ public class GameManager : MonoBehaviour
 		foreach (GameObject t in teammdummy)
 		{ teamManagers[(int)t.GetComponent<TeamManager>().team] = t.GetComponent<TeamManager>(); }
 
-		// 플레이어 미니언의 리스트 저장.
-		playerMinions = new List<GameObject>[2];	// 팀의 개수만큼 배열의 크기를 지정. 현재 디버깅용으로 2로 설정.
-		for (int i = 0; i < 2; i++) { playerMinions[i] = new List<GameObject>(); }
-		logUIs = new List<GameObject>();				// 로그 표시에 대하여. 5개 이하만 표시하려고 해당 리스트를 생성.
-		logUIs_Reservation = new List<string>();        // 다섯개이상 부터는 예약 리스트를 생성하여 그 리스트 안에 저장.
-		timer_log = 0;
+		
 	}
 
-	private void Start()
+	private void Start_function()
 	{
-		
+		// 모든 플레이어들을 저장하는 중. FindGameObjectsWithTag를 사용하여 오브젝트를 찾고, 해당 스크립트를 저장하게 구현.
+		// 이 부분 이전에 플레이어를 소환하는 절차가 필요!, 로컬 플레이어또한 필요.
+		GameObject[] playerdummys = GameObject.FindGameObjectsWithTag("Player");
+		players = new LSM_PlayerCtrl[playerdummys.Length];
+		for (int i = 0; i < playerdummys.Length; i++)
+		{
+			players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
+			players[i].isMainPlayer = false;
+		}
+
+		mainPlayer.isMainPlayer = true;
+		foreach (LSM_PlayerCtrl item in players)
+		{
+			item.Start_fuction();
+		}
+
+		// 기존 게임매니저의 상태 초기화. Default값 Ready.
+		state = MoonHeader.ManagerState.Ready;
+
+
+
+
+		// 플레이어 미니언의 리스트 저장.
+		playerMinions = new List<GameObject>[2];    // 팀의 개수만큼 배열의 크기를 지정. 현재 디버깅용으로 2로 설정.
+		for (int i = 0; i < 2; i++) { playerMinions[i] = new List<GameObject>(); }
+
+
+		// 디버깅용으로 플레이어를 한명으로 설정.
+		numOfPlayer = players.Length ;
+
+		gameState = MoonHeader.GameState.SettingAttackPath;
 	}
 
 
 
 	private void Update()
 	{
-		Game();
-		DisplayEnable();
+		if (Input.GetKeyDown(KeyCode.O))
+			Connect();
+
+		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
+		{
+			
+			if (PhotonNetwork.CurrentRoom.PlayerCount == 2) // 일단 1명으로
+			{
+				if (!onceStart)
+				{
+					onceStart = true;
+					Start_function();
+
+				}
+				Game();
+				DisplayEnable();
+			}
+		}
 	}
 
 	// 게임 진행 중 모든 상황을 처리하는 함수.

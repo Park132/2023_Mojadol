@@ -19,7 +19,6 @@ namespace Com.MyCompany.Game
         public GameObject playerPrefab;
         #endregion
 
-
         #region Photon Callbacks
         public override void OnLeftRoom() // 오버라이드된 콜백함수, 룸을 나가서 Launcher 신으로 이동시킨다
         {

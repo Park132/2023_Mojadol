@@ -11,11 +11,13 @@ public class LSM_AttackPathUI : MonoBehaviour
     public Slider sl;						// 슬라이더
 	public LSM_Spawner parentSpawner;		// 해당 UI가 사용되는 마스터스포너
 	public LSM_SpawnPointSc spawnPoint;		// 해당 UI가 사용되는 스폰포인트
-	private Camera mapcam;					// 맵을 볼때 사용되는 카메라
+	private Camera mapcam;                  // 맵을 볼때 사용되는 카메라
+	private bool once;
 
-	private void Start()
+	private void Start_function()
 	{
 		//num.text = "0";
+		once = true;
 		num.text = sl.value.ToString();
 		mapcam = GameManager.Instance.mainPlayer.MapCam.GetComponent<Camera>();
 		//transform.SetAsFirstSibling();	// 해당 UI가 다른 UI를 가리지 않기 위해 가장 상단으로 위치. 해당 부분은 EmptyObject내에 자식 오브젝트로 생성하기에 필요없는 부분이 되었음.
@@ -30,20 +32,26 @@ public class LSM_AttackPathUI : MonoBehaviour
 	private void Update()
 	{
 		// 생성 후 초기화를 하기 전에 실행되는 것을 방지.
-		if (!ReferenceEquals(spawnPoint, null))
+		if (!ReferenceEquals(spawnPoint, null) && GameManager.Instance.onceStart
+			&& GameManager.Instance.onceStart)
 		{
+			if (!once)
+				Start_function();
+
 			// 게임 시작 전, 공격로 선택 중에 스폰포인트와 첫번째 웨이포인트 사이에 UI를 위치하도록 구현.
 			if (GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath || 
 				GameManager.Instance.gameState == MoonHeader.GameState.StartGame)
 			{
-				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
+				//this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
+				this.transform.position = mapcam.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
 				//num.text = GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number].ToString();
 				num.text = sl.value.ToString();
 			}
 			// 게임 중, 스폰포인트의 위치에 UI를 위치하도록 구현.
 			else if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
 			{
-				this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.transform.position);
+				//this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.transform.position);
+				this.transform.position = mapcam.WorldToScreenPoint(spawnPoint.transform.position);
 				num.text = parentSpawner.spawnpoints[spawnPoint.number].num.ToString();
 			}
 			this.transform.localScale = Vector3.one * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 40) * 0.015f));

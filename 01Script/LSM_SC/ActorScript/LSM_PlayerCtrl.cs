@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using Photon.Pun;
 
 // 플레이어 스크립트
 // TopView에서의 플레이어 컨트롤
-public class LSM_PlayerCtrl : MonoBehaviour
+public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
 {
     public bool isMainPlayer;               // 현재 게임중인 플레이어인지 확인.
     public string playerName;               // 멀티에서의 플레이어 이름
@@ -16,7 +17,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
     const float MapCamBaseSize = 60;        // TopView 카메라의 OrthogonalSize
 
     public GameObject mySpawner;            // 팀의 마스터 스포너
-    private Camera mapCamCamera;            // TopView에 사용되는 카메라
+    public Camera mapCamCamera;            // TopView에 사용되는 카메라
 
     // TopView에서의 이동속도 초기화
     private float wheelSpeed = 15f;
@@ -43,31 +44,65 @@ public class LSM_PlayerCtrl : MonoBehaviour
 
     private int exp;
 
-	private void Start()
-	{
-        mapCamCamera = MapCam.GetComponent<Camera>();
-        zoomIn = ZoomInMinion();
-        is_zoomIn = false;
-        MapCam.transform.position = mapCamBasePosition;
-        MapCam.GetComponent<Camera>().orthographicSize = MapCamBaseSize;
-        minionStatsPannel.SetActive(false);
-        minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
-        playerWatchingTarget = null;
-        player.statep = MoonHeader.State_P.None;
-        if (isMainPlayer)
-        { MapCam.SetActive(true); MapSubCam.SetActive(true);  }
-        // 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
-        GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
-        foreach (GameObject s in dummySpawners)
+    // 싱글톤 해 말아
+    // public static GameObject LocalPlayerInstance;
+
+    private void Awake()
+    {
+        
+        if(mySpawner == null)
         {
-            LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
-            if (sSC.team == this.player.team) { mySpawner = s; break; }
+            mySpawner = GameObject.Find("Spawner");
+        }
+        if (photonView.IsMine)
+        {
+            //LSM_PlayerCtrl.LocalPlayerInstance = this.gameObject;
+        }
+
+    }
+
+    public void Start_fuction()
+	{
+        if(isMainPlayer)
+        {
+            MapCam = GameObject.FindGameObjectWithTag("MapCamera");
+            MainCam = GameObject.FindGameObjectWithTag("MainCamera");
+            MiniMapCam = GameObject.FindGameObjectWithTag("MiniMapCamera");
+            MapSubCam = GameObject.FindGameObjectWithTag("SubCamera");
+
+            mapCamCamera = MapCam.GetComponent<Camera>();
+            zoomIn = ZoomInMinion();
+            is_zoomIn = false;
+            MapCam.transform.position = mapCamBasePosition;
+            MapCam.GetComponent<Camera>().orthographicSize = MapCamBaseSize;
+
+            minionStatsPannel = GameObject.Find("MinionStatPanel");
+
+
+            if (minionStatsPannel != null)
+            {
+                minionStatsPannel.SetActive(false);
+                minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
+            }
+                
+            playerWatchingTarget = null;
+            player.statep = MoonHeader.State_P.None;
+            
+            if (photonView.IsMine)
+            { MapCam.SetActive(true); MapSubCam.SetActive(true); MainCam.SetActive(false);MiniMapCam.SetActive(false); }
+            // 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
+            GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
+            foreach (GameObject s in dummySpawners)
+            {
+                LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
+                if (sSC.team == this.player.team) { mySpawner = s; break; }
+            }
         }
     }
 
 	void Update()
     {
-        if (isMainPlayer)
+        if (isMainPlayer && GameManager.Instance.onceStart)
         {
             ClickEv();
             MapEv();
@@ -181,7 +216,7 @@ public class LSM_PlayerCtrl : MonoBehaviour
         // 미니언을 처음 클릭할 경우
         if (Input.GetMouseButtonDown(0) && player.statep == MoonHeader.State_P.None)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = mapCamCamera.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
             RaycastHit hit;
 
