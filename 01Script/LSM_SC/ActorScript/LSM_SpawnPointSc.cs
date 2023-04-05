@@ -14,7 +14,8 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	public GameObject parentSpawner;		// 이 스폰포인트의 마스터 스포너
 	private LSM_Spawner parentSpawnerSC;	// 마스터 스포너의 스크립트
 
-	public GameObject pathUI;				// 플레이어가 조작할 공격로 설정 ui
+	public GameObject pathUI;               // 플레이어가 조작할 공격로 설정 ui
+	private bool once;
 
 	// 기즈모
 	private void OnDrawGizmos()
@@ -33,10 +34,18 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	{
 		// 변수 초기화
 		isClicked = false;
-        parentSpawner = transform.parent.gameObject;
+		parentSpawner = transform.parent.gameObject;
 		parentSpawnerSC = parentSpawner.GetComponent<LSM_Spawner>();
+		once = false;
 
+		// 플레이어가 조작할 UI
+		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
+		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
+		if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) pathUI.SetActive(false);
+	}
 
+	private void Start_function()
+	{
 		//if (GameManager.Instance.mainPlayer.player.team == parentSpawnerSC.team)
 		// 화살표 아이콘
 		Paths = new GameObject[Ways.Length];
@@ -47,16 +56,18 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) Paths[i].SetActive(false);
 		}
 
-		// 플레이어가 조작할 UI
-		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
-		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
-		if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) pathUI.SetActive(false);
+
 	}
 
 	//public void Click(bool change) { isClicked = change; }
 
 	private void Update()
 	{
+		if (GameManager.Instance.onceStart && !once)
+		{
+			Start_function();
+			once = true;
+		}
 
 		// 공격로 아이콘의 위치 조정.
 		for (int i = 0; i < Paths.Length; i++)
