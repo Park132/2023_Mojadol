@@ -33,7 +33,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	public GameObject CameraPosition;		// 카메라를 초기화할 때 사용할 변수.
 	private GameObject icon, playerIcon;	// 미니언에 존재하는 아이콘, 플레이어 아이콘
 
-	[SerializeField] protected GameObject target_attack;	// 미니언의 타겟
+	[SerializeField] protected GameObject target_attack;    // 미니언의 타겟
+	protected I_Actor target_actor;
 	[SerializeField]
 	protected float searchRadius, minAtkRadius, maxAtkRadius;	// 미니언의 탐색 범위, 최소 공격 가능 거리, 최대 공격 가능 거리
 	private float timer_Searching, timer_Attack;				// 탐색과 공격의 타이머 변수.
@@ -238,6 +239,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 						}
 					}
 				}
+				if (!ReferenceEquals(target_attack, null)) { target_actor = target_attack.GetComponent<I_Actor>(); }
 
 				// 타겟을 찾았으며, 이동중이라면.. 자신의 목표를 타겟으로 지정. 해당 지점으로 이동
 				if (nav.enabled && !ReferenceEquals(target_attack, null))
@@ -305,7 +307,9 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		if (!ReferenceEquals(target_attack, null))
 		{
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
-			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking && stats.state != MoonHeader.State.Dead)
+			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking 
+				|| stats.state == MoonHeader.State.Dead 
+				|| target_actor.GetTeam() == this.stats.actorHealth.team)
 			{Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
@@ -347,30 +351,18 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				if (!dummy_cant_attack)
 				{
 					// y축 rotation만을 변경할 것임.
-					this.transform.LookAt(target_attack.transform.position);
-					this.transform.rotation = Quaternion.Euler(Vector3.Scale(this.transform.rotation.eulerAngles, Vector3.up));
-					if (timer_Attack >= ATTACK_DELAY)
+					Quaternion target_rotation = Quaternion.LookRotation(target_attack.transform.position - this.transform.position);
+					Vector3 target_euler = Quaternion.RotateTowards(this.transform.rotation, target_rotation, 270 * Time.deltaTime).eulerAngles;
+					//Vector3 target_euler = target_rotation.eulerAngles;
+					this.transform.rotation = Quaternion.Euler(0, target_euler.y, 0);
+
+                    Quaternion target_rotation_y = Quaternion.Euler(0, target_rotation.y, 0);
+                    if (timer_Attack >= ATTACK_DELAY && Quaternion.Angle(this.transform.rotation, target_rotation_y) < 5f)
 					{
 						timer_Attack = 0;
 						// 공격 애니메이션 실행. 지금은 즉발. 하지만 발사체를 사용할거면 이때 소환.
 						anim.SetTrigger("Attack");
-						switch (target_attack.tag)
-						{
-							case "Minion":
-								Attack_other<LSM_MinionCtrl>(target_attack);
-
-								break;
-							case "Turret":
-								Attack_other<LSM_TurretSc>(target_attack);
-								LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
-								if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
-								{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
-
-								break;
-							case "PlayerMinion":
-								Attack_other<PSH_PlayerFPSCtrl>(target_attack);
-								break;
-						}
+						StartCoroutine(Attack_Anim());				
 
 					}
 				}
@@ -378,6 +370,28 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		}
 
 	}
+
+	private IEnumerator Attack_Anim()
+	{
+		yield return new WaitForSeconds(0.5f);
+        switch (target_attack.tag)
+        {
+            case "Minion":
+                Attack_other<LSM_MinionCtrl>(target_attack);
+
+                break;
+            case "Turret":
+                Attack_other<LSM_TurretSc>(target_attack);
+                LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
+                if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
+                { CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
+
+                break;
+            case "PlayerMinion":
+                Attack_other<PSH_PlayerFPSCtrl>(target_attack);
+                break;
+        }
+    }
 
 	// Generic 변수를 사용하여 해당 구문을 함수화. IActor 인터페이스는 현재 player, turret, minion가 구현하고있음.
 	// 따라서 Damaged를 호출이 가능함.

@@ -5679,6 +5679,8 @@ MonoBehaviour:
   - {fileID: 4752272835364512656, guid: 33ac5eece6f0e474e91c126ba985a51c, type: 3}
   UIs:
   - {fileID: 7116788151370582358, guid: 6968fa7345637fb42a71b2011124a9bf, type: 3}
+  particles:
+  - {fileID: 1829163952570794, guid: 77cc4b117e817d84d9fe0c9400da91ab, type: 3}
 --- !u!4 &1850861373
 Transform:
   m_ObjectHideFlags: 0

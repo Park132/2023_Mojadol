@@ -349,6 +349,19 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         myPlayerCtrl = pctrl;
         ChangeTeamColor(playerIcon);
         state_p = MoonHeader.State_P_Minion.Normal;
+
+        // 초기화
+        canAttack = true;
+        canMove= true;
+        state = State.Normal;
+        handpos.transform.localEulerAngles = new Vector3(0, 0, 0);
+        movespeed = 5.0f;
+        attackRange.SetActive(false);
+        canUseQ = true;
+        canUseE = true;
+        canSee = true;
+        cameraCanMove = true;
+        invertCamera = false;
     }
 
     // LSM Damaged 추가.

@@ -18,6 +18,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 	protected float timer, timer_attack;				// 탐색, 공격에 사용될 타이머
 	protected float searchRadius;						// 탐색 범위
 	[SerializeField]protected GameObject target;        // 공격 타겟
+	protected I_Actor target_Actor;
 
 	protected Renderer[] bodies;  // 색상을 변경할 렌더러.
 
@@ -154,21 +155,21 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 
 
 					// 혹시 모를 오류를 방지하기 위하여 논리 변수를 확인.
-					if (dummy_bool)
+					if (dummy_bool && dummy_actor.team != this.stats.actorHealth.team)
 					{
-						// 터렛의 현재 팀과 타겟의 팀이 같은지 확인.
-						if (dummy_actor.team != this.stats.actorHealth.team)
+						float dummydistance = Vector3.Distance(transform.position, hit.transform.position);
+						// 가장 거리가 적은 타겟을 찾는 구문
+						if (minDistance > dummydistance)
 						{
-							float dummydistance = Vector3.Distance(transform.position, hit.transform.position);
-							// 가장 거리가 적은 타겟을 찾는 구문
-							if (minDistance > dummydistance)
-							{
-								target = hit.transform.gameObject;
-								minDistance = dummydistance;
-							}
+							target = hit.transform.gameObject;
+							minDistance = dummydistance;
 						}
 					}
 				}
+
+				if (!ReferenceEquals(target, null))
+				{target_Actor = target.GetComponent<I_Actor>();}
+
 
 				//if (!ReferenceEquals(target, null)) Debug.Log("Minion Searching!!");
 			}
@@ -183,7 +184,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 		if (timer_attack < ATTACKDELAY) timer_attack += Time.deltaTime;
 		if (!ReferenceEquals(target, null))
 		{
-			if (!target.activeSelf)
+			if (!target.activeSelf || target_Actor.GetTeam() == this.GetTeam())
 			{ target = null;}
 			else
 			{
@@ -191,6 +192,18 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 				{
 					//Debug.Log("Attack Minion!");
 					timer_attack = 0;
+
+					RaycastHit[] hits=Physics.RaycastAll(this.transform.position, (target.transform.position - this.transform.position).normalized, searchRadius, 1 << LayerMask.NameToLayer("Minion"));
+
+					foreach(RaycastHit hit in hits)
+					{
+						if (target == hit.transform.gameObject)
+						{
+							GameObject dummy = PoolManager.Instance.Get_Particles(0);
+							dummy.transform.position= hit.point;
+							break;
+						}
+					}
 
 					// 팀에 따라 제너릭 함수를 따로 사용.
 					switch (target.tag)

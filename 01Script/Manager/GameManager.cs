@@ -207,7 +207,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
 		{
 			
-			if (PhotonNetwork.CurrentRoom.PlayerCount == 2) // 일단 1명으로
+			if (PhotonNetwork.CurrentRoom.PlayerCount == 1) // 일단 1명으로
 			{
 				if (!onceStart)
 				{

@@ -20,14 +20,15 @@ public class PoolManager : MonoBehaviour
 	// 프리펩 저장 변수
 	public GameObject[] minions;		// # 0: LSM 폴더 내의 Minion1, 1: LSM 폴더 내의 Minion2
 	public GameObject[] playerMinions;	// # 0: PSH 폴더 내의 MeleeCharacter
-	public GameObject[] UIs;			// # 0: Icon 폴더 내의 display
+	public GameObject[] UIs;            // # 0: Icon 폴더 내의 display
+	public GameObject[] particles;
 	private GameObject alwaysEnableUI;
 
 	// 풀 저장 변수
 	public List<GameObject>[] poolList_Minion;
 	public List<GameObject>[] poolList_PlayerMinions;
 	public List<GameObject>[] poolList_UIs;
-
+	public List<GameObject>[] poolList_Particles;
 
 	private bool once;
 
@@ -49,7 +50,10 @@ public class PoolManager : MonoBehaviour
 		poolList_UIs = new List<GameObject>[UIs.Length];
 		for (int i = 0; i < poolList_UIs.Length;i++)
 			poolList_UIs[i] = new List<GameObject>();
-	}
+        poolList_Particles = new List<GameObject>[particles.Length];
+        for (int i = 0; i < poolList_Particles.Length; i++)
+            poolList_Particles[i] = new List<GameObject>();
+    }
 
     // 미니언의 종류에 맞는 미니언을 반환.
 	public GameObject Get_Minion(int index)
@@ -131,5 +135,28 @@ public class PoolManager : MonoBehaviour
 		}
 		return result;
 	}
-	
+
+    // 파티클 반환
+    public GameObject Get_Particles(int index)
+    {
+        if (index >= particles.Length || index < 0)
+            return null;
+        GameObject result = null;
+
+        foreach (GameObject item in poolList_Particles[index])
+        {
+            if (!item.activeSelf)
+            {
+                result = item;
+                item.SetActive(true);
+                break;
+            }
+        }
+        if (ReferenceEquals(result, null))
+        {
+            result = GameObject.Instantiate(particles[index], this.transform);
+            poolList_Particles[index].Add(result);
+        }
+        return result;
+    }
 }
