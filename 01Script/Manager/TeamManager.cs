@@ -18,21 +18,14 @@ public class TeamManager : MonoBehaviour
 
 	public int MaximumSpawnNum;			// 팀 별 최대 소환 가능 조직 수.
 	public int[] AttackPathNumber;		// 스포너의 스폰포인트 개수만큼 배열의 크기를 갖고있음. 스폰 포인트마다 설정된 미니언 생성 수
-	public int selectedNumber;			// 현재 플레이어가 설정한 공격로의 조직 수. 이를 이용하여 슬라이더의 최대 값을 조정.
+	public int selectedNumber;          // 현재 플레이어가 설정한 공격로의 조직 수. 이를 이용하여 슬라이더의 최대 값을 조정.
+	private bool once;
 
 	private void Start()
 	{
 		// 디버깅용
 		selectedNumber = 0;
 		MaximumSpawnNum = 6;
-
-		// 해당 팀의 플레이어들을 받아옴. 해당 플레이어를 받아오기전 GameManager에서 플레이어를 생성함을 가정하여 받아오는 중.
-		this_teamPlayers = new List<LSM_PlayerCtrl>();
-		GameObject[] dummyplayer = GameObject.FindGameObjectsWithTag("Player");
-		foreach (GameObject p in dummyplayer) {
-			LSM_PlayerCtrl pSC = p.GetComponent<LSM_PlayerCtrl>();
-			if (pSC.player.team == this.team) { this_teamPlayers.Add(pSC); }
-		}
 
 		// 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
 		GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
@@ -43,6 +36,23 @@ public class TeamManager : MonoBehaviour
 		// 마스터스포너에 존재하는 스폰포인트의 개수만큼 배열의 크기를 지정.
 		AttackPathNumber = new int[this_teamSpawner.spawnpoints.Length];
 	}
+
+    private void Update()
+    {
+		if (!once && GameManager.Instance.onceStart)
+			Start_function();
+    }
+    private void Start_function()
+	{
+        // 해당 팀의 플레이어들을 받아옴. 해당 플레이어를 받아오기전 GameManager에서 플레이어를 생성함을 가정하여 받아오는 중.
+        this_teamPlayers = new List<LSM_PlayerCtrl>();
+        GameObject[] dummyplayer = GameObject.FindGameObjectsWithTag("Player");
+        foreach (GameObject p in dummyplayer)
+        {
+            LSM_PlayerCtrl pSC = p.GetComponent<LSM_PlayerCtrl>();
+            if (pSC.player.team == this.team) { this_teamPlayers.Add(pSC); }
+        }
+    }
 
 	// PathUI의 슬라이더 최대 값을 조정하는 함수.
 	public void PathUI_ChangeMaxValue()	

@@ -14,7 +14,11 @@ public class LSM_AttackPathUI : MonoBehaviour
 	private Camera mapcam;                  // 맵을 볼때 사용되는 카메라
 	private bool once;
 
-	private void Start_function()
+    private void Awake()
+    {
+        sl = this.GetComponentInChildren<Slider>();
+    }
+    private void Start_function()
 	{
 		//num.text = "0";
 		once = true;

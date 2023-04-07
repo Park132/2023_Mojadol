@@ -41,7 +41,6 @@ public class LSM_SpawnPointSc : MonoBehaviour
 		// 플레이어가 조작할 UI
 		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
 		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
-		if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) pathUI.SetActive(false);
 	}
 
 	private void Start_function()
@@ -55,9 +54,9 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			Paths[i].GetComponent<LSM_AttackPath>().SetVariable(this.gameObject, number);
 			if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) Paths[i].SetActive(false);
 		}
+        if (parentSpawnerSC.team != GameManager.Instance.mainPlayer.player.team) pathUI.SetActive(false);
 
-
-	}
+    }
 
 	//public void Click(bool change) { isClicked = change; }
 

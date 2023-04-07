@@ -18,10 +18,10 @@ public class LSM_NexusSC : LSM_TurretSc
 
 	}
 
-	public override int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+	public override void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		if (t == this.stats.actorHealth.team)
-			return this.stats.actorHealth.health;
+			return;
 		this.stats.actorHealth.health -= dam;
 		StartCoroutine(DamagedEffect());
 		if (this.stats.actorHealth.health <= 0)
@@ -29,7 +29,7 @@ public class LSM_NexusSC : LSM_TurretSc
 			GameManager.Instance.GameEndingProcess(this.stats.actorHealth.team);
 		}
 
-		return this.stats.actorHealth.health;
+		return;
 	}
 	protected override void DestroyProcessing(GameObject other)
 	{

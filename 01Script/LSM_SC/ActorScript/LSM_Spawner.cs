@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Photon.Pun;
+using Photon.Realtime;
+using UnityEngine.Rendering;
 
 // 팀 별 마스터 스포너!!
 public class LSM_Spawner : MonoBehaviour
@@ -28,6 +30,8 @@ public class LSM_Spawner : MonoBehaviour
 	//public byte num_attack;
 	public float delay;
 
+	private PhotonView photonView;
+
 	private void Awake()
 	{
 		state = MoonHeader.SpawnerState.None;
@@ -49,17 +53,19 @@ public class LSM_Spawner : MonoBehaviour
 		wave_Minions_Num = 0;
 		selectedNum = 0;
 		MAX_NUM_MINION = 0;
-		
+		photonView = this.GetComponent<PhotonView>();
 	}
 
 	private void Update()
 	{
-		CheckingSpawn();
-		
+		//if (!PhotonNetwork.IsMasterClient)
+			//return;
+		//CheckingSpawn();
+		if (GameManager.Instance.onceStart)
+		{ CheckingSpawn(); }
 	}
 
 	
-
 	// 현재 스포너의 상태를 확인하며 스포너의 동작을 하는 함수
 	private void CheckingSpawn()
 	{
@@ -105,7 +111,8 @@ public class LSM_Spawner : MonoBehaviour
 							// 미니언 세팅
 							LSM_MinionCtrl dummy_ctrl = dummy.GetComponent<LSM_MinionCtrl>();
 							LSM_SpawnPointSc dummy_point = spawnpoints[i].path.GetComponent<LSM_SpawnPointSc>();
-							dummy_ctrl.MonSetting(dummy_point.Ways, team, this.GetComponent<LSM_Spawner>(), monT);
+							dummy_ctrl.MonSetting(dummy_point, team, this.GetComponent<LSM_Spawner>(), monT);
+
 							dummy_ctrl.minionBelong = dummy_point.number;
 							//dummy_ctrl.minionType = spawnpoints[i].summon_ % 2;	//미니언의 타입을 결정
 

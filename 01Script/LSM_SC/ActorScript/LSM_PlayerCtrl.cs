@@ -172,7 +172,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
                 Debug.DrawRay(MainCam.transform.position, MainCam.transform.forward * 10, Color.green, 0.1f);
                 if (Physics.Raycast(MainCam.transform.position, MainCam.transform.forward, out hit, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret")))
                 {
-                    Debug.Log("Player Searching! : " +hit.transform.name);
+                    //Debug.Log("Player Searching! : " +hit.transform.name);
                     if (!ReferenceEquals(hit.transform.gameObject,playerWatchingTarget))
                     {
                         playerWatchingTarget = hit.transform.gameObject;

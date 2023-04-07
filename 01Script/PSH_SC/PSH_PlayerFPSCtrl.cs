@@ -352,10 +352,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     }
 
     // LSM Damaged 추가.
-    public int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+    public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
         if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
-            return 0;
+            return;
         actorHealth.health -= dam;
         // 넉백이 되는 방향벡터를 구함.
         //Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one - Vector3.up).normalized;
@@ -363,7 +363,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         //rigid.AddForce(direction_knock * scale_knock);
         if (this.actorHealth.health <= 0)
             StartCoroutine(DeadProcessing(other));
-        return (int)actorHealth.health;
+        return;
     }
     // LSM DeadProcessing
     public IEnumerator DeadProcessing(GameObject other)

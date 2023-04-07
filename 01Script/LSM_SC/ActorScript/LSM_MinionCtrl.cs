@@ -22,6 +22,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	
 	// 아래 필요한 컴포넌트를 변수화
 	private Rigidbody rigid;
+	[SerializeField]private Animator anim;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
 	private IEnumerator navenable_IE;   // StopCorutine을 사용하기 위한 변수
@@ -43,7 +44,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	public bool debugging_minion; // 디버깅 확인용...
 
 	// 다시 활성화할 경우 Obstacle 비활성화, Agent 활성화
-	private void OnEnable()
+	void OnEnable()
 	{
 		nav_ob.enabled = false;
 		nav.enabled = false;
@@ -56,6 +57,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		rigid = this.GetComponent<Rigidbody>();
 		nav = this.GetComponent<NavMeshAgent>();
 		nav_ob = this.GetComponent<NavMeshObstacle>();
+		anim = this.GetComponentInChildren<Animator>();
 		// 초기화
 		timer_Searching = 0;
 		timer_Attack = 0;
@@ -76,6 +78,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		//searchRadius = 10f;
 		//minAtkRadius = 9f;
 		//maxAtkRadius = 13f;
+
 	}
 	private void Start()
 	{
@@ -106,6 +109,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 			SearchingTarget();
 			Attack();
 			MyDestination();
+			AnimationSetting();
 		}
 
 
@@ -114,7 +118,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 	// 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
 	// 모든 변수 초기화
-	public void MonSetting(GameObject[] way, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
+	public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
 	{
 		nav_ob.enabled = false;
 		nav.enabled = true;
@@ -126,7 +130,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		is_attackFinish_Act = false;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 4f, 3, way, t, typeM);
+		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
@@ -292,6 +296,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 원래 공격할때 NavAgent를 비활성화, NavObstacle을 활성화 하였으나, 이를 실행하면 NavMesh를 통한 길찾기를 실시간으로 다시 반복하는 문제가있음.
 	// 그러므로 NavAgent의 Priority를 하강시키는 것으로 해당 미니언을 밀치지 않게 설정.
 	// 또 다시 변경... NavObstacle을 사용. 
+	
 	private void Attack()
 	{
 		if (timer_Attack <= ATTACK_DELAY) { timer_Attack += Time.deltaTime; }
@@ -331,9 +336,11 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				// Agent 및 Obstacle을 동시에 사용한다면 오류 발생 -> 자신 또한 장애물이라 생각하며 자신이 있는 길을 피하려는 모순
 				// 그렇기에 Obstacle과 Agent를 서로 키고 끄고를 하는 것임. 허나 비활성화한다고 바로 비활성화되지는 않은듯함.
 				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함. 간단하게 해결하기 위하여 변환되는 순간 속도를 0으로 설정.
-				if (dummy_cant_attack && !nav.enabled) {Debug.Log("cant attack!"); //StopCoroutine(navenable_IE);
+				if (dummy_cant_attack && !nav.enabled) {
+					//Debug.Log("cant attack!"); //StopCoroutine(navenable_IE);
 					navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
-				else if (!dummy_cant_attack && nav.enabled) {Debug.Log("can attack!!"); //StopCoroutine(navenable_IE); 
+				else if (!dummy_cant_attack && nav.enabled) {
+					//Debug.Log("can attack!!"); //StopCoroutine(navenable_IE); 
 					navenable_IE = NavEnable(false); StartCoroutine(navenable_IE); rigid.velocity = Vector3.zero; } //여기 오류. 아마도 공격이 끝나고 계속 불러오는듯.
 
 				// 만약 공격이 가능하다면 공격하는 구문
@@ -346,6 +353,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 					{
 						timer_Attack = 0;
 						// 공격 애니메이션 실행. 지금은 즉발. 하지만 발사체를 사용할거면 이때 소환.
+						anim.SetTrigger("Attack");
 						switch (target_attack.tag)
 						{
 							case "Minion":
@@ -353,7 +361,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 								break;
 							case "Turret":
-								LSM_TurretSc dummy_Sc = Attack_other<LSM_TurretSc>(target_attack);
+								Attack_other<LSM_TurretSc>(target_attack);
+								LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
 								if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
 								{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
 
@@ -372,23 +381,23 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 	// Generic 변수를 사용하여 해당 구문을 함수화. IActor 인터페이스는 현재 player, turret, minion가 구현하고있음.
 	// 따라서 Damaged를 호출이 가능함.
-	private T Attack_other<T>(GameObject other) where T : I_Actor {
+	private void Attack_other<T>(GameObject other) where T : I_Actor {
 		T Script = other.GetComponent<T>();
 		Script.Damaged(this.stats.actorHealth.Atk, this.transform.position, this.stats.actorHealth.team, this.gameObject);
-		return Script;
 	}
 
 	
 	// 미니언이 데미지를 받을 때 사용하는 함수.
 	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
 	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐. // 현재 넉백을 제외하고있음.
-	public int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+
+	public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		// 죽음 혹은 무적 상태일 경우 데미지를 입지않음. 바로 return
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
-			return stats.actorHealth.health;
+			return;
 		else if (t == this.stats.actorHealth.team)
-			return -1;
+			return;
 
 		stats.actorHealth.health -= dam;
 		StartCoroutine(DamagedEffect(origin));
@@ -399,7 +408,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		{
 			StartCoroutine(DeadProcessing(other));
 		}
-		return stats.actorHealth.health;
+		return;
 	}
 
 	// 체력이 0 이하일 경우 호출.
@@ -486,8 +495,10 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		}
 	}
 
-	// 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
-	public void ChangeTeamColor() { ChangeTeamColor(icon); }
+	// 아이콘 및 몸체 색 변경.
+    #region ChangeTeamColors
+    // 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
+    public void ChangeTeamColor() { ChangeTeamColor(icon); }
 
 	// 시작 혹은 생성할 때 미니언의 아이콘 등의 색상을 변경.
     public void ChangeTeamColor(GameObject obj)
@@ -510,9 +521,10 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		//this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
 		// Scene 즉 게임 화면에서 팀마다 색상이 변하는 것은... 나중에 파티클이나 이펙트로 하는건 어떤지? 이에 대한 내용은 일단 유지... 허나 데미지 받으면 흰색.
 	}
+    #endregion
 
-	// 플레이어가 해당 미니언에게 강령
-	public void PlayerConnect()
+    // 플레이어가 해당 미니언에게 강령
+    public void PlayerConnect()
 	{
 		PlayerSelect = true;
 
@@ -544,7 +556,19 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		this.icon.GetComponent<Renderer>().material.color = Color.green;
 	}
 
-	public int GetHealth(){return this.stats.actorHealth.health;}
+	// 애니메이션 관련 변수를 변경해주는 함수
+	private void AnimationSetting()
+	{
+		if (nav.enabled)
+			anim.SetFloat("Velocity", Vector3.Magnitude(nav.velocity));
+		else
+			anim.SetFloat("Velocity", 0f);
+	}
+
+	// I_Actor 구현 함수
+    #region I_Actor
+    public int GetHealth(){return this.stats.actorHealth.health;}
 	public int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
 	public MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
+    #endregion
 }

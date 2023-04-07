@@ -81,10 +81,10 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 
 	// I_Actor 인터페이스에 포함되어잇는 함수.
 	// 공격을 받을 시 데미지를 입음.
-	public virtual int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+	public virtual void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		if (t == this.stats.actorHealth.team)
-			return this.stats.actorHealth.health;
+			return;
 		this.stats.actorHealth.health -= dam;
 		StartCoroutine(DamagedEffect());
 
@@ -95,7 +95,7 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 			ChangeColor();
 			ChangeColor(bodies[0].gameObject);
 		}
-		return this.stats.actorHealth.health;
+		return;
 	}
 
 
@@ -216,7 +216,8 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 	private void Attack_Actor<T>(GameObject obj) where T : I_Actor
 	{
 		T script = obj.GetComponent<T>();
-		int remain_health = script.Damaged(this.stats.actorHealth.Atk, transform.position, this.stats.actorHealth.team, this.gameObject);
+		script.Damaged(this.stats.actorHealth.Atk, transform.position, this.stats.actorHealth.team, this.gameObject);
+		int remain_health = script.GetHealth();
 		if (remain_health <= 0)
 			target = null;
 	}

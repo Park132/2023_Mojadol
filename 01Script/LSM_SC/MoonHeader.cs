@@ -96,7 +96,7 @@ public class MoonHeader : MonoBehaviour
 // 인터페이스.
 public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
-	int Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
+	void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
 	public int GetHealth();
 	public int GetMaxHealth();
 	public MoonHeader.Team GetTeam();

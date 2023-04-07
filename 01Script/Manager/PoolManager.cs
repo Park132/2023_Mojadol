@@ -1,6 +1,9 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+
 
 public class PoolManager : MonoBehaviour
 {
@@ -25,28 +28,16 @@ public class PoolManager : MonoBehaviour
 	public List<GameObject>[] poolList_PlayerMinions;
 	public List<GameObject>[] poolList_UIs;
 
+
+	private bool once;
+
 	private void Start()
 	{
 		alwaysEnableUI = GameObject.Find("AlwaysEnableUI");
-		/*
-		for (int i = 0; i < minions.Length; i++)
-		{
-			for (int j = 0; j < 50; j++)
-			{
-				GameObject dummy = Get_Minion(i);
-			}
-		}
-		for (int i = 0; i < minions.Length; i++)
-		{
-			for (int j = 0; j < 50; j++)
-			{
-				poolList_Minion[i][j].SetActive(false);
-			}
-		}*/
 	}
 
-	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
-	private void Awake_Function()
+    // 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
+    private void Awake_Function()
 	{
 		// 미니언 종류의 개수만큼 배열의 크기를 지정.
 		poolList_Minion = new List<GameObject>[minions.Length];
@@ -60,7 +51,7 @@ public class PoolManager : MonoBehaviour
 			poolList_UIs[i] = new List<GameObject>();
 	}
 
-	// 미니언의 종류에 맞는 미니언을 반환.
+    // 미니언의 종류에 맞는 미니언을 반환.
 	public GameObject Get_Minion(int index)
 	{
 		if (minions.Length <= index || index < 0)
@@ -82,6 +73,8 @@ public class PoolManager : MonoBehaviour
 		if (ReferenceEquals(result, null))
 		{
 			result = GameObject.Instantiate(minions[index], this.transform);
+			//result = PhotonNetwork.Instantiate(minions[index].name, Vector3.zero, Quaternion.identity);
+			//result.transform.parent = this.transform;
 			poolList_Minion[index].Add(result);
 		}
 
@@ -89,7 +82,7 @@ public class PoolManager : MonoBehaviour
 	}
 
 	// 플레이어 미니언 반환
-	public GameObject Get_PlayerMinion(int index)
+	[PunRPC]public GameObject Get_PlayerMinion(int index)
 	{
 		if (index >= playerMinions.Length || index < 0)
 			return null;
@@ -108,6 +101,8 @@ public class PoolManager : MonoBehaviour
 		if (ReferenceEquals(result, null))
 		{
 			result = GameObject.Instantiate(playerMinions[index], this.transform);
+			//result = PhotonNetwork.Instantiate(playerMinions[index].name,Vector3.zero, Quaternion.identity);
+			//result.transform.parent = this.transform;
 			poolList_PlayerMinions[index].Add(result);
 		}
 		return result;

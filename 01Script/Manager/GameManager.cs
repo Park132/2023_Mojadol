@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 	public GameObject[] wayPoints;		// 씬에 존재하는 모든 "웨이포인트"의 모음
 
 	public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
-	public GameObject selectAttackPathUI, mapUI, gameUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
+	public GameObject selectAttackPathUI, mapUI, gameUI, loadingUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
 															// gameUI: 게임 진행 중 표시되는 UI
 	public LSM_GameUI gameUI_SC;
 
@@ -104,10 +104,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 	public override void OnJoinedRoom()
 	{
 		base.OnJoinedRoom();
-		if(!PhotonNetwork.IsMasterClient)
-        {
-			mainPlayer=PhotonNetwork.Instantiate("Playerobj", this.transform.position, this.transform.rotation).GetComponent<LSM_PlayerCtrl>();
-		}
+		loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Connected!!";
+		//if(!PhotonNetwork.IsMasterClient)
+        //{
+		mainPlayer=PhotonNetwork.Instantiate("Playerobj", this.transform.position, this.transform.rotation).GetComponent<LSM_PlayerCtrl>();		// LSM -> 마스터 클라이언트 또한 들어올때 플레이어 오브젝트 소환.
+		//}
 	}
 
 	public override void OnPlayerEnteredRoom(Player newPlayer)
@@ -130,7 +131,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
 	private void Awake_Function()
 	{
-
 		// 게임매니저에 존재하는 TimerSC를 받아옴.
 		timerSc = this.GetComponent<LSM_TimerSc>();
 
@@ -151,8 +151,10 @@ public class GameManager : MonoBehaviourPunCallbacks
 
 		wayPoints = GameObject.FindGameObjectsWithTag("WayPoint");
 		screen = GameObject.Find("Screen").GetComponent<Image>();
-		screen.transform.SetAsLastSibling();	// 스크린이 다른 UI를 가리도록 가장 마지막에 배치하는 코드.
-		GameObject[] teammdummy = GameObject.FindGameObjectsWithTag("TeamManager");
+		screen.transform.SetAsLastSibling();    // 스크린이 다른 UI를 가리도록 가장 마지막에 배치하는 코드.
+        loadingUI = GameObject.Find("Loading");
+		loadingUI.transform.SetAsLastSibling();
+        GameObject[] teammdummy = GameObject.FindGameObjectsWithTag("TeamManager");
 		teamManagers = new TeamManager[teammdummy.Length];
 		foreach (GameObject t in teammdummy)
 		{ teamManagers[(int)t.GetComponent<TeamManager>().team] = t.GetComponent<TeamManager>(); }
@@ -211,7 +213,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 				{
 					onceStart = true;
 					Start_function();
-
+					loadingUI.SetActive(false);
 				}
 				Game();
 				DisplayEnable();
