@@ -14,8 +14,10 @@ public class LSM_GameUI : MonoBehaviour
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
+    public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
     
     private I_Actor player_ac, target_ac;
+    private PSH_PlayerFPSCtrl playerCtrl;
     private GameObject target_obj;
 
 
@@ -36,7 +38,7 @@ public class LSM_GameUI : MonoBehaviour
         target_obj = obj;
         target_ac = obj.GetComponent<I_Actor>();
     }
-    public void playerHealth(I_Actor a) { playerUI.SetActive(true);  player_ac = a; }
+    public void playerHealth(PSH_PlayerFPSCtrl ctrl) { playerUI.SetActive(true);  player_ac = ctrl.GetComponent<I_Actor>(); playerCtrl = ctrl; }
     // 모든 캐릭터들이 갖고있는 공통적인 것. I_Actor를 받아와 구문을 최소화.
 
 
@@ -51,6 +53,10 @@ public class LSM_GameUI : MonoBehaviour
         }
 
         if (playerUI.activeSelf)
-        { playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100; }
+        { 
+            playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100;
+            QSkillCool.color = new Color32(0, 0, 0, (byte)(playerCtrl.IsCanUseQ() ? 0 : 150));
+            ESkillCool.color = new Color32(0, 0, 0, (byte)(playerCtrl.IsCanUseE() ? 0 : 150));
+        }
     }
 }

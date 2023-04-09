@@ -357,7 +357,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
         player_dummy.playerCamera = MainCam.GetComponent<Camera>();
         mapsubcam_target = player_dummy.camerapos;
         GameManager.Instance.gameUI.SetActive(true);
-        GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl.GetComponent<I_Actor>());
+        GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl);
 
         subTarget_minion.transform.gameObject.SetActive(false);
         StartCoroutine(GameManager.Instance.ScreenFade(true));

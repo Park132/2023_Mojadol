@@ -307,10 +307,11 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		if (!ReferenceEquals(target_attack, null))
 		{
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
-			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking 
-				|| stats.state == MoonHeader.State.Dead 
-				|| target_actor.GetTeam() == this.stats.actorHealth.team)
-			{Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
+			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking
+				|| stats.state == MoonHeader.State.Dead)
+			{ Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
+			else if (target_actor.GetTeam() == this.stats.actorHealth.team && target_attack.CompareTag("Turret"))
+			{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); }
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
@@ -340,31 +341,37 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				// Agent 및 Obstacle을 동시에 사용한다면 오류 발생 -> 자신 또한 장애물이라 생각하며 자신이 있는 길을 피하려는 모순
 				// 그렇기에 Obstacle과 Agent를 서로 키고 끄고를 하는 것임. 허나 비활성화한다고 바로 비활성화되지는 않은듯함.
 				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함. 간단하게 해결하기 위하여 변환되는 순간 속도를 0으로 설정.
-				if (dummy_cant_attack && !nav.enabled) {
-					//Debug.Log("cant attack!"); //StopCoroutine(navenable_IE);
-					navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
-				else if (!dummy_cant_attack && nav.enabled) {
-					//Debug.Log("can attack!!"); //StopCoroutine(navenable_IE); 
-					navenable_IE = NavEnable(false); StartCoroutine(navenable_IE); rigid.velocity = Vector3.zero; } //여기 오류. 아마도 공격이 끝나고 계속 불러오는듯.
+
+				if (dummy_cant_attack && !nav.enabled)
+				{
+					navenable_IE = NavEnable(true); StartCoroutine(navenable_IE);
+				}
+				else if (!dummy_cant_attack && nav.enabled)
+				{
+					navenable_IE = NavEnable(false); StartCoroutine(navenable_IE); rigid.velocity = Vector3.zero;
+				} //여기 오류. 아마도 공격이 끝나고 계속 불러오는듯.
 
 				// 만약 공격이 가능하다면 공격하는 구문
 				if (!dummy_cant_attack)
 				{
 					// y축 rotation만을 변경할 것임.
-					Quaternion target_rotation = Quaternion.LookRotation(target_attack.transform.position - this.transform.position);
+					Quaternion target_rotation = Quaternion.LookRotation((target_attack.transform.position - this.transform.position).normalized);
+
+
 					Vector3 target_euler = Quaternion.RotateTowards(this.transform.rotation, target_rotation, 270 * Time.deltaTime).eulerAngles;
 					//Vector3 target_euler = target_rotation.eulerAngles;
 					this.transform.rotation = Quaternion.Euler(0, target_euler.y, 0);
 
-                    Quaternion target_rotation_y = Quaternion.Euler(0, target_rotation.y, 0);
-                    if (timer_Attack >= ATTACK_DELAY && Quaternion.Angle(this.transform.rotation, target_rotation_y) < 5f)
+
+					if (timer_Attack >= ATTACK_DELAY && Mathf.Abs(this.transform.rotation.eulerAngles.y - target_rotation.eulerAngles.y) < 10f)
 					{
 						timer_Attack = 0;
 						// 공격 애니메이션 실행. 지금은 즉발. 하지만 발사체를 사용할거면 이때 소환.
 						anim.SetTrigger("Attack");
-						StartCoroutine(Attack_Anim());				
+						StartCoroutine(Attack_Anim());
 
 					}
+
 				}
 			}
 		}
@@ -374,23 +381,26 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	private IEnumerator Attack_Anim()
 	{
 		yield return new WaitForSeconds(0.5f);
-        switch (target_attack.tag)
-        {
-            case "Minion":
-                Attack_other<LSM_MinionCtrl>(target_attack);
+		if (!ReferenceEquals(target_attack, null))
+		{
+			switch (target_attack.tag)
+			{
+				case "Minion":
+					Attack_other<LSM_MinionCtrl>(target_attack);
 
-                break;
-            case "Turret":
-                Attack_other<LSM_TurretSc>(target_attack);
-                LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
-                if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
-                { CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
+					break;
+				case "Turret":
+					Attack_other<LSM_TurretSc>(target_attack);
+					LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
+					if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
+					{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
 
-                break;
-            case "PlayerMinion":
-                Attack_other<PSH_PlayerFPSCtrl>(target_attack);
-                break;
-        }
+					break;
+				case "PlayerMinion":
+					Attack_other<PSH_PlayerFPSCtrl>(target_attack);
+					break;
+			}
+		}
     }
 
 	// Generic 변수를 사용하여 해당 구문을 함수화. IActor 인터페이스는 현재 player, turret, minion가 구현하고있음.

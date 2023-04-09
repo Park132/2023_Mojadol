@@ -420,4 +420,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     public int GetHealth() { return this.actorHealth.health; }
     public int GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
+
+    public bool IsCanUseE() { return canUseE; }
+    public bool IsCanUseQ() { return canUseQ; }
 }
