@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using Photon.Pun;
 
 /* 2023_03_20_HSH_수정사항 : 터렛이 팀에 종속 시 Scene에서도 Color가 변경되도록 함.
  * ㄴ 터렛 피격 시 분홍색으로 하이라이트(DamagedEffect())
  */
 
 // 포탑에 대하여 간단하게 구현
-public class LSM_TurretSc : MonoBehaviour, I_Actor
+public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 {
 	// 포탑의 탐색, 공격에 대한 딜레이 상수화 혹시 모를 변경에 대비하여 const는 생략
 	protected float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
@@ -24,6 +25,25 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 
 	public int TurretBelong;						// 터렛의 위치
 													// # 터렛의 경로에 따라서 번호를 다르게 설정. 해당 경로와 동일하게 숫자가 같도록 설정.
+
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+		if(stream.IsWriting)
+        {
+			stream.SendNext(stats.actorHealth.maxHealth);
+			stream.SendNext(stats.actorHealth.health);
+			stream.SendNext(stats.actorHealth.team);
+			stream.SendNext(stats.actorHealth.Atk);
+
+		}
+		else
+        {
+			this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
+			this.stats.actorHealth.health = (int)stream.ReceiveNext();
+			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
+			this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
+		}
+    }
 
 	protected virtual void Start()
 	{
@@ -71,6 +91,8 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 
 	protected void Update()
 	{
+		if (!PhotonNetwork.IsMasterClient)
+			return;
 		// 게임 중일때만 실행되도록 설정
 		if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
 		{
@@ -97,6 +119,16 @@ public class LSM_TurretSc : MonoBehaviour, I_Actor
 			ChangeColor(bodies[0].gameObject);
 		}
 		return;
+		
+	}
+
+	[PunRPC]protected void Damaged_RPC(int dam)
+    {
+		this.stats.actorHealth.health -= dam;
+		if (this.stats.actorHealth.health <= 0)
+        {
+
+        }
 	}
 
 

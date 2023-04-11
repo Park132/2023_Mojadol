@@ -64,11 +64,15 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			stream.SendNext(state);
 			stream.SendNext(gameState);
+			Debug.Log($"stream is Writing : {state}");
+			Debug.Log($"stream is Writing : {gameState}");
 		}
 		else
 		{
 			this.state = (MoonHeader.ManagerState)stream.ReceiveNext();
 			this.gameState = (MoonHeader.GameState)stream.ReceiveNext();
+			Debug.Log($"stream is Reading : {state}");
+			Debug.Log($"stream is Reading : {gameState}");
 		}
 	}
 	#endregion

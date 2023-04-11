@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
+using Photon.Pun;
+
 /* 2023_03_20_HSH_수정사항 : 미니언이 소속된 팀에 따라 Scene에서도 Color가 변경되도록 함(CHangeTeamColor).
  * ㄴ 미니언 피격 시 분홍색으로 하이라이트 + 넉백 추가(DamagedEffect)
  *
@@ -10,19 +12,19 @@ using UnityEngine.AI;
 
 // 미니언 스크립트.
 // 후에 근접, 원거리 등의 미니언들은 해당 스크립트를 상속받고 할 생각임.
-public class LSM_MinionCtrl : MonoBehaviour, I_Actor
+public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 {
-	public MoonHeader.S_MinionStats stats;			// 미니언의 상태에 대한 구조체.
-	public LSM_Spawner mySpawner;					// 미니언의 마스터 스포너.
-	private bool PlayerSelect, once_changeRound;	// PlayerSelect: 플레이어가 해당 미니언에 강령하였는지, once_changeRound: 라운드 변경 시 한번만 실행되도록.
-	[SerializeField] private int way_index;			// 현재 미니언에 저장된 경로 중 몇번째를 목표로 삼는지.
+	public MoonHeader.S_MinionStats stats;          // 미니언의 상태에 대한 구조체.
+	public LSM_Spawner mySpawner;                   // 미니언의 마스터 스포너.
+	private bool PlayerSelect, once_changeRound;    // PlayerSelect: 플레이어가 해당 미니언에 강령하였는지, once_changeRound: 라운드 변경 시 한번만 실행되도록.
+	[SerializeField] private int way_index;         // 현재 미니언에 저장된 경로 중 몇번째를 목표로 삼는지.
 
 	// 타겟 찾기, 공격 딜래이 등을 상수화
 	const float MAXIMUMVELOCITY = 3f, SEARCHTARGET_DELAY = 1f, ATTACK_DELAY = 2f;
-	
+
 	// 아래 필요한 컴포넌트를 변수화
 	private Rigidbody rigid;
-	[SerializeField]private Animator anim;
+	[SerializeField] private Animator anim;
 	private NavMeshAgent nav;
 	private NavMeshObstacle nav_ob;
 	private IEnumerator navenable_IE;   // StopCorutine을 사용하기 위한 변수
@@ -30,19 +32,42 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 	private Renderer[] bodies;  // 색상을 변경할 렌더러.
 
-	public GameObject CameraPosition;		// 카메라를 초기화할 때 사용할 변수.
-	private GameObject icon, playerIcon;	// 미니언에 존재하는 아이콘, 플레이어 아이콘
+	public GameObject CameraPosition;       // 카메라를 초기화할 때 사용할 변수.
+	private GameObject icon, playerIcon;    // 미니언에 존재하는 아이콘, 플레이어 아이콘
 
 	[SerializeField] protected GameObject target_attack;    // 미니언의 타겟
 	protected I_Actor target_actor;
 	[SerializeField]
-	protected float searchRadius, minAtkRadius, maxAtkRadius;	// 미니언의 탐색 범위, 최소 공격 가능 거리, 최대 공격 가능 거리
-	private float timer_Searching, timer_Attack;				// 탐색과 공격의 타이머 변수.
+	protected float searchRadius, minAtkRadius, maxAtkRadius;   // 미니언의 탐색 범위, 최소 공격 가능 거리, 최대 공격 가능 거리
+	private float timer_Searching, timer_Attack;                // 탐색과 공격의 타이머 변수.
 
 	public int minionBelong;    //Spawner.cs에서 자기가 몇 번 공격로 소속인지 받아옴
 	public int minionType;  //0이면 원거리, 1이면 근거리 미니언
 
 	public bool debugging_minion; // 디버깅 확인용...
+
+	#region IPUnalsdfjaow
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (stream.IsWriting)
+		{
+			stream.SendNext(stats.actorHealth.maxHealth);
+			stream.SendNext(stats.actorHealth.health);
+			stream.SendNext(stats.actorHealth.team);
+			stream.SendNext(stats.actorHealth.Atk);
+			stream.SendNext(stats.state);
+		}
+		else
+		{
+			this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
+			this.stats.actorHealth.health = (int)stream.ReceiveNext();
+			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
+			this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
+			this.stats.state = (MoonHeader.State)stream.ReceiveNext();
+		}
+	}
+
+	#endregion
 
 	// 다시 활성화할 경우 Obstacle 비활성화, Agent 활성화
 	void OnEnable()
@@ -87,8 +112,10 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	}
 	private void LateUpdate()
 	{
+		if (!PhotonNetwork.IsMasterClient) return;
+
 		// 현재 게임의 진행 상태가 어떻게 되는지 확인 후, 상태를 변경.
-		if (once_changeRound&&GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
+		if (once_changeRound && GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
 		{
 			// 공격하고있지 않으며, Agent가 활성화되어있을 때
 			if (nav.enabled && stats.state != MoonHeader.State.Attack)
@@ -105,7 +132,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		}
 
 		// 살아있으며, 스포너 초기화가 되어있고, 현재 게임중인 상태라면 아래 함수들을 실행.
-		if (stats.state != MoonHeader.State.Dead && !ReferenceEquals(mySpawner, null) && once_changeRound )
+		if (stats.state != MoonHeader.State.Dead && !ReferenceEquals(mySpawner, null) && once_changeRound)
 		{
 			SearchingTarget();
 			Attack();
@@ -132,6 +159,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
 		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
+		photonView.RPC("MonSetting_RPC", RpcTarget.All, 10, 3, (int)t);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
@@ -150,14 +178,25 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 
 		// 아이콘 및 몸통 색 팀의 색상에 맞게 변화
 		ChangeTeamColor();
-		ChangeTeamColor(playerIcon);
-		ChangeTeamColor(bodies[0].gameObject);
 	}
+
+	// 체력, 공격력, 팀
+	[PunRPC]private void MonSetting_RPC(int mh, int atk, int t)
+    {
+		this.stats.actorHealth.Atk = atk;
+		this.stats.actorHealth.maxHealth = mh;
+		this.stats.actorHealth.health = mh;
+		this.stats.actorHealth.team = (MoonHeader.Team)t;
+		ChangeTeamColor();
+    }
+
 
 	// 웨이포인트 트리거에 닿았다면 발동하는 함수.
 	// 해당 웨이포인트와 미니언의 현재 목적지가 같은지 확인하는 함수 구현.
 	private void OnTriggerEnter(Collider other)
 	{
+		if (!PhotonNetwork.IsMasterClient) return;
+
 		if (other.CompareTag("WayPoint") && stats.state != MoonHeader.State.Dead)
 		{
 			CheckingTurretTeam(other.transform.gameObject);
@@ -247,7 +286,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				// 
 				//else if (ReferenceEquals(target_attack,null) && nav.enabled && nav.isStopped) { nav.isStopped = false; }
 				// 타겟을 찾지 못하였으며, NavMeshAgent가 비활성화되어있을경우, Obstacle 비활성화, Agent 활성화
-				else if (ReferenceEquals(target_attack,null) && !nav.enabled) {StopCoroutine(navenable_IE); navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
+				else if (ReferenceEquals(target_attack, null) && !nav.enabled) { StopCoroutine(navenable_IE); navenable_IE = NavEnable(true); StartCoroutine(navenable_IE); }
 			}
 		}
 
@@ -256,7 +295,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		{
 			// Agent의 목적지를 타겟의 위치로 설정.
 			nav.destination = target_attack.transform.position;
-			
+
 
 			// 레이캐스트를 쏴서 몸체에 가까이 있는지 확인.
 			RaycastHit[] hits = Physics.RaycastAll(this.transform.position, (target_attack.transform.position - this.transform.position).normalized, maxAtkRadius);
@@ -281,7 +320,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 			{
 				//Debug.Log("target setting null. : distance : " + Vector3.Distance(target_attack.transform.position, this.transform.position) + "target : " +target_attack.name);
 				Debug.Log("AttackFinish in Far away");
-				StartCoroutine(AttackFin()); 
+				StartCoroutine(AttackFin());
 			}
 
 			// 만약 타겟과의 거리가 최소 공격 가능 거리보다 적다면 공격 함수 호출.
@@ -298,11 +337,11 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	// 원래 공격할때 NavAgent를 비활성화, NavObstacle을 활성화 하였으나, 이를 실행하면 NavMesh를 통한 길찾기를 실시간으로 다시 반복하는 문제가있음.
 	// 그러므로 NavAgent의 Priority를 하강시키는 것으로 해당 미니언을 밀치지 않게 설정.
 	// 또 다시 변경... NavObstacle을 사용. 
-	
+
 	private void Attack()
 	{
 		if (timer_Attack <= ATTACK_DELAY) { timer_Attack += Time.deltaTime; }
-		
+
 		// 타겟이 존재한다면.
 		if (!ReferenceEquals(target_attack, null))
 		{
@@ -398,7 +437,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 					break;
 			}
 		}
-    }
+	}
 
 	// Generic 변수를 사용하여 해당 구문을 함수화. IActor 인터페이스는 현재 player, turret, minion가 구현하고있음.
 	// 따라서 Damaged를 호출이 가능함.
@@ -407,7 +446,7 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 		Script.Damaged(this.stats.actorHealth.Atk, this.transform.position, this.stats.actorHealth.team, this.gameObject);
 	}
 
-	
+
 	// 미니언이 데미지를 받을 때 사용하는 함수.
 	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
 	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐. // 현재 넉백을 제외하고있음.
@@ -438,14 +477,14 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	{
 		stats.state = MoonHeader.State.Dead;
 		if (nav.enabled)
-		{nav.velocity = Vector3.zero; nav.isStopped = true; }
+		{ nav.velocity = Vector3.zero; nav.isStopped = true; }
 		if (other.transform.CompareTag("PlayerMinion"))
 		{
 			other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
 																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
 			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
 		}
-		
+
 
 		yield return new WaitForSeconds(0.5f);
 		this.gameObject.SetActive(false);
@@ -456,26 +495,26 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	private IEnumerator DamagedEffect(Vector3 origin)
 	{
 		Color damagedColor = new Color32(255, 150, 150, 255);
-		
-        //Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized * 500 + Vector3.up * 100;
+
+		//Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized * 500 + Vector3.up * 100;
 
 		foreach (Renderer r in bodies)
 		{ r.material.color = damagedColor; }
 		//this.rigid.AddForce(knockbackDirection);
 
-        yield return new WaitForSeconds(0.25f);
+		yield return new WaitForSeconds(0.25f);
 		foreach (Renderer r in bodies)
 		{ r.material.color = Color.white; }
 
 		// 첫번째 렌더러 팀색으로 변경.
-		ChangeTeamColor(bodies[0].gameObject);
+		ChangeTeamColor();
 	}
 
 	// 공격이 끝났을 때 호출.
 	// 공격 타겟을 null로 초기화, Obstacle 비활성화, Agent 활성화. 이때 약간의 텀이 존재해야함.
 	// 텀이 존재하지 않을 경우, 자신의 너비만큼 순간이동.
-    protected IEnumerator AttackFin()
-    {
+	protected IEnumerator AttackFin()
+	{
 		if (!PlayerSelect && !is_attackFinish_Act)
 		{
 			is_attackFinish_Act = true;
@@ -487,12 +526,12 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 			yield return StartCoroutine(navenable_IE);
 			target_attack = null;
 			this.stats.state = MoonHeader.State.Normal;
-			
+
 			//nav.isStopped = false;
 			timer_Searching = SEARCHTARGET_DELAY;
 			is_attackFinish_Act = false;
 		}
-    }
+	}
 
 	// NavMesh Agent와 Obstacle을 동시에 키면 오류.
 	// 그렇다고 텀을 안주고 키면 순간이동 버그.
@@ -517,12 +556,12 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 	}
 
 	// 아이콘 및 몸체 색 변경.
-    #region ChangeTeamColors
-    // 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
-    public void ChangeTeamColor() { ChangeTeamColor(icon); }
+	#region ChangeTeamColors
+	// 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
+	public void ChangeTeamColor() { photonView.RPC("ChangeTeamColor_RPC", RpcTarget.All); }
 
 	// 시작 혹은 생성할 때 미니언의 아이콘 등의 색상을 변경.
-    public void ChangeTeamColor(GameObject obj)
+    [PunRPC]public void ChangeTeamColor_RPC()
 	{
 		Color dummy_color;
 		switch (stats.actorHealth.team)
@@ -538,9 +577,9 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 				break;
 			default: dummy_color = Color.gray; break;
 		}
-		obj.GetComponent<Renderer>().material.color = dummy_color;
-		//this.gameObject.GetComponent<Renderer>().material.color = dummy_color;	//UI에서 뿐만 아니라 Scene에서도 색상이 변경
-		// Scene 즉 게임 화면에서 팀마다 색상이 변하는 것은... 나중에 파티클이나 이펙트로 하는건 어떤지? 이에 대한 내용은 일단 유지... 허나 데미지 받으면 흰색.
+		icon.GetComponent<Renderer>().material.color = dummy_color;
+		playerIcon.GetComponent<Renderer>().material.color = dummy_color;
+		bodies[0].GetComponent<Renderer>().material.color = dummy_color;
 	}
     #endregion
 
