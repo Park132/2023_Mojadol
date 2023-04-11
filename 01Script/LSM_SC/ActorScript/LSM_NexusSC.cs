@@ -1,3 +1,4 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,14 +14,13 @@ public class LSM_NexusSC : LSM_TurretSc
 		base.Start();
 		stats = new MoonHeader.S_TurretStats(100, 10, parentSpawner.team);
 		base.ChangeColor();
-		base.ChangeColor(bodies[0].gameObject);
 		ATTACKDELAY = 1.5f;
 
 	}
 
 	public override void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
-		if (t == this.stats.actorHealth.team)
+		if (t == this.stats.actorHealth.team || !PhotonNetwork.IsMasterClient)
 			return;
 		this.stats.actorHealth.health -= dam;
 		StartCoroutine(DamagedEffect());

@@ -51,6 +51,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	{
 		if (stream.IsWriting)
 		{
+			stream.SendNext(this.gameObject.activeSelf);
 			stream.SendNext(stats.actorHealth.maxHealth);
 			stream.SendNext(stats.actorHealth.health);
 			stream.SendNext(stats.actorHealth.team);
@@ -59,6 +60,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 		else
 		{
+			this.gameObject.SetActive((bool)stream.ReceiveNext());
 			this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
 			this.stats.actorHealth.health = (int)stream.ReceiveNext();
 			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
@@ -83,7 +85,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		rigid = this.GetComponent<Rigidbody>();
 		nav = this.GetComponent<NavMeshAgent>();
 		nav_ob = this.GetComponent<NavMeshObstacle>();
-		anim = this.GetComponentInChildren<Animator>();
+		anim = this.GetComponent<Animator>();
 		// 초기화
 		timer_Searching = 0;
 		timer_Attack = 0;
@@ -403,7 +405,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						timer_Attack = 0;
 						// 공격 애니메이션 실행. 지금은 즉발. 하지만 발사체를 사용할거면 이때 소환.
-						anim.SetTrigger("Attack");
+						photonView.RPC("AttackAnimation_RPC",RpcTarget.All);
 						StartCoroutine(Attack_Anim());
 
 					}
@@ -413,6 +415,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 
 	}
+
+	[PunRPC]protected void AttackAnimation_RPC() { anim.SetTrigger("Attack"); }
 
 	private IEnumerator Attack_Anim()
 	{
@@ -454,13 +458,15 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		// 죽음 혹은 무적 상태일 경우 데미지를 입지않음. 바로 return
-		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead)
+		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead || !PhotonNetwork.IsMasterClient)
 			return;
 		else if (t == this.stats.actorHealth.team)
 			return;
 
 		stats.actorHealth.health -= dam;
-		StartCoroutine(DamagedEffect(origin));
+
+		photonView.RPC("Damaged_RPC_Minion", RpcTarget.All);
+		//StartCoroutine(DamagedEffect());
 
 		//Debug.Log("Minion Damaged!! : " +stats.health);
 		// 체력이 0 이하라면 DeadProcessing
@@ -470,6 +476,10 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 		return;
 	}
+
+	[PunRPC] protected void Damaged_RPC_Minion() {
+        StartCoroutine(DamagedEffect());
+    }
 
 	// 체력이 0 이하일 경우 호출.
 	// 프로토 타입에서는 0.5초이후 비활성화.
@@ -487,12 +497,18 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 
 		yield return new WaitForSeconds(0.5f);
-		this.gameObject.SetActive(false);
+		//this.gameObject.SetActive(false);
+		photonView.RPC("DeadProcessing",RpcTarget.All);
 	}
+	public void MinionDisable() { photonView.RPC("DeadProcessing", RpcTarget.All); }
+	[PunRPC]protected void DeadProcessing()
+	{
+        this.gameObject.SetActive(false);
+    }
 
 	// LSM 변경. 모든 적의 공격이 미니언의 앞에서만 오지 않을 수 있음.
 	// 그러므로 해당 미니언의 위치를 받아와 방향 벡터를 얻고, 그 방향벡터로 일정 힘의 크기로 AddForce
-	private IEnumerator DamagedEffect(Vector3 origin)
+	private IEnumerator DamagedEffect()
 	{
 		Color damagedColor = new Color32(255, 150, 150, 255);
 

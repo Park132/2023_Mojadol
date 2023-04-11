@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using Unity.VisualScripting;
 
 public class PoolManager : MonoBehaviour
 {
@@ -32,6 +32,8 @@ public class PoolManager : MonoBehaviour
 
 	private bool once;
 
+	public int ReadyToStart_SpawnNum;
+
 	private void Start()
 	{
 		alwaysEnableUI = GameObject.Find("AlwaysEnableUI");
@@ -53,7 +55,43 @@ public class PoolManager : MonoBehaviour
         poolList_Particles = new List<GameObject>[particles.Length];
         for (int i = 0; i < poolList_Particles.Length; i++)
             poolList_Particles[i] = new List<GameObject>();
+
+		ReadyToStart_SpawnNum = 30;
     }
+
+	public IEnumerator ReadyToStart_Spawn()
+	{
+		if (PhotonNetwork.IsMasterClient)
+		{
+			for (int i = 0; i < minions.Length; i++)
+			{
+				for (int j = 0; j < ReadyToStart_SpawnNum; j++)
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					Get_Minion(i);
+                    GameManager.Instance.LoadingUpdate();
+                }
+				foreach (GameObject item in poolList_Minion[i])
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					item.GetComponent<LSM_MinionCtrl>().MinionDisable();
+                }
+                GameManager.Instance.LoadingUpdate();
+            }
+			GameManager.Instance.PlayerReady();
+		}
+		else
+		{
+			while (true)
+			{
+				yield return new WaitForSeconds(Time.deltaTime);
+				if (GameManager.Instance.LoadingGauge >= GameManager.Instance.ReadyToStart_LoadingGauge)
+				{ break; }
+			}
+			yield return new WaitForSeconds(3f);				// 디버깅용. 삭제해도 무방.
+            GameManager.Instance.PlayerReady();
+        }
+	}
 
     // 미니언의 종류에 맞는 미니언을 반환.
 	public GameObject Get_Minion(int index)

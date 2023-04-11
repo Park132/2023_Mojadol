@@ -5,10 +5,11 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using Photon.Pun;
+using static MoonHeader;
 
 // 플레이어 스크립트
 // TopView에서의 플레이어 컨트롤
-public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
+public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 {
     public bool isMainPlayer;               // 현재 게임중인 플레이어인지 확인.
     public string playerName;               // 멀티에서의 플레이어 이름
@@ -26,10 +27,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
 
     public GameObject MainCam, MapCam, MapSubCam, MiniMapCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
-                                                                    // # MainCam    -> Player 자식 오브젝트 중 Camera
-                                                                    // # MapCam     -> Player 자식 오브젝트 중 MapCamera
-                                                                    // # MapSubCam  -> Player 자식 오브젝트 중 MapSubCamera
-                                                                    // # MiniMapCam -> Player 자식 오브젝트 중 MiniMapCam
+                                                                    
     public Vector3 mapCamBasePosition;                  // TopView카메라의 초기위치
                                                         // # Y축만 95로 설정
     public GameObject minionStatsPannel;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
@@ -44,8 +42,23 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
 
     private int exp;
 
-    // 싱글톤 해 말아
-    // public static GameObject LocalPlayerInstance;
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(playerName);
+            stream.SendNext(player.team);
+            stream.SendNext(player.statep);
+            stream.SendNext(exp);
+        }
+        else
+        {
+            this.playerName = (string)stream.ReceiveNext();
+            this.player.team = (MoonHeader.Team)stream.ReceiveNext();
+            this.player.statep = (MoonHeader.State_P)stream.ReceiveNext();
+            this.exp = (int)stream.ReceiveNext();
+        }
+    }
 
     private void Awake()
     {
@@ -64,7 +77,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
     public void Start_fuction()
 	{
         if(isMainPlayer)
-        {
+        { 
             MapCam = GameObject.FindGameObjectWithTag("MapCamera");
             MainCam = GameObject.FindGameObjectWithTag("MainCamera");
             MiniMapCam = GameObject.FindGameObjectWithTag("MiniMapCamera");
@@ -99,6 +112,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
             }
         }
     }
+    public void SettingTeam(int t) { photonView.RPC("SettingTeam_RPC", RpcTarget.AllBuffered, t); }
+    [PunRPC] protected void SettingTeam_RPC(int t) { this.player.team = (MoonHeader.Team)t; }
 
 	void Update()
     {
@@ -359,7 +374,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks
         GameManager.Instance.gameUI.SetActive(true);
         GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl);
 
-        subTarget_minion.transform.gameObject.SetActive(false);
+        subTarget_minion.MinionDisable();
+
         StartCoroutine(GameManager.Instance.ScreenFade(true));
         player.statep = MoonHeader.State_P.Selected;
         Cursor.lockState = CursorLockMode.Locked;

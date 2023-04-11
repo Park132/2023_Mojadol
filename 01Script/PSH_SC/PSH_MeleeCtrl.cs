@@ -9,11 +9,11 @@ public class PSH_MeleeCtrl : MonoBehaviour
 
     // 자주 쓰일것이니, 미리 변수를 생성.
     private PSH_PlayerFPSCtrl fpsc;
-
-	private void Start()
-	{
-        fpsc = head.gameObject.GetComponent<PSH_PlayerFPSCtrl>();
+    private void Awake()
+    {
+        fpsc = this.gameObject.GetComponentInParent<PSH_PlayerFPSCtrl>();
     }
+    
 
 	private void OnTriggerEnter(Collider other)
     {

@@ -23,8 +23,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	protected Renderer[] bodies;  // 색상을 변경할 렌더러.
 
-	public int TurretBelong;						// 터렛의 위치
+	public int TurretBelong;                        // 터렛의 위치
 													// # 터렛의 경로에 따라서 번호를 다르게 설정. 해당 경로와 동일하게 숫자가 같도록 설정.
+	//protected PhotonView photonView;
 
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
@@ -51,12 +52,12 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
 		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
 		mark.transform.localPosition = Vector3.up * 10;
+		
 		// health, atk
 		
 		// 디버그용으로 미리 설정.
 		stats = new MoonHeader.S_TurretStats(100,6);
 		ChangeColor();
-		ChangeColor(bodies[0].gameObject);
 
 		timer = 0;
 		searchRadius = 10f;
@@ -65,12 +66,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     }
 
 	// 팀에 해당하는 색으로 변경.
-	protected void ChangeColor()
-	{
-		ChangeColor(mark);
-    }
 
-	protected void ChangeColor(GameObject obj)
+	protected void ChangeColor()
 	{
 		Color dummy_c = Color.white;
 
@@ -86,7 +83,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				dummy_c = Color.yellow;
 				break;
 		}
-		obj.GetComponent<Renderer>().material.color = dummy_c;
+		mark.GetComponent<Renderer>().material.color = dummy_c;
+		bodies[0].GetComponent<Renderer>().material.color = dummy_c;
 	}
 
 	protected void Update()
@@ -106,29 +104,30 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// 공격을 받을 시 데미지를 입음.
 	public virtual void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
-		if (t == this.stats.actorHealth.team)
+		if (!PhotonNetwork.IsMasterClient || t== this.stats.actorHealth.team)
 			return;
+
 		this.stats.actorHealth.health -= dam;
-		StartCoroutine(DamagedEffect());
+		photonView.RPC("Damaged_RPC_Turret", RpcTarget.All);
 
 		if (this.stats.actorHealth.health <= 0) {
 			this.stats.actorHealth.team = t;
 			this.stats.actorHealth.health = 10;
 			DestroyProcessing(other);
-			ChangeColor();
-			ChangeColor(bodies[0].gameObject);
+			photonView.RPC("DestroyProcessing_RPC", RpcTarget.All);
 		}
 		return;
 		
 	}
 
-	[PunRPC]protected void Damaged_RPC(int dam)
+	// 체력은 동기화되게 설정하였기에, 외적인 면만 보여주면 될듯..
+	[PunRPC]protected void Damaged_RPC_Turret()
     {
-		this.stats.actorHealth.health -= dam;
-		if (this.stats.actorHealth.health <= 0)
-        {
+        StartCoroutine(DamagedEffect());
+	}
 
-        }
+	[PunRPC] protected void DestroyProcessing_RPC() {
+		ChangeColor();
 	}
 
 
@@ -145,7 +144,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		foreach (Renderer item in bodies)
 			item.material.color = recovered;
-		ChangeColor(bodies[0].gameObject);
+		ChangeColor();
 	}
 
 	protected virtual void DestroyProcessing(GameObject other)

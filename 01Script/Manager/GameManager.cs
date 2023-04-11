@@ -54,6 +54,11 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	private float timer_log;
 
 	public bool onceStart;
+	private bool starting_;
+
+	public int ReadyToStart_LoadingGauge;
+	public int LoadingGauge, ReadyToStart_Player;
+	public Image LoadingImage;
 
 	// private 
 
@@ -64,15 +69,11 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			stream.SendNext(state);
 			stream.SendNext(gameState);
-			Debug.Log($"stream is Writing : {state}");
-			Debug.Log($"stream is Writing : {gameState}");
 		}
 		else
 		{
 			this.state = (MoonHeader.ManagerState)stream.ReceiveNext();
 			this.gameState = (MoonHeader.GameState)stream.ReceiveNext();
-			Debug.Log($"stream is Reading : {state}");
-			Debug.Log($"stream is Reading : {gameState}");
 		}
 	}
 	#endregion
@@ -174,13 +175,15 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		screen.transform.SetAsLastSibling();    // 스크린이 다른 UI를 가리도록 가장 마지막에 배치하는 코드.
         loadingUI = GameObject.Find("Loading");
 		loadingUI.transform.SetAsLastSibling();
+		LoadingImage = GameObject.Find("LoadingBar").GetComponent<Image>();
         GameObject[] teammdummy = GameObject.FindGameObjectsWithTag("TeamManager");
 		teamManagers = new TeamManager[teammdummy.Length];
 		foreach (GameObject t in teammdummy)
 		{ teamManagers[(int)t.GetComponent<TeamManager>().team] = t.GetComponent<TeamManager>(); }
+		starting_ = false;
 
-		
-	}
+        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Press O to Connect...";
+    }
 
 	private void Start_function()
 	{
@@ -192,19 +195,19 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
 			players[i].isMainPlayer = false;
-		}
+			
+        }
 
 		mainPlayer.isMainPlayer = true;
-		foreach (LSM_PlayerCtrl item in players)
+		for (int i = 0; i < players.Length; i++)
 		{
-			item.Start_fuction();
+			players[i].Start_fuction();
+			if (PhotonNetwork.IsMasterClient)
+				players[i].SettingTeam(i%2);
 		}
 
 		// 기존 게임매니저의 상태 초기화. Default값 Ready.
 		state = MoonHeader.ManagerState.Ready;
-
-
-
 
 		// 플레이어 미니언의 리스트 저장.
 		playerMinions = new List<GameObject>[2];    // 팀의 개수만큼 배열의 크기를 지정. 현재 디버깅용으로 2로 설정.
@@ -218,8 +221,62 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	}
 
 
+	// 시작하기 전 약간의 로딩시간.
+	protected IEnumerator StartProcessing() {
+        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Loading...";
+        yield return new WaitForSeconds(1f);
+        Start_function();
+        ReadyToStart_LoadingGauge = PoolManager.Instance.minions.Length * PoolManager.Instance.ReadyToStart_SpawnNum
+			+ PoolManager.Instance.minions.Length-1;
+		LoadingGauge = 0;
+		//yield return new WaitForSeconds(3f);
+		yield return StartCoroutine(PoolManager.Instance.ReadyToStart_Spawn());
+		yield return StartCoroutine(CheckingPlayerReady());
+        loadingUI.SetActive(false);
+		onceStart = true;
+	}
 
-	private void Update()
+	// 로딩 관련 함수 모음.
+	#region For Loading Function
+	// 로딩 애니메이션. 다른 플레이어가 준비될때까지 잠시 기다리는 함수.
+	protected IEnumerator CheckingPlayerReady() {
+		float timer_Loading_Dummy = 0;
+		string dummy_for_loading_Message = "";
+		TextMeshProUGUI LoadingUI_Text =loadingUI.GetComponentInChildren<TextMeshProUGUI>();
+
+        while (true)
+		{
+			yield return new WaitForSeconds(Time.deltaTime);
+			timer_Loading_Dummy+= Time.deltaTime;
+
+			if (timer_Loading_Dummy >= 4) timer_Loading_Dummy = 0;
+			else if (timer_Loading_Dummy >= 3) dummy_for_loading_Message = "Waiting For Other Player...";
+			else if (timer_Loading_Dummy >= 2) dummy_for_loading_Message = "Waiting For Other Player..";
+			else if (timer_Loading_Dummy >= 1) dummy_for_loading_Message = "Waiting For Other Player.";
+			else dummy_for_loading_Message = "Waiting For Other Player";
+
+			LoadingUI_Text.text = dummy_for_loading_Message;
+
+			if (ReadyToStart_Player >= players.Length)
+			{ break; }
+		}
+	}
+
+	public void LoadingUpdate()
+	{
+		photonView.RPC("LoadingUpdate_RPC", RpcTarget.AllBuffered);
+	}
+	[PunRPC]public void LoadingUpdate_RPC()
+	{
+		LoadingGauge++;
+		LoadingImage.fillAmount = (float)LoadingGauge / ReadyToStart_LoadingGauge;
+	}
+	public void PlayerReady() { photonView.RPC("PlayerReady_RPC", RpcTarget.AllBuffered); }
+	[PunRPC] public void PlayerReady_RPC() { ReadyToStart_Player++; }
+    #endregion
+
+
+    private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.O))
 			Connect();
@@ -229,14 +286,17 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			
 			if (PhotonNetwork.CurrentRoom.PlayerCount == 2) // 일단 1명으로
 			{
-				if (!onceStart)
+				if (!starting_)
 				{
-					onceStart = true;
-					Start_function();
-					loadingUI.SetActive(false);
+					starting_ = true;
+					StartCoroutine(StartProcessing());
 				}
-				Game();
-				DisplayEnable();
+
+				if (onceStart)
+				{
+					Game();
+					DisplayEnable();
+				}
 			}
 		}
 	}

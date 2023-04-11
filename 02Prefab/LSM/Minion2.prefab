@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 6243652877292517528}
   - component: {fileID: 710994129255434594}
   - component: {fileID: 2723207640786662611}
+  - component: {fileID: 7222396729971993920}
   m_Layer: 7
   m_Name: Minion2
   m_TagString: Minion
@@ -192,6 +193,7 @@ MonoBehaviour:
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
+  - {fileID: 1425675102199671761}
   - {fileID: 2723207640786662611}
   sceneViewId: 0
   InstantiationId: 0
@@ -212,6 +214,26 @@ MonoBehaviour:
   m_SynchronizeRotation: 1
   m_SynchronizeScale: 0
   m_UseLocal: 1
+--- !u!95 &7222396729971993920
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8887907667050671287}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: b6ef2f4d0154b2747860a3332fa05f97, type: 3}
+  m_Controller: {fileID: 9100000, guid: 1a4f0e50f3fa8804ea3591cfd4b87584, type: 2}
+  m_CullingMode: 1
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1001 &7815253932390603439
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -282,6 +304,10 @@ PrefabInstance:
     - target: {fileID: 4946351356562766, guid: fda5edc93819a5946901f75bc534ac54, type: 3}
       propertyPath: m_ConstrainProportionsScale
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 95303867828160866, guid: fda5edc93819a5946901f75bc534ac54, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 95303867828160866, guid: fda5edc93819a5946901f75bc534ac54, type: 3}
       propertyPath: m_Controller
