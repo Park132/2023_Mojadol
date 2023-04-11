@@ -76,9 +76,9 @@ public class PoolManager : MonoBehaviour
 		// 비활성화된 미니언이 존재하지 않는다면 새로 생성.
 		if (ReferenceEquals(result, null))
 		{
-			result = GameObject.Instantiate(minions[index], this.transform);
-			//result = PhotonNetwork.Instantiate(minions[index].name, Vector3.zero, Quaternion.identity);
-			//result.transform.parent = this.transform;
+			//result = GameObject.Instantiate(minions[index], this.transform);
+			result = PhotonNetwork.Instantiate(minions[index].name, Vector3.zero, Quaternion.identity);
+			result.transform.parent = this.transform;
 			poolList_Minion[index].Add(result);
 		}
 
@@ -104,9 +104,9 @@ public class PoolManager : MonoBehaviour
 
 		if (ReferenceEquals(result, null))
 		{
-			result = GameObject.Instantiate(playerMinions[index], this.transform);
-			//result = PhotonNetwork.Instantiate(playerMinions[index].name,Vector3.zero, Quaternion.identity);
-			//result.transform.parent = this.transform;
+			//result = GameObject.Instantiate(playerMinions[index], this.transform);
+			result = PhotonNetwork.Instantiate(playerMinions[index].name,Vector3.zero, Quaternion.identity);
+			result.transform.parent = this.transform;
 			poolList_PlayerMinions[index].Add(result);
 		}
 		return result;

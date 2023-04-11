@@ -58,8 +58,8 @@ public class LSM_Spawner : MonoBehaviour
 
 	private void Update()
 	{
-		//if (!PhotonNetwork.IsMasterClient)
-			//return;
+		if (!PhotonNetwork.IsMasterClient)
+			return;
 		//CheckingSpawn();
 		if (GameManager.Instance.onceStart)
 		{ CheckingSpawn(); }

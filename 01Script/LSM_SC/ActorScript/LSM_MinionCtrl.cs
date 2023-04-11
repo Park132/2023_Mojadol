@@ -357,11 +357,8 @@ public class LSM_MinionCtrl : MonoBehaviour, I_Actor
 					// y축 rotation만을 변경할 것임.
 					Quaternion target_rotation = Quaternion.LookRotation((target_attack.transform.position - this.transform.position).normalized);
 
-
-					Vector3 target_euler = Quaternion.RotateTowards(this.transform.rotation, target_rotation, 270 * Time.deltaTime).eulerAngles;
-					//Vector3 target_euler = target_rotation.eulerAngles;
+					Vector3 target_euler = Quaternion.RotateTowards(this.transform.rotation, target_rotation, 200 * Time.deltaTime).eulerAngles;
 					this.transform.rotation = Quaternion.Euler(0, target_euler.y, 0);
-
 
 					if (timer_Attack >= ATTACK_DELAY && Mathf.Abs(this.transform.rotation.eulerAngles.y - target_rotation.eulerAngles.y) < 10f)
 					{

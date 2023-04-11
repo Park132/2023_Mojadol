@@ -9,10 +9,11 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     enum State { Normal, Attacking, Blocking, Casting, Exhausting};
     State state = State.Normal;
 
+    protected float BASIC_ATTACKDELAY = 1.0f;
+
     // 플레이어 변수
     protected int basicDamage = 20;
     protected int currentDamage;
-    protected float basicAttackDelay = 1.0f;
 
     // 공격 기능 관련 변수
     public GameObject attackRange;
@@ -20,7 +21,7 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     protected bool canAttack;
 
     // 스킬 관련 변수
-    protected float qDamage_ = 30.0f, eDamage_ = 25.0f;
+    protected int qDamage_ = 30, eDamage_ = 25;
     protected float qDelay_, eDelay_;
     protected bool canUseQ, canUseE;
 
@@ -30,6 +31,7 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
 
     // 이동 관련 변수
     public bool canMove;
+    public float basicMoveSpeed = 5.0f;
     public float moveSpeed = 5.0f;
     public bool isSpeedDown;
 
@@ -43,7 +45,7 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     public float mouseSensitivity = 3f;
     public float maxLookAngle = 50f;
 
-    protected float timer;
+    protected float timer_RecoverSpeed, timer_BA, timer_EC, timer_QC, timer_dummy_Casting;
 
     public string playerName;
     public MoonHeader.S_ActorState actorHealth;
@@ -58,10 +60,10 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     {
         ResetVariable();
 
-        anim = this.GetComponent<Animator>();
+        anim = this.GetComponentInChildren<Animator>();
         rigid = this.GetComponent<Rigidbody>();
-        playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], this.transform);
-        playerIcon.transform.localPosition = new Vector3(0,60,0);
+        //playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], this.transform);
+        //playerIcon.transform.localPosition = new Vector3(0,60,0);
     }
     protected void Update()
     {
@@ -70,6 +72,7 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
         if (canSee)
         { LookAround(); }
         PlayerInput();
+        Recharging();
     }
     protected void LateUpdate()
     {
@@ -78,11 +81,12 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
 
     protected void PlayerInput()
     {
-        if (Input.GetButtonDown("Fire1") && canAttack) { }
-        if (canAttack) { }
+        if (Input.GetButtonDown("Fire1") && canAttack) { StartCoroutine(BasicAttack()); }
+        if (canAttack) { Block(); }
 
         if (Input.GetKeyDown(KeyCode.Q) && canUseQ) { }
         if (canUseE) { }
+
 
     }
 
@@ -93,6 +97,9 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
 
         // movespeed = Input.GetKey(KeyCode.LeftShift) ? 8.0f : 5.0f; // 달리기
         this.transform.Translate(new Vector3(x, 0, y) * moveSpeed * Time.deltaTime);
+
+        anim.SetFloat("Velocity", rigid.velocity.magnitude);
+        Debug.Log(rigid.velocity.magnitude);
     }
 
     protected void LookAround()
@@ -129,26 +136,127 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     {
         if (isSpeedDown)
         {
-            timer += Time.deltaTime;
-            if (timer >= 2.0f)
+            timer_RecoverSpeed += Time.deltaTime;
+            if (timer_RecoverSpeed >= 2.0f)
             {
                 moveSpeed = 5.0f;
-                timer = 0.0f;
+                timer_RecoverSpeed = 0.0f;
                 isSpeedDown= false;
             }
         }
     }
 
     // 기본 공격
-    IEnumerator BasicAttack()
+    protected IEnumerator BasicAttack()
     {
         canAttack = false;
         currentDamage = basicDamage;
         state = State.Attacking;
+        moveSpeed = basicMoveSpeed - 2f;
 
+        // 애니메이션 실행, 애니메이션에 짧은 시간이 흐른 후 공격 범위 활성화.
+        //anim.SetTrigger("Attack");
+        yield return new WaitForSeconds(0f);
 
-        yield return new WaitForSeconds(1f);
+        attackRange.SetActive(true);
+        yield return new WaitForSeconds(0.3f);
+        attackRange.SetActive(false);
     }
+    protected void BasicAttackOver()
+    {
+        moveSpeed = basicMoveSpeed;
+        state = State.Normal;
+    }
+
+    // 막기
+    protected void Block()
+    {
+        if (Input.GetButtonDown("Fire2"))
+        {
+            //anim.SetBool("Blocking",true);
+            state = State.Blocking;
+            moveSpeed = basicMoveSpeed - 2.0f;
+        }
+        if (Input.GetButtonUp("Fire2"))
+        {
+            //anim.SetBool("Blocking",false);
+            state = State.Normal;
+            moveSpeed = basicMoveSpeed;
+        }
+    }
+
+    // Q 스킬
+    protected IEnumerator QSkillActive()
+    {
+        currentDamage = qDamage_;
+        //anim.SetTrigger("Q");
+        canAttack = false;
+        canUseQ = false;
+
+        yield return new WaitForSeconds(0f);
+        currentDamage = basicDamage;
+        canAttack = true;
+        state = State.Normal;
+    }
+
+    // E 스킬
+    protected void ESkillActive()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            state = State.Casting;
+            canMove = false;
+            anim.SetBool("Casting",true);
+            timer_dummy_Casting = 0;
+        }
+        if (Input.GetKey(KeyCode.E))
+        {
+            timer_dummy_Casting += Time.deltaTime;
+        }
+        if (Input.GetKeyUp(KeyCode.E))
+        {
+            state = State.Normal;
+            canMove = true;
+
+            GameObject dummy_prefab = GameObject.Instantiate(swordBall_Prefab, attackRange.transform.position, attackRange.transform.rotation);
+            dummy_prefab.GetComponent<PSH_SwordProjectile>().damage = eDamage_ + (timer_dummy_Casting / 1);
+            dummy_prefab.GetComponent<PSH_SwordProjectile>().script = this.GetComponent<PSH_PlayerFPSCtrl>();
+
+            timer_dummy_Casting = 0;
+            canUseE = false;
+        }
+    }
+
+    // 딜레이 계산하는 구문.
+    protected void Recharging()
+    {
+        if (!canAttack)
+        {
+            switch (state)
+            {
+                case State.Attacking:
+                    timer_BA += Time.deltaTime;
+                    if (timer_BA >= BASIC_ATTACKDELAY)
+                    { timer_BA = 0; BasicAttackOver(); }
+                    break;
+            }
+        }
+        if (!canUseQ)
+        {
+            timer_QC += Time.deltaTime;
+            if (timer_QC >= qDelay_)
+            { timer_QC = 0; canUseQ = true; }
+        }
+        if (!canUseE)
+        {
+            timer_EC += Time.deltaTime;
+            if (timer_EC >= eDelay_)
+            { timer_EC = 0; canUseE = true; }
+        }
+    }
+
+
+
     protected void ResetVariable()
     {
         // 변수 초기화
@@ -157,12 +265,13 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
         canUseQ = true; canUseE = true;
         currentDamage = basicDamage;
         state = State.Normal;
-        moveSpeed = 5.0f;
+        moveSpeed = basicMoveSpeed;
         attackRange.SetActive(false);
         cameraCanMove = true;
         invertCamera = false;
         canSee = true;
         isSpeedDown = false;
+        qDelay_ = 3.0f; eDelay_ = 7.0f;
     }
 
     public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname, LSM_PlayerCtrl pctrl)

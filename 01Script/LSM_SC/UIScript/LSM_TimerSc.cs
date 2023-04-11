@@ -2,10 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Photon.Pun;
 
 
 // 타이머 스크립트
-public class LSM_TimerSc : MonoBehaviour
+public class LSM_TimerSc : MonoBehaviourPunCallbacks, IPunObservable
 {
 	public GameObject timerPannel;			// 타이머 UI
 											// # Canvas의 자식 오브젝트 중 TimerPannel
@@ -13,6 +14,33 @@ public class LSM_TimerSc : MonoBehaviour
 											// # Canvas의 자식 오브젝트 중의 TimerPannel의 자식 오브젝트 Timer
 	public bool startTimer = false, limitTimeSetting, reverse;
     float timer, limitS;
+
+	#region PhotonView Variable
+	private PhotonView pv;
+	#endregion
+
+	#region IPunObservable Implementation -0408 PSH
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+
+		if (stream.IsWriting)
+		{
+			stream.SendNext(timer);
+			stream.SendNext(limitS);
+			stream.SendNext(startTimer);
+			stream.SendNext(limitTimeSetting);
+			stream.SendNext(reverse);
+		}
+		else
+		{
+			this.timer = (float)stream.ReceiveNext();
+			this.limitS = (float)stream.ReceiveNext();
+			this.startTimer = (bool)stream.ReceiveNext();
+			this.limitTimeSetting = (bool)stream.ReceiveNext();
+			this.reverse = (bool)stream.ReceiveNext();
+		}
+	}
+	#endregion
 
 
 	private void Start()
@@ -22,6 +50,7 @@ public class LSM_TimerSc : MonoBehaviour
 		reverse = false;
 		timerPannel.SetActive(false);
 		startTimer = false;
+		pv = this.gameObject.GetComponent<PhotonView>();
 	}
 
 	private void Update()
@@ -62,7 +91,20 @@ public class LSM_TimerSc : MonoBehaviour
 	public void TimerStop() { timer = 0; timerPannel.SetActive(false); startTimer = false; limitTimeSetting = false; limitS = 0; reverse = false; }
 
 	// 스킵버튼을 클릭 시 실행되는 함수. 바로 타이머가 종료되게 설정.
-	public void TimerOut() { GameManager.Instance.TimeOutProcess(); TimerStop(); }
+	public void TimerOut() { GameManager.Instance.TimeOutProcess(); TimerStop();
+		pv.RPC("RPC_TimerOut", RpcTarget.All);
+	}
+
+	#region RPC Methods 0408 - PSH
+
+	[PunRPC]
+	void RPC_TimerOut()
+	{
+		GameManager.Instance.TimeOutProcess();
+		TimerStop();
+	}
+
+	#endregion
 
 	// Getter
 	public float Get() { return timer; }

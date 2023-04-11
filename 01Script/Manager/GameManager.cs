@@ -9,7 +9,7 @@ using Photon.Realtime;
 
 // 전체 게임에 대한 매니저.
 // LSM담당 스크립트지만 톱니바퀴 아이콘이 맘에들어서.. 머쓱
-public class GameManager : MonoBehaviourPunCallbacks
+public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 {
 	// 싱글톤///
     private static GameManager instance;
@@ -56,6 +56,22 @@ public class GameManager : MonoBehaviourPunCallbacks
 	public bool onceStart;
 
 	// private 
+
+	#region IPunObservable Implementation 0408-PSH
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
+	{
+		if (stream.IsWriting)
+		{
+			stream.SendNext(state);
+			stream.SendNext(gameState);
+		}
+		else
+		{
+			this.state = (MoonHeader.ManagerState)stream.ReceiveNext();
+			this.gameState = (MoonHeader.GameState)stream.ReceiveNext();
+		}
+	}
+	#endregion
 
 	#region Multi Variables Region
 	string gameVersion = "1.0";
@@ -207,7 +223,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
 		{
 			
-			if (PhotonNetwork.CurrentRoom.PlayerCount == 1) // 일단 1명으로
+			if (PhotonNetwork.CurrentRoom.PlayerCount == 2) // 일단 1명으로
 			{
 				if (!onceStart)
 				{

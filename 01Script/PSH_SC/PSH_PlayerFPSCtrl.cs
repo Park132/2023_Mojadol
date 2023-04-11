@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
-public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
+public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
 {
     // 근접 플레이어 구현
     // 플레이어 상태
@@ -65,6 +66,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
 
 	// LSM */
 
+    PhotonView pv;
+
 	private void Awake()
 	{
         // LSM
@@ -72,6 +75,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
         playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
         playerIcon.transform.localPosition = new Vector3(0, 60, 0);
         //
+
+        pv = this.GetComponent<PhotonView>();
+        int id = PhotonNetwork.AllocateViewID(pv.ViewID);
+        pv.ViewID = id;
     }
 
 
@@ -89,6 +96,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviour, I_Actor
     // Update is called once per frame
     void Update()
     {
+        if (!photonView.IsMine)
+            return;
 
         // 이동, 카메라 조작
         if (canMove)
