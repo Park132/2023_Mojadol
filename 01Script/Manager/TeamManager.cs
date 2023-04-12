@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 // 팀당 하나의 팀매니저를 추가할 예정.
 // 팀별 킬, 글로벌 골드, 스포너관리 등을 해당 스크립트에서 조정.
-public class TeamManager : MonoBehaviour
+public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 {
     public MoonHeader.Team team;		// 해당 팀매니저의 팀
 										// # 팀의 개수만큼 오브젝트를 소환. blue, red로 전환.
@@ -20,6 +21,21 @@ public class TeamManager : MonoBehaviour
 	public int[] AttackPathNumber;		// 스포너의 스폰포인트 개수만큼 배열의 크기를 갖고있음. 스폰 포인트마다 설정된 미니언 생성 수
 	public int selectedNumber;          // 현재 플레이어가 설정한 공격로의 조직 수. 이를 이용하여 슬라이더의 최대 값을 조정.
 	private bool once;
+
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (stream.IsWriting)
+		{
+			stream.SendNext(MaximumSpawnNum);
+			stream.SendNext(AttackPathNumber);
+		}
+		else
+		{
+			MaximumSpawnNum = (int)stream.ReceiveNext();
+			AttackPathNumber = (int[])stream.ReceiveNext();
+
+		}
+	}
 
 	private void Start()
 	{
@@ -89,4 +105,17 @@ public class TeamManager : MonoBehaviour
 		}
 
 	}
+
+	public void PathingNumberSetting(int num, int settingV)
+	{
+		this.AttackPathNumber[num] = settingV;
+		this.PathUI_ChangeMaxValue();
+		photonView.RPC("PathNumSetting_RPC", RpcTarget.AllBuffered, num, settingV);
+	}
+	[PunRPC]private void PathNumSetting_RPC(int num, int settingV)
+	{
+        this.AttackPathNumber[num] = settingV;
+        this.PathUI_ChangeMaxValue();
+		this_teamSpawner.ChangePathNumber();
+    }
 }

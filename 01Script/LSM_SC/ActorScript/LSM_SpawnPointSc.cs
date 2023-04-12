@@ -15,6 +15,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	private LSM_Spawner parentSpawnerSC;	// 마스터 스포너의 스크립트
 
 	public GameObject pathUI;               // 플레이어가 조작할 공격로 설정 ui
+	public LSM_AttackPathUI pathUI_SC;
 	private bool once;
 
 	// 기즈모
@@ -40,7 +41,8 @@ public class LSM_SpawnPointSc : MonoBehaviour
 
 		// 플레이어가 조작할 UI
 		pathUI = GameObject.Instantiate(PrefabManager.Instance.icons[2], GameManager.Instance.mapUI.transform);
-		pathUI.GetComponent<LSM_AttackPathUI>().SetParent(this);
+		pathUI_SC = pathUI.GetComponent<LSM_AttackPathUI>();
+		pathUI_SC.SetParent(this);
 	}
 
 	private void Start_function()

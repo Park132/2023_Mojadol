@@ -1113,8 +1113,9 @@ GameObject:
   m_Component:
   - component: {fileID: 221452382}
   - component: {fileID: 221452381}
+  - component: {fileID: 221452383}
   m_Layer: 0
-  m_Name: TeamManager
+  m_Name: RedTeamManager
   m_TagString: TeamManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1155,6 +1156,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &221452383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221452380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 221452381}
+  sceneViewId: 10
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &221951799
 GameObject:
   m_ObjectHideFlags: 0
@@ -1352,6 +1376,7 @@ MonoBehaviour:
   onceStart: 0
   ReadyToStart_LoadingGauge: 0
   LoadingGauge: 0
+  ReadyToStart_Player: 0
   LoadingImage: {fileID: 0}
 --- !u!4 &254482921
 Transform:
@@ -2038,8 +2063,9 @@ GameObject:
   m_Component:
   - component: {fileID: 518772373}
   - component: {fileID: 518772372}
+  - component: {fileID: 518772374}
   m_Layer: 0
-  m_Name: TeamManager (1)
+  m_Name: BlueTeamManager
   m_TagString: TeamManager
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2080,6 +2106,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &518772374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518772371}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 518772372}
+  sceneViewId: 11
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1001 &520367879
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4169,7 +4218,7 @@ GameObject:
   - component: {fileID: 1059195884}
   - component: {fileID: 1059195886}
   m_Layer: 0
-  m_Name: Spawner (1)
+  m_Name: BlueSpawner
   m_TagString: Spawner
   m_Icon: {fileID: 7422848464349959988, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -4231,7 +4280,8 @@ MonoBehaviour:
   Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
-  ObservedComponents: []
+  ObservedComponents:
+  - {fileID: 1275945854}
   sceneViewId: 3
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -5109,6 +5159,17 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+--- !u!114 &1275945854 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3618782605040564011, guid: 4f60c8f4a401e5a44a858a8f1bed0fe8, type: 3}
+  m_PrefabInstance: {fileID: 91603189}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5a23f4b65d7d3e4d8bacc0a41ac64e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1308853455
 GameObject:
   m_ObjectHideFlags: 0
@@ -5617,6 +5678,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1142772913429187298, guid: 4f60c8f4a401e5a44a858a8f1bed0fe8, type: 3}
   m_PrefabInstance: {fileID: 821203429}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1389525564 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3618782605040564011, guid: 4f60c8f4a401e5a44a858a8f1bed0fe8, type: 3}
+  m_PrefabInstance: {fileID: 821203429}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5a23f4b65d7d3e4d8bacc0a41ac64e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1409379792
 GameObject:
   m_ObjectHideFlags: 0
@@ -6382,7 +6454,7 @@ GameObject:
   - component: {fileID: 1724237252}
   - component: {fileID: 1724237253}
   m_Layer: 0
-  m_Name: Spawner
+  m_Name: RedSpawner
   m_TagString: Spawner
   m_Icon: {fileID: 7422848464349959988, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -6444,7 +6516,8 @@ MonoBehaviour:
   Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
-  ObservedComponents: []
+  ObservedComponents:
+  - {fileID: 1389525564}
   sceneViewId: 2
   InstantiationId: 0
   isRuntimeInstantiated: 0

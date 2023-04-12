@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 10f, ROUNDTIME = 500f;
+	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 30f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
@@ -164,6 +164,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		canvas = GameObject.Find("Canvas");
 		selectAttackPathUI = GameObject.Find("AttackPathUIs");
 		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(timerSc.TimerOut);		// 스킵버튼에 해당. 클릭 시 TimerSC에 존재하는 TimerOut함수가 실행되도록 설정.
+
 		selectAttackPathUI.SetActive(false);
 		mapUI = GameObject.Find("MapUIs");
 		gameUI = GameObject.Find("GameUI");
@@ -202,8 +203,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		for (int i = 0; i < players.Length; i++)
 		{
 			players[i].Start_fuction();
-			if (PhotonNetwork.IsMasterClient)
-				players[i].SettingTeam(i%2);
+			//if (PhotonNetwork.IsMasterClient)
+				//players[i].SettingTeam(i%2);				// 팀 나누기.
+
 		}
 
 		// 기존 게임매니저의 상태 초기화. Default값 Ready.
@@ -305,6 +307,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	// 보통 처음 시작, 혹은 처리 완료일 경우에 실행됨.
 	private void Game()
 	{
+		if (!PhotonNetwork.IsMasterClient)
+			return;
 		// 게임매니저의 상태가 현재 Ready일경우.
 		if (state == MoonHeader.ManagerState.Ready)
 		{
@@ -312,31 +316,26 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			{
 				// 플레이어가 각각 공격로를 설정하는 턴
 				case MoonHeader.GameState.SettingAttackPath:
-					StartCoroutine(ScreenFade(true));
+					
 					state = MoonHeader.ManagerState.Processing;
-					SettingAttack();		// 스포너의 상태를 변경.
-					SettingTurnText();      // 턴 상태 UI를 변경
-					timerSc.TimerStart(SELECTATTACKPATHTIME);	// 게임매니저에 설정된 공격로 설정 시간만큼 타이머 시작.
-					selectAttackPathUI.SetActive(true);
+					timerSc.TimerStart(SELECTATTACKPATHTIME);   // 게임매니저에 설정된 공격로 설정 시간만큼 타이머 시작.
+					photonView.RPC("SettingAttackPathReady_RPC", RpcTarget.AllBuffered);
 					break;
 
 				// 공격로 지정이 모두 완료 후 게임을 시작하기 전 카운트 다운
 				case MoonHeader.GameState.StartGame:
 					timerSc.TimerStart(3.5f, true);				//타이머 세팅. 3.5초의 설정 시간.
 					state = MoonHeader.ManagerState.Processing;
-					SettingTurnText();		// 턴 상태 UI를 변경.
-					foreach (GameObject s in spawnPoints)	// 모든 마스터 스포너에게 턴이 변경됐음을 알림.
-					{ s.GetComponent<LSM_Spawner>().ChangeTurn(); }
+					photonView.RPC("StartGameReady_RPC", RpcTarget.AllBuffered);
 					break;
 
 				// 현재 게임을 시작
 				case MoonHeader.GameState.Gaming:
-					SettingTurnText();		// 턴 상태 UI를 변경.
-					foreach (GameObject s in spawnPoints)	// 모든 마스터 스포너의 상태를 변경.
-					{ s.GetComponent<LSM_Spawner>().state = MoonHeader.SpawnerState.Spawn; }
+					
 					state = MoonHeader.ManagerState.Processing;
-					timerSc.TimerStart(ROUNDTIME);	// 게임매니저에 설정된 게임 진행 시간만큼 타이머 시작.
-					//MapCam.SetActive(false); MainCam.SetActive(true);
+					timerSc.TimerStart(ROUNDTIME);  // 게임매니저에 설정된 게임 진행 시간만큼 타이머 시작.
+													//MapCam.SetActive(false); MainCam.SetActive(true);
+					photonView.RPC("GamingReady_RPC", RpcTarget.AllBuffered);
 					break;
 			}
 		}
@@ -347,27 +346,70 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			{
 				// 공격로 선택의 시간이 종료되었다면, 약간의 시간이 흐른 후 시작되도록 설정.
 				case MoonHeader.GameState.SettingAttackPath:
-					foreach (GameObject s in spawnPoints)		// 모든 마스터 스포너에게 현재 최대 설정 가능한 포인트 만큼 설정하였는지 확인하는 함수 실행.
-					{ s.GetComponent<LSM_Spawner>().CheckingSelectMon(); } 
+					
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.StartGame;
-					selectAttackPathUI.SetActive(false);
+					photonView.RPC("SettingAttackPathEnd_RPC", RpcTarget.AllBuffered);
 					break;
 				// 게임 턴이 종료되었다면.
 				case MoonHeader.GameState.Gaming:
-					ScreenFade(false);
-					StartCoroutine(mainPlayer.AttackPathSelectSetting());
+					
+					
 					ChangeRound_AllRemover();
-					Cursor.lockState = CursorLockMode.None;
+					
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.SettingAttackPath;
+					photonView.RPC("GamingEnd_RPC", RpcTarget.AllBuffered);
 					break;
 			}
 		}
 	}
 
-	// 현재 턴이 공격로 선택 시간이므로, 모든 마스터스포너에게 공격로 설정을 할 때 사용하는 함수.
-	private void SettingAttack()
+	// 게임매니저 RPC 처리.
+    #region Gamemanager Process
+    [PunRPC]private void SettingAttackPathReady_RPC()
+	{
+        state = MoonHeader.ManagerState.Processing;
+        StartCoroutine(ScreenFade(true));
+        SettingAttack();        // 스포너의 상태를 변경.
+        SettingTurnText();      // 턴 상태 UI를 변경
+        selectAttackPathUI.SetActive(true);
+    }
+	[PunRPC]private void StartGameReady_RPC()
+	{
+        state = MoonHeader.ManagerState.Processing;
+        SettingTurnText();      // 턴 상태 UI를 변경.
+        foreach (GameObject s in spawnPoints)   // 모든 마스터 스포너에게 턴이 변경됐음을 알림.
+        { s.GetComponent<LSM_Spawner>().ChangeTurn(); }
+    }
+	[PunRPC]private void GamingReady_RPC()
+	{
+        state = MoonHeader.ManagerState.Processing;
+        SettingTurnText();      // 턴 상태 UI를 변경.
+        foreach (GameObject s in spawnPoints)   // 모든 마스터 스포너의 상태를 변경.
+        { s.GetComponent<LSM_Spawner>().state = MoonHeader.SpawnerState.Spawn; }
+    }
+
+	[PunRPC]private void SettingAttackPathEnd_RPC()
+	{
+        state = MoonHeader.ManagerState.Ready;
+        gameState = MoonHeader.GameState.StartGame;
+        foreach (GameObject s in spawnPoints)       // 모든 마스터 스포너에게 현재 최대 설정 가능한 포인트 만큼 설정하였는지 확인하는 함수 실행.
+        { s.GetComponent<LSM_Spawner>().CheckingSelectMon(); }
+        selectAttackPathUI.SetActive(false);
+    }
+	[PunRPC]private void GamingEnd_RPC()
+	{
+        state = MoonHeader.ManagerState.Ready;
+        gameState = MoonHeader.GameState.SettingAttackPath;
+        ScreenFade(false);
+        StartCoroutine(mainPlayer.AttackPathSelectSetting());
+        Cursor.lockState = CursorLockMode.None;
+    }
+    #endregion
+
+    // 현재 턴이 공격로 선택 시간이므로, 모든 마스터스포너에게 공격로 설정을 할 때 사용하는 함수.
+    private void SettingAttack()
 	{
 		if (MoonHeader.GameState.SettingAttackPath != gameState) return;
 
@@ -451,6 +493,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			foreach (GameObject obj in playerMinions[i])
 			{
+
 				obj.SetActive(false);
 			}
 			playerMinions[i].Clear();
@@ -462,7 +505,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 				{
 					LSM_MinionCtrl dummyCtrl = minion.GetComponent<LSM_MinionCtrl>();
 					teamManagers[(int)dummyCtrl.stats.actorHealth.team].exp += dummyCtrl.stats.exp;
-					minion.SetActive(false);
+					//minion.SetActive(false);
+					dummyCtrl.MinionDisable();
 				}
 			}
 		}

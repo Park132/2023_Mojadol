@@ -30,14 +30,16 @@ public class LSM_TimerSc : MonoBehaviourPunCallbacks, IPunObservable
 			stream.SendNext(startTimer);
 			stream.SendNext(limitTimeSetting);
 			stream.SendNext(reverse);
+			stream.SendNext(timerPannel.activeSelf);
 		}
 		else
 		{
 			this.timer = (float)stream.ReceiveNext();
-			this.limitS = (float)stream.ReceiveNext();
+			this.limitS = (float)stream.ReceiveNext(); 
 			this.startTimer = (bool)stream.ReceiveNext();
 			this.limitTimeSetting = (bool)stream.ReceiveNext();
 			this.reverse = (bool)stream.ReceiveNext();
+			timerPannel.SetActive((bool)stream.ReceiveNext());
 		}
 	}
 	#endregion
@@ -55,14 +57,13 @@ public class LSM_TimerSc : MonoBehaviourPunCallbacks, IPunObservable
 
 	private void Update()
 	{
-		// 타이머가 시작되었다면
-		if (startTimer)
+        // UI 글자 처리
+        TimerText();
+        // 타이머가 시작되었다면
+        if (startTimer && PhotonNetwork.IsMasterClient)
 		{
 			// 리버스에 대하여 더할지 뺄지 확인.
 			timer += Time.deltaTime * (reverse ? -1 : 1);
-			
-			// UI 글자 처리
-			TimerText();
 
 			// 최대 시간이 정해져있는지 확인. 및 reverse 확인.
 			if (timer >= limitS && limitTimeSetting && !reverse)
@@ -91,8 +92,9 @@ public class LSM_TimerSc : MonoBehaviourPunCallbacks, IPunObservable
 	public void TimerStop() { timer = 0; timerPannel.SetActive(false); startTimer = false; limitTimeSetting = false; limitS = 0; reverse = false; }
 
 	// 스킵버튼을 클릭 시 실행되는 함수. 바로 타이머가 종료되게 설정.
-	public void TimerOut() { GameManager.Instance.TimeOutProcess(); TimerStop();
-		pv.RPC("RPC_TimerOut", RpcTarget.All);
+	public void TimerOut() { 
+		//GameManager.Instance.TimeOutProcess(); TimerStop();
+		pv.RPC("RPC_TimerOut", RpcTarget.MasterClient);
 	}
 
 	#region RPC Methods 0408 - PSH

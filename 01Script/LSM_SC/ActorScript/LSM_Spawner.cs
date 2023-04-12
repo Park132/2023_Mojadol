@@ -46,7 +46,10 @@ public class LSM_Spawner : MonoBehaviour
 		}
 		spawnpoints = new MoonHeader.S_SpawnerPaths[ways.Count];
 		for (int i = 0; i < ways.Count; i++)
-		{ spawnpoints[i] = new MoonHeader.S_SpawnerPaths(ways[i]); }
+		{
+			LSM_SpawnPointSc ways_script_dummy = ways[i].GetComponent<LSM_SpawnPointSc>();
+			spawnpoints[ways_script_dummy.number] = new MoonHeader.S_SpawnerPaths(ways[i]);
+		}
 
 		// 변수 초기화
 		delay = 0;
@@ -181,6 +184,14 @@ public class LSM_Spawner : MonoBehaviour
 		{
 			spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i] * BASEMINIONMULTIPLER;
 			spawnpoints[i].summon_ = 0;
+		}
+	}
+
+	public void ChangePathNumber() 
+	{
+		foreach(MoonHeader.S_SpawnerPaths item in spawnpoints)
+		{
+			item.path.GetComponent<LSM_SpawnPointSc>().pathUI_SC.CheckingServerValue();
 		}
 	}
 }

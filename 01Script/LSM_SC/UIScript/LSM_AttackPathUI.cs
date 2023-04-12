@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 // 공격로 비율 지정에 사용되는 아이콘 스크립트.
 public class LSM_AttackPathUI : MonoBehaviour
@@ -76,17 +77,25 @@ public class LSM_AttackPathUI : MonoBehaviour
 
 	// 슬라이더의 값이 변할 경우 발동되는 함수.
 	// 해당하는 팀의 매니저에서 값을 변경하도록 설정.
-	public void ChangeValue()
+
+	public void OnSpideUp(BaseEventData eventData)
 	{
-		if (!ReferenceEquals(spawnPoint, null))
-		{
-			GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number] = (int)sl.value;
-			//parentSpawner.spawnpoints[spawnPoint.number].num = (int)sl.value;
-			num.text = sl.value.ToString();
-			// 팀매니저에 존재하는 최대값 변경 함수 호출.
-			GameManager.Instance.teamManagers[(int)parentSpawner.team].PathUI_ChangeMaxValue();
-		}
-	}
+        if (!ReferenceEquals(spawnPoint, null))
+        {
+            GameManager.Instance.teamManagers[(int)parentSpawner.team].PathingNumberSetting(spawnPoint.number, (int)sl.value);
+            num.text = sl.value.ToString();
+            // 팀매니저에 존재하는 최대값 변경 함수 호출.
+            //GameManager.Instance.teamManagers[(int)parentSpawner.team].PathUI_ChangeMaxValue();
+        }
+    }
+
+	
+
+	public void CheckingServerValue()
+	{
+		sl.value = GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number];
+        num.text = sl.value.ToString();
+    }
 
 	// 슬라이더 비활성화
 	public void InvisibleSlider(bool change) { sl.gameObject.SetActive(change); }
