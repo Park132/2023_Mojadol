@@ -116,15 +116,17 @@ public class PoolManager : MonoBehaviour
 		{
 			//result = GameObject.Instantiate(minions[index], this.transform);
 			result = PhotonNetwork.Instantiate(minions[index].name, Vector3.zero, Quaternion.identity);
-			result.transform.parent = this.transform;
-			poolList_Minion[index].Add(result);
+			//result.transform.parent = this.transform;
+			result.GetComponent<LSM_MinionCtrl>().ParentSetting_Pool(index);
+			//poolList_Minion[index].Add(result);
+			
 		}
 
 		return result;
 	}
 
 	// 플레이어 미니언 반환
-	[PunRPC]public GameObject Get_PlayerMinion(int index)
+	public GameObject Get_PlayerMinion(int index)
 	{
 		if (index >= playerMinions.Length || index < 0)
 			return null;
@@ -144,8 +146,9 @@ public class PoolManager : MonoBehaviour
 		{
 			//result = GameObject.Instantiate(playerMinions[index], this.transform);
 			result = PhotonNetwork.Instantiate(playerMinions[index].name,Vector3.zero, Quaternion.identity);
-			result.transform.parent = this.transform;
-			poolList_PlayerMinions[index].Add(result);
+			result.GetComponent<PSH_PlayerFPSCtrl>().ParentSetting_Pool(index);
+			//result.transform.parent = this.transform;
+			//poolList_PlayerMinions[index].Add(result);
 		}
 		return result;
 	}

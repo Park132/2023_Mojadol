@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
+using static MoonHeader;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 
-public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
+public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 {
     // 근접 플레이어 구현
     // 플레이어 상태
@@ -68,7 +71,29 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
 
     PhotonView pv;
 
-	private void Awake()
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(playerName);
+            stream.SendNext(this.gameObject.activeSelf);
+            stream.SendNext(actorHealth.maxHealth);
+            stream.SendNext(actorHealth.health);
+            stream.SendNext(actorHealth.team);
+            stream.SendNext(actorHealth.Atk);
+        }
+        else
+        {
+            this.playerName = (string)stream.ReceiveNext();
+            this.gameObject.SetActive((bool)stream.ReceiveNext());
+            this.actorHealth.maxHealth = (int)stream.ReceiveNext();
+            this.actorHealth.health = (int)stream.ReceiveNext();
+            this.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
+            this.actorHealth.Atk = (int)stream.ReceiveNext();
+        }
+    }
+
+    private void Awake()
 	{
         // LSM
         rigid = GetComponent<Rigidbody>();
@@ -352,12 +377,14 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
     {
         //Health = monHealth * 10;
         // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
+        this.photonView.RequestOwnership();
         actorHealth = new MoonHeader.S_ActorState(100, 10, t);
         actorHealth.health = monHealth * 10;
         playerName = pname;
         myPlayerCtrl = pctrl;
-        ChangeTeamColor(playerIcon);
         state_p = MoonHeader.State_P_Minion.Normal;
+
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, 100, monHealth * 10, pname, (int)t);
 
         // 초기화
         canAttack = true;
@@ -372,6 +399,19 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
         cameraCanMove = true;
         invertCamera = false;
     }
+
+    [PunRPC]private void SpawnSetting_RPC(int mh, int h, string name, int t)
+    {
+        this.actorHealth.maxHealth = mh;
+        this.actorHealth.health = h;
+        this.playerName= name;
+        this.actorHealth.team = (Team)t;
+
+        this.transform.name = playerName;
+        GameManager.Instance.playerMinions[(int)actorHealth.team].Add(this.gameObject);
+        ChangeTeamColor(playerIcon);
+    }
+
 
     // LSM Damaged 추가.
     public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
@@ -422,6 +462,19 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor
             default: dummy_color = Color.gray; break;
         }
         obj.GetComponent<Renderer>().material.color = dummy_color;
+    }
+
+    public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }
+    [PunRPC]private void ParentSetting_Pool_RPC(int index)
+    {
+        this.transform.parent = PoolManager.Instance.gameObject.transform;
+        PoolManager.Instance.poolList_PlayerMinions[index].Add(this.gameObject);
+    }
+
+    public void MinionDisable() { photonView.RPC("DeadProcessing", RpcTarget.All); }
+    [PunRPC]protected void DeadProcessing()
+    {
+        this.gameObject.SetActive(false);
     }
 
 

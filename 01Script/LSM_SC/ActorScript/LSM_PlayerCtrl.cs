@@ -22,7 +22,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     // TopView에서의 이동속도 초기화
     private float wheelSpeed = 15f;
-    private float map_move = 1f;
+    private float map_move = 90f;
     private bool is_zoomIn;                 // 선택한 미니언에게 확대하고 있는지
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
 
@@ -144,7 +144,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
             // 방향키 이동에 따라서 맵의 이동
             Vector3 mapcampPosition = MapCam.transform.position;
-            Vector3 move_f = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")) * map_move;
+            Vector3 move_f = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")) * map_move * Time.deltaTime;
             MapCam.transform.position = new Vector3(
                 mapcampPosition.x+ move_f.x, mapcampPosition.y,
                 mapcampPosition.z+ move_f.z);
@@ -312,11 +312,24 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         Vector3 originV = MapCam.transform.position;
         float originSize = mapCamCamera.orthographicSize;
 
-        for (int i = 0; i < 50; i++)
+        /*for (int i = 0; i < 50; i++)
         {
             MapCam.transform.position = Vector3.Lerp(originV, (mapcamSub_Target.transform.position + Vector3.up * 95), 0.02f * i);
             mapCamCamera.orthographicSize = Mathf.Lerp(originSize, 20, 0.02f * i);
             yield return new WaitForSeconds(0.01f);
+        }*/
+
+        
+        while (true)
+        {
+            Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * 95;
+            MapCam.transform.position = Vector3.MoveTowards(MapCam.transform.position,
+                targetPosition, map_move * 2 * Time.deltaTime);
+            mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > 20) ?
+                mapCamCamera.orthographicSize - 0.5f : 20;
+            yield return new WaitForSeconds(0.01f);
+            if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= 20)
+                break;
         }
         is_zoomIn=false;
         minionStatsPannel.SetActive(true);
@@ -362,8 +375,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         //playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
         playerMinion.transform.position = subTarget_minion.transform.position;
         playerMinion.transform.rotation = subTarget_minion.transform.rotation;
-        playerMinion.name = playerName;
-        GameManager.Instance.playerMinions[(int)player.team].Add(playerMinion);
+
+
         playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
 
         // 카메라 지정. 및 초기세팅

@@ -75,13 +75,7 @@ public class LSM_Spawner : MonoBehaviour
 		// 현재 스포너의 상태가 공격로 선택이라면 선택
 		if (state == MoonHeader.SpawnerState.Setting)
 		{
-			/*
-			selectedNum = 0;
-			foreach (MoonHeader.SpawnerPaths item in spawnpoints)
-			{
-				selectedNum += item.num;
-			}
-			*/
+			
 		}
 		// 스폰이 가능한 상태라면
 		else if (state == MoonHeader.SpawnerState.Spawn)
@@ -131,7 +125,6 @@ public class LSM_Spawner : MonoBehaviour
 					{
 						wave_Minions_Num = 0;
 						SettingPath_MinionSpawn();
-						
 					}
 				}
 			}
@@ -144,6 +137,7 @@ public class LSM_Spawner : MonoBehaviour
 	{
 		if (GameManager.Instance.mainPlayer.player.team != this.team) return;
 		bool change_dummy = false;
+
 		// 현재 공격로 지정 턴일때
 		if (GameManager.Instance.gameState == MoonHeader.GameState.SettingAttackPath)
 		{change_dummy = true;}
@@ -158,10 +152,14 @@ public class LSM_Spawner : MonoBehaviour
             LSM_AttackPathUI dummy_path_ui = dummy.pathUI.GetComponent<LSM_AttackPathUI>();
 
 			dummy_path_ui.InvisibleSlider(change_dummy);
-			dummy_path_ui.sl.value = item.num;
+			ChangePathNumber();
+			GameManager.Instance.teamManagers[(int)this.team].PathUI_ChangeMaxValue();
+
 			foreach (GameObject path in dummy.Paths)
 				path.SetActive(change_dummy);
 		}
+		if (change_dummy)
+		{ SettingPath_MinionSpawn(); delay = 0; }
 	}
 
 	// 공격로 선택이 끝난 이후 공격로에 얼만큼 지정을 하였는지 확인.

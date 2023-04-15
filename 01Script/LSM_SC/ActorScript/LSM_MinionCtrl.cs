@@ -189,6 +189,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.stats.actorHealth.maxHealth = mh;
 		this.stats.actorHealth.health = mh;
 		this.stats.actorHealth.team = (MoonHeader.Team)t;
+		PlayerDisConnect();
 		ChangeTeamColor();
     }
 
@@ -597,10 +598,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		playerIcon.GetComponent<Renderer>().material.color = dummy_color;
 		bodies[0].GetComponent<Renderer>().material.color = dummy_color;
 	}
-    #endregion
+	#endregion
 
-    // 플레이어가 해당 미니언에게 강령
-    public void PlayerConnect()
+	// 플레이어가 해당 미니언에게 강령
+	public void PlayerConnect() { photonView.RPC("PlayerConnect_RPC", RpcTarget.All); }
+    [PunRPC]public void PlayerConnect_RPC()
 	{
 		PlayerSelect = true;
 
@@ -614,7 +616,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	// 플레이어가 해당 미니언에게서 나옴.
-	// 어디에서 빠져나왔을지 모르니, navmesh의 목적지를 재 설정해야함.
+	
+
 	public void PlayerDisConnect()
 	{
 		PlayerSelect = false;
@@ -623,7 +626,6 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		icon.SetActive(true);
 		playerIcon.SetActive(false);
-		MyDestination();
 	}
 
 	// 플레이어가 해당 미니언을 탑뷰일 때 선택하였을 경우.
@@ -641,7 +643,14 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			anim.SetFloat("Velocity", 0f);
 	}
 
-	// I_Actor 구현 함수
+	public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }
+	[PunRPC] private void ParentSetting_Pool_RPC(int index) {
+		this.transform.parent = PoolManager.Instance.gameObject.transform;
+		PoolManager.Instance.poolList_Minion[index].Add(this.gameObject);
+    }
+    
+
+    // I_Actor 구현 함수
     #region I_Actor
     public int GetHealth(){return this.stats.actorHealth.health;}
 	public int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }

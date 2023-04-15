@@ -203,8 +203,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		for (int i = 0; i < players.Length; i++)
 		{
 			players[i].Start_fuction();
-			//if (PhotonNetwork.IsMasterClient)
-				//players[i].SettingTeam(i%2);				// ÆÀ ³ª´©±â.
+			if (PhotonNetwork.IsMasterClient)
+				players[i].SettingTeam(i%2);				// ÆÀ ³ª´©±â.
 
 		}
 
@@ -280,7 +280,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
     private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.O))
+		if (Input.GetKeyDown(KeyCode.O) && !onceStart)
 			Connect();
 
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
@@ -494,7 +494,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			foreach (GameObject obj in playerMinions[i])
 			{
 
-				obj.SetActive(false);
+				obj.GetComponent<PSH_PlayerFPSCtrl>().MinionDisable();
 			}
 			playerMinions[i].Clear();
 		}
