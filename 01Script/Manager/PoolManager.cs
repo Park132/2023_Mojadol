@@ -138,6 +138,7 @@ public class PoolManager : MonoBehaviour
 			{
 				result = item;
 				item.SetActive(true);
+				item.GetComponent<PSH_PlayerFPSCtrl>().MinionEnable();
 				break;
 			}
 		}

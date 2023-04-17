@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public int numOfPlayer;				// 현재 플레이어의 수.
 	public TextMeshProUGUI turnText;	// 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
 										// # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
-	private GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
+	public GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
 	public GameObject[] wayPoints;		// 씬에 존재하는 모든 "웨이포인트"의 모음
 
 	public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
@@ -204,7 +204,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			players[i].Start_fuction();
 			if (PhotonNetwork.IsMasterClient)
-				players[i].SettingTeam(i%2);				// 팀 나누기.
+			{
+				players[i].SettingTeamAndName(i % 2, "Test " + i);              // 팀 나누기.
+			}
 
 		}
 
@@ -369,6 +371,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     #region Gamemanager Process
     [PunRPC]private void SettingAttackPathReady_RPC()
 	{
+		gameState = MoonHeader.GameState.SettingAttackPath;
         state = MoonHeader.ManagerState.Processing;
         StartCoroutine(ScreenFade(true));
         SettingAttack();        // 스포너의 상태를 변경.
@@ -477,12 +480,17 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	// 보통 플레이어의 미니언이 게임 도중 죽었을 경우 사용되는 함수.
 	public void PlayerMinionRemover(MoonHeader.Team t, string nam)
 	{
-		for (int i = 0; i < playerMinions[(int)t].Count; i++)
+		photonView.RPC("PlayerMinionRemover_RPC",RpcTarget.All, (int)t, nam);
+	}
+	[PunRPC]private void PlayerMinionRemover_RPC(int t, string n)
+	{
+		for (int i = 0; i < playerMinions[t].Count; i++)
 		{
-			if (playerMinions[(int)t][i].name.Equals(nam))
-				playerMinions[(int)t].Remove(playerMinions[(int)t][i]);
+			if (playerMinions[t][i].name.Equals(n))
+			{
+				playerMinions[t].Remove(playerMinions[t][i]);
+			}
 		}
-
 	}
 
 	// 게임 매니저에 저장되어있는 플레이어 미니언들을 전부 파괴하는 함수.
@@ -493,11 +501,12 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			foreach (GameObject obj in playerMinions[i])
 			{
-
 				obj.GetComponent<PSH_PlayerFPSCtrl>().MinionDisable();
 			}
-			playerMinions[i].Clear();
 		}
+
+		photonView.RPC("ChangeRound_AllRemover_RPC", RpcTarget.All);
+
 		for (int i = 0; i < PoolManager.Instance.minions.Length; i++) {
 			foreach (GameObject minion in PoolManager.Instance.poolList_Minion[i])
 			{
@@ -511,6 +520,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			}
 		}
 	}
+	[PunRPC]private void ChangeRound_AllRemover_RPC() { playerMinions[0].Clear(); playerMinions[1].Clear(); }
+
 
 	// log를 최대 5개 표시하게 관리하기 위한 함수.
 	private void DisplayEnable()

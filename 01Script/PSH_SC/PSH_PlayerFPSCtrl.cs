@@ -76,7 +76,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         if (stream.IsWriting)
         {
             stream.SendNext(playerName);
-            stream.SendNext(this.gameObject.activeSelf);
+            //stream.SendNext(this.gameObject.activeSelf);
             stream.SendNext(actorHealth.maxHealth);
             stream.SendNext(actorHealth.health);
             stream.SendNext(actorHealth.team);
@@ -85,7 +85,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         else
         {
             this.playerName = (string)stream.ReceiveNext();
-            this.gameObject.SetActive((bool)stream.ReceiveNext());
+            //this.gameObject.SetActive((bool)stream.ReceiveNext());
             this.actorHealth.maxHealth = (int)stream.ReceiveNext();
             this.actorHealth.health = (int)stream.ReceiveNext();
             this.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
@@ -474,9 +474,13 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     public void MinionDisable() { photonView.RPC("DeadProcessing", RpcTarget.All); }
     [PunRPC]protected void DeadProcessing()
     {
+        if (photonView.IsMine)
+            myPlayerCtrl.PlayerMinionDeadProcessing(); 
         this.gameObject.SetActive(false);
     }
 
+    public void MinionEnable() { photonView.RPC("MinionEnable_RPC", RpcTarget.All); }
+    [PunRPC] protected void MinionEnable_RPC() { this.gameObject.SetActive(true); }
 
     // I_Actor 인터페이스에 미리 선언해둔 함수들 구현
     public int GetHealth() { return this.actorHealth.health; }

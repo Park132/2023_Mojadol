@@ -112,8 +112,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
     }
-    public void SettingTeam(int t) { photonView.RPC("SettingTeam_RPC", RpcTarget.AllBuffered, t); }
-    [PunRPC] protected void SettingTeam_RPC(int t) { this.player.team = (MoonHeader.Team)t; }
+    public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTeamAndName_RPC", RpcTarget.AllBuffered, t,n); }
+    [PunRPC] protected void SettingTeamAndName_RPC(int t, string n) { this.player.team = (MoonHeader.Team)t; this.playerName = n; }
 
 	void Update()
     {
@@ -373,8 +373,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
         playerMinion = PoolManager.Instance.Get_PlayerMinion(0);
         //playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
-        playerMinion.transform.position = subTarget_minion.transform.position;
-        playerMinion.transform.rotation = subTarget_minion.transform.rotation;
+        
 
 
         playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
@@ -387,7 +386,12 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         GameManager.Instance.gameUI.SetActive(true);
         GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl);
 
+        Vector3 dummyPosition = subTarget_minion.transform.position;
+        Quaternion dummyRotation = subTarget_minion.transform.rotation;
         subTarget_minion.MinionDisable();
+
+        playerMinion.transform.position = dummyPosition;
+        playerMinion.transform.rotation = dummyRotation;
 
         StartCoroutine(GameManager.Instance.ScreenFade(true));
         player.statep = MoonHeader.State_P.Selected;

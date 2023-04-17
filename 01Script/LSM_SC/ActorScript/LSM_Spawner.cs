@@ -135,7 +135,6 @@ public class LSM_Spawner : MonoBehaviour
 	//턴이 변경될때마다 게임매니저에서 호출
 	public void ChangeTurn()
 	{
-		if (GameManager.Instance.mainPlayer.player.team != this.team) return;
 		bool change_dummy = false;
 
 		// 현재 공격로 지정 턴일때
@@ -145,8 +144,12 @@ public class LSM_Spawner : MonoBehaviour
 		else
 		{change_dummy = false;}
 
-		// 공격로 설정을 위한 UI에 대하여, 슬라이더의 표시 여부를 확인.
-		foreach (MoonHeader.S_SpawnerPaths item in spawnpoints)
+        if (change_dummy)
+        { SettingPath_MinionSpawn(); delay = 0; }
+        if (GameManager.Instance.mainPlayer.player.team != this.team) return;
+
+        // 공격로 설정을 위한 UI에 대하여, 슬라이더의 표시 여부를 확인.
+        foreach (MoonHeader.S_SpawnerPaths item in spawnpoints)
 		{
 			LSM_SpawnPointSc dummy = item.path.GetComponent<LSM_SpawnPointSc>();
             LSM_AttackPathUI dummy_path_ui = dummy.pathUI.GetComponent<LSM_AttackPathUI>();
@@ -158,8 +161,7 @@ public class LSM_Spawner : MonoBehaviour
 			foreach (GameObject path in dummy.Paths)
 				path.SetActive(change_dummy);
 		}
-		if (change_dummy)
-		{ SettingPath_MinionSpawn(); delay = 0; }
+		
 	}
 
 	// 공격로 선택이 끝난 이후 공격로에 얼만큼 지정을 하였는지 확인.
@@ -183,6 +185,7 @@ public class LSM_Spawner : MonoBehaviour
 			spawnpoints[i].num = GameManager.Instance.teamManagers[(int)this.team].AttackPathNumber[i] * BASEMINIONMULTIPLER;
 			spawnpoints[i].summon_ = 0;
 		}
+		wave_Minions_Num = 0;
 	}
 
 	public void ChangePathNumber() 
