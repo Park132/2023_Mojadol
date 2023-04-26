@@ -7,15 +7,21 @@ public class PSH_PlayerUniversal : MonoBehaviour
     GameObject playerCharacter;
     Rigidbody rigid;
 
-    Animator anim;
-
+    // 이동속도, 점프 판별 함수
     float speed = 15.0f;
     bool isGrounded;
+
+    // 애니메이션 부분
+    Transform myspine;
+    Animator anim;
+    int attackcode = 0;
+
+
 
     #region Camera Variants
     // 카메라 관련 변수들
     public Camera playerCamera;
-    public GameObject camerapos;
+    public GameObject camerapos; // eyes 연결
     bool cameraCanMove = true;
     bool invertCamera = false;
     float yaw = 0.0f;
@@ -29,17 +35,29 @@ public class PSH_PlayerUniversal : MonoBehaviour
     {
         rigid = this.gameObject.GetComponent<Rigidbody>();
         playerCharacter = this.gameObject;
-        anim = this.gameObject.GetComponent<Animator>();
         playerCamera = Camera.main;
+        anim = this.gameObject.GetComponent<Animator>();
+        myspine = anim.GetBoneTransform(HumanBodyBones.Spine);
     }
 
     // Update is called once per frame
-    void Update()
+    void Update() 
     {
         Move();
-        LookAround();
-        
-        
+        // LookAround();
+        BasicAttack(true);
+
+        /*
+        if (Input.GetMouseButtonDown(0)) // 바라보는 시점에 맞게 검을 휘둘러야함
+        {
+            anim.SetTrigger("basicAttack");
+        }
+        */
+    }
+
+    private void LateUpdate()
+    {
+        LookAround(); // 척추 움직임에 따른 시야 움직임이 적용될려면 이 함수가 LateUpdate()에서 호출 되어야함
     }
 
     void Move()
@@ -74,9 +92,6 @@ public class PSH_PlayerUniversal : MonoBehaviour
 
     void LookAround()
     {
-        playerCamera.transform.position = camerapos.transform.position;
-        playerCamera.transform.rotation = camerapos.transform.rotation;
-
         if (cameraCanMove)
         {
             yaw = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -95,13 +110,43 @@ public class PSH_PlayerUniversal : MonoBehaviour
             pitch = Mathf.Clamp(pitch, -maxLookAngle, maxLookAngle);
 
             this.transform.localEulerAngles = new Vector3(0, yaw, 0);
-            camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
+
+            myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
+            // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
         }
+        playerCamera.transform.position = camerapos.transform.position;
+        // playerCamera.transform.rotation = camerapos.transform.rotation;
+        // playerCamera.transform.SetPositionAndRotation(camerapos.transform.position, camerapos.transform.rotation);
     }
 
-    void BasicAttack()
+    void BasicAttack(bool canAttack)
     {
+        if(canAttack)
+        {
+            float upbody_weight = 1.0f;
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                attackcode++;
+                attackcode %= 2;
+
+                anim.SetLayerWeight(1, 1f);
+                
+                anim.SetTrigger("basicAttack" + attackcode.ToString());
+
+                AnimatorStateInfo stateinfo = anim.GetCurrentAnimatorStateInfo(1);
+                Debug.Log($"stateinfo's name : {stateinfo.IsName("slash5")}");
+
+                if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.99f)
+                {
+                    
+                }
+            }
+        }
+
+        #region 2개의 애니메이션 섞기
+        /*
         float basic_attack_weight = 1.0f;
 
         if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.6f) //애니메이션이 절판쯤 진행 됐을 때 참이 됨, 끝까지 재생됨
@@ -112,10 +157,8 @@ public class PSH_PlayerUniversal : MonoBehaviour
             }
             anim.SetLayerWeight(1, basic_attack_weight);
         }
+        */
+        #endregion
 
-        if(Input.GetMouseButtonDown(0))
-        {
-
-        }
     }
 }
