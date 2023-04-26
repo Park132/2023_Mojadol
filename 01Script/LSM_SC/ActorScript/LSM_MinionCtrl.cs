@@ -45,6 +45,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public int minionType;  //0이면 원거리, 1이면 근거리 미니언
 
 	public bool debugging_minion; // 디버깅 확인용...
+	private Vector3 networkPosition;
 
 	#region IPUnalsdfjaow
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -57,6 +58,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			stream.SendNext(stats.actorHealth.team);
 			stream.SendNext(stats.actorHealth.Atk);
 			stream.SendNext(stats.state);
+
+			stream.SendNext(nav.enabled ? Vector3.zero : nav.velocity);
+			stream.SendNext(rigid.position);
 		}
 		else
 		{
@@ -66,6 +70,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
 			this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
 			this.stats.state = (MoonHeader.State)stream.ReceiveNext();
+			rigid.velocity = (Vector3)stream.ReceiveNext();
+			networkPosition = (Vector3)stream.ReceiveNext();
+
+			float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTimestamp));
+			networkPosition += rigid.velocity * lag;
 		}
 	}
 
@@ -146,9 +155,17 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	}
 
-	// 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
-	// 모든 변수 초기화
-	public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
+    private void FixedUpdate()
+    {
+        if (!photonView.IsMine)
+		{
+			rigid.position = Vector3.MoveTowards(rigid.position, networkPosition, Time.fixedDeltaTime);
+		}
+    }
+
+    // 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
+    // 모든 변수 초기화
+    public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
 	{
 		nav_ob.enabled = false;
 		nav.enabled = true;
@@ -175,6 +192,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		mySpawner = spawn;
 		icon.SetActive(true);
 		playerIcon.SetActive(false);
+		nav.velocity = Vector3.zero;
 		rigid.angularVelocity = Vector3.zero;
 		rigid.velocity = Vector3.zero;
 
