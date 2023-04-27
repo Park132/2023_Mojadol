@@ -111,13 +111,12 @@ public class PSH_PlayerUniversal : MonoBehaviour
 
             this.transform.localEulerAngles = new Vector3(0, yaw, 0);
 
-            myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
+            // myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
         }
         playerCamera.transform.position = camerapos.transform.position;
         // playerCamera.transform.rotation = camerapos.transform.rotation;
-        // playerCamera.transform.SetPositionAndRotation(camerapos.transform.position, camerapos.transform.rotation);
     }
 
     void BasicAttack(bool canAttack)
