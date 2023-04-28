@@ -45,15 +45,27 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public int minionType;  //0이면 원거리, 1이면 근거리 미니언
 
 	public bool debugging_minion; // 디버깅 확인용...
-	private Vector3 networkPosition;
+	private Vector3 networkPosition, networkVelocity;
 
-	#region IPUnalsdfjaow
-	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+
+    // 기즈모
+    
+    private void OnDrawGizmosSelected()
+    {
+		if (!PhotonNetwork.IsMasterClient)
+		{
+			Gizmos.color = Color.green;
+			Gizmos.DrawRay(this.transform.position, networkPosition - this.transform.position);
+			Gizmos.DrawCube(networkPosition, Vector3.one * 2);
+		}
+    }
+
+    #region IPUnalsdfjaow
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
 		if (stream.IsWriting)
 		{
 			stream.SendNext(this.gameObject.activeSelf);
-			stream.SendNext(rigid.position);
 			
 				stream.SendNext(stats.actorHealth.maxHealth);
 				stream.SendNext(stats.actorHealth.health);
@@ -61,7 +73,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				stream.SendNext(stats.actorHealth.Atk);
 				stream.SendNext(stats.state);
 
-				stream.SendNext(nav.enabled ? Vector3.zero : nav.velocity);
+				stream.SendNext(nav.enabled ? nav.velocity : Vector3.zero );
 				
 			
 		}
@@ -69,7 +81,6 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		{
 			bool isActive_ = (bool)stream.ReceiveNext();
 			this.gameObject.SetActive(isActive_);
-			networkPosition = (Vector3)stream.ReceiveNext();
 			
 				this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
 				this.stats.actorHealth.health = (int)stream.ReceiveNext();
@@ -78,11 +89,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				this.stats.state = (MoonHeader.State)stream.ReceiveNext();
 
 
-				rigid.velocity = (Vector3)stream.ReceiveNext();
-				
+				networkVelocity= (Vector3)stream.ReceiveNext();
+				rigid.velocity = networkVelocity;
 
-				float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTimestamp)) *10;
-				networkPosition += rigid.velocity * lag;
+				//float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.timestamp)) * 20;
+				networkPosition = this.transform.position + networkVelocity * 5;
 			
 		}
 	}
@@ -164,12 +175,14 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	}
 
-    private void FixedUpdate()
+    private void Update()
     {
         if (!photonView.IsMine)
-		{
-			rigid.position = Vector3.MoveTowards(rigid.position, networkPosition, Time.fixedDeltaTime);
-		}
+        {
+			transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
+            //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime * networkVelocity.magnitude);
+			//Debug.Log(string.Format("velocityMagnitude : {0}\nvelocity : {1}",networkVelocity.magnitude, stats.speed));
+        }
     }
 
     // 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
@@ -187,7 +200,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
 		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
-		photonView.RPC("MonSetting_RPC", RpcTarget.All, 10, 3, (int)t);
+		photonView.RPC("MS_RPC", RpcTarget.All, (int)stats.actorHealth.maxHealth, (int)stats.actorHealth.Atk, (int)t, (int)stats.speed);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
@@ -210,11 +223,12 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	// 체력, 공격력, 팀
-	[PunRPC]private void MonSetting_RPC(int mh, int atk, int t)
+	[PunRPC]private void MS_RPC(int mh, int atk, int t, int s)
     {
 		this.stats.actorHealth.Atk = atk;
 		this.stats.actorHealth.maxHealth = mh;
 		this.stats.actorHealth.health = mh;
+		this.stats.speed = s;
 		this.stats.actorHealth.team = (MoonHeader.Team)t;
 		PlayerDisConnect();
 		ChangeTeamColor();
@@ -433,7 +447,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						timer_Attack = 0;
 						// 공격 애니메이션 실행. 지금은 즉발. 하지만 발사체를 사용할거면 이때 소환.
-						photonView.RPC("AttackAnimation_RPC",RpcTarget.All);
+						photonView.RPC("AAnim_RPC", RpcTarget.All);
 						StartCoroutine(Attack_Anim());
 
 					}
@@ -444,7 +458,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	}
 
-	[PunRPC]protected void AttackAnimation_RPC() { anim.SetTrigger("Attack"); }
+	[PunRPC]protected void AAnim_RPC() { anim.SetTrigger("Attack"); }
 
 	private IEnumerator Attack_Anim()
 	{
@@ -493,7 +507,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		stats.actorHealth.health -= dam;
 
-		photonView.RPC("Damaged_RPC_Minion", RpcTarget.All);
+		photonView.RPC("DamMinion_RPC", RpcTarget.All);
 		//StartCoroutine(DamagedEffect());
 
 		//Debug.Log("Minion Damaged!! : " +stats.health);
@@ -505,7 +519,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		return;
 	}
 
-	[PunRPC] protected void Damaged_RPC_Minion() {
+	[PunRPC] protected void DamMinion_RPC() {
         StartCoroutine(DamagedEffect());
     }
 
@@ -524,12 +538,12 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 
 
-		yield return new WaitForSeconds(0.5f);
+		yield return new WaitForSeconds(1f);
 		//this.gameObject.SetActive(false);
-		photonView.RPC("DeadProcessing",RpcTarget.All);
+		photonView.RPC("DeadP",RpcTarget.All);
 	}
-	public void MinionDisable() { photonView.RPC("DeadProcessing", RpcTarget.All); }
-	[PunRPC]protected void DeadProcessing()
+	public void MinionDisable() { photonView.RPC("DeadP", RpcTarget.All); }
+	[PunRPC]protected void DeadP()
 	{
         this.gameObject.SetActive(false);
     }
@@ -602,10 +616,10 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// 아이콘 및 몸체 색 변경.
 	#region ChangeTeamColors
 	// 오버로드. 매개변수가 존재하지 않을경우 미니언의 아이콘의 색상을 변경.
-	public void ChangeTeamColor() { photonView.RPC("ChangeTeamColor_RPC", RpcTarget.All); }
+	public void ChangeTeamColor() { photonView.RPC("ChangeTC_RPC", RpcTarget.All); }
 
 	// 시작 혹은 생성할 때 미니언의 아이콘 등의 색상을 변경.
-    [PunRPC]public void ChangeTeamColor_RPC()
+    [PunRPC]public void ChangeTC_RPC()
 	{
 		Color dummy_color;
 		switch (stats.actorHealth.team)
@@ -628,8 +642,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	#endregion
 
 	// 플레이어가 해당 미니언에게 강령
-	public void PlayerConnect() { photonView.RPC("PlayerConnect_RPC", RpcTarget.All); }
-    [PunRPC]public void PlayerConnect_RPC()
+	public void PlayerConnect() { photonView.RPC("PlayerC_RPC", RpcTarget.All); }
+    [PunRPC]public void PlayerC_RPC()
 	{
 		PlayerSelect = true;
 
@@ -670,8 +684,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			anim.SetFloat("Velocity", 0f);
 	}
 
-	public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }
-	[PunRPC] private void ParentSetting_Pool_RPC(int index) {
+	public void ParentSetting_Pool(int index) { photonView.RPC("ParentSPool_RPC", RpcTarget.AllBuffered, index); }
+	[PunRPC] private void ParentSPool_RPC(int index) {
 		this.transform.parent = PoolManager.Instance.gameObject.transform;
 		PoolManager.Instance.poolList_Minion[index].Add(this.gameObject);
     }

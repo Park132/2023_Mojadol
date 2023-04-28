@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 30f;
+	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 3000f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
@@ -59,6 +59,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public int ReadyToStart_LoadingGauge;
 	public int LoadingGauge, ReadyToStart_Player;
 	public Image LoadingImage;
+	public TextMeshProUGUI pingText;
+
+	private float ping;
 
 	// private 
 
@@ -69,12 +72,12 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			stream.SendNext(state);
 			stream.SendNext(gameState);
-		}
+        }
 		else
 		{
 			this.state = (MoonHeader.ManagerState)stream.ReceiveNext();
 			this.gameState = (MoonHeader.GameState)stream.ReceiveNext();
-		}
+        }
 	}
 	#endregion
 
@@ -302,10 +305,28 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 				{
 					Game();
 					DisplayEnable();
+					PingCalculator();
 				}
 			}
 		}
 	}
+
+	private void PingCalculator()
+	{
+		float dummy_ping = 0;
+		foreach(LSM_PlayerCtrl item in players)
+		{
+			if (item.isMainPlayer)
+				continue;
+			else
+			{
+				dummy_ping += item.this_player_ping;
+			}
+		}
+		ping = Mathf.Ceil(dummy_ping / (players.Length - 1) * 1000);
+		pingText.text = ping.ToString() + " ms";
+	}
+
 
 	// 게임 진행 중 모든 상황을 처리하는 함수.
 	// 보통 처음 시작, 혹은 처리 완료일 경우에 실행됨.

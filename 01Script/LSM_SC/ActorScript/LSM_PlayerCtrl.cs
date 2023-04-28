@@ -42,6 +42,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private int exp;
 
+    public float this_player_ping;
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
@@ -57,6 +59,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             this.player.team = (MoonHeader.Team)stream.ReceiveNext();
             this.player.statep = (MoonHeader.State_P)stream.ReceiveNext();
             this.exp = (int)stream.ReceiveNext();
+            this_player_ping = (float)(PhotonNetwork.Time - info.SentServerTime);
         }
     }
 
@@ -322,11 +325,13 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         
         while (true)
         {
+            if (ReferenceEquals(mapcamSub_Target, null))
+                break;
             Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * 95;
             MapCam.transform.position = Vector3.MoveTowards(MapCam.transform.position,
                 targetPosition, map_move * 2 * Time.deltaTime);
             mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > 20) ?
-                mapCamCamera.orthographicSize - 0.5f : 20;
+                mapCamCamera.orthographicSize - map_move * Time.deltaTime : 20;
             yield return new WaitForSeconds(Time.deltaTime);
             if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= 20)
                 break;

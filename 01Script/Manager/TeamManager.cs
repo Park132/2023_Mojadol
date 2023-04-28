@@ -18,7 +18,9 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 	public LSM_Spawner this_teamSpawner;
 
 	public int MaximumSpawnNum;			// 팀 별 최대 소환 가능 조직 수.
-	public int[] AttackPathNumber;		// 스포너의 스폰포인트 개수만큼 배열의 크기를 갖고있음. 스폰 포인트마다 설정된 미니언 생성 수
+	public int[] AttackPathNumber;      // 스포너의 스폰포인트 개수만큼 배열의 크기를 갖고있음. 스폰 포인트마다 설정된 미니언 생성 수
+	public int[] AttackPathNum_past;
+
 	public int selectedNumber;          // 현재 플레이어가 설정한 공격로의 조직 수. 이를 이용하여 슬라이더의 최대 값을 조정.
 	private bool once;
 
@@ -51,7 +53,8 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 		}
 		// 마스터스포너에 존재하는 스폰포인트의 개수만큼 배열의 크기를 지정.
 		AttackPathNumber = new int[this_teamSpawner.spawnpoints.Length];
-	}
+        AttackPathNum_past = new int[this_teamSpawner.spawnpoints.Length];
+    }
 
     private void Update()
     {
@@ -104,7 +107,22 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 			selectedNumber++; AttackPathNumber[index]++;
 		}
 
-	}
+		if (PhotonNetwork.IsMasterClient)
+		{
+			bool is_Change_tatic = false;
+			for (int i = 0; i < AttackPathNumber.Length; i++)
+			{
+				if (AttackPathNumber[i] != AttackPathNum_past[i])
+				{
+					is_Change_tatic = true;
+					break;
+				}
+			}
+			if (is_Change_tatic) { GameManager.Instance.DisplayAdd(this.team.ToString() + " 팀의 전략이 변경되었습니다."); }
+			for (int i = 0; i < AttackPathNumber.Length; i++)
+			{ AttackPathNum_past[i] = AttackPathNumber[i]; }
+		}
+    }
 
 	public void PathingNumberSetting(int num, int settingV)
 	{
