@@ -231,7 +231,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         yield return new WaitForSeconds(1f);
         Start_function();
         ReadyToStart_LoadingGauge = PoolManager.Instance.minions.Length * PoolManager.Instance.ReadyToStart_SpawnNum
-			+ PoolManager.Instance.minions.Length-1;
+			+ PoolManager.Instance.particles.Length * PoolManager.Instance.ReadyToStart_SpawnNum_Particles
+			+ PoolManager.Instance.minions.Length - 1
+			+ PoolManager.Instance.particles.Length - 1;
 		LoadingGauge = 0;
 		//yield return new WaitForSeconds(3f);
 		yield return StartCoroutine(PoolManager.Instance.ReadyToStart_Spawn());
@@ -539,6 +541,11 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		
 	}
 	public void DisplayAdd(string content)
+	{
+		photonView.RPC("DisplayAdd_RPC", RpcTarget.All, content);
+	}
+
+	[PunRPC]public void DisplayAdd_RPC(string content)
 	{
 		logUIs_Reservation.Add(content);
 		Debug.Log(content);

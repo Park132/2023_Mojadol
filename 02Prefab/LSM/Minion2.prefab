@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 710994129255434594}
   - component: {fileID: 2723207640786662611}
   - component: {fileID: 7222396729971993920}
+  - component: {fileID: -4524413951801283385}
   m_Layer: 7
   m_Name: Minion2
   m_TagString: Minion
@@ -189,12 +190,13 @@ MonoBehaviour:
   ObservedComponentsFoldoutOpen: 1
   Group: 0
   prefixField: -1
-  Synchronization: 3
+  Synchronization: 1
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
   - {fileID: 1425675102199671761}
   - {fileID: 2723207640786662611}
+  - {fileID: -4524413951801283385}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -234,6 +236,30 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
+--- !u!114 &-4524413951801283385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8887907667050671287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b8c4a61274f60b4ea5fb4299cfdbf14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowLayerWeightsInspector: 1
+  ShowParameterInspector: 1
+  m_SynchronizeParameters:
+  - Type: 1
+    SynchronizeType: 2
+    Name: Velocity
+  - Type: 9
+    SynchronizeType: 0
+    Name: Attack
+  m_SynchronizeLayers:
+  - SynchronizeType: 2
+    LayerIndex: 0
 --- !u!1001 &7815253932390603439
 PrefabInstance:
   m_ObjectHideFlags: 0

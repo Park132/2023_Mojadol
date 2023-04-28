@@ -327,7 +327,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 targetPosition, map_move * 2 * Time.deltaTime);
             mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > 20) ?
                 mapCamCamera.orthographicSize - 0.5f : 20;
-            yield return new WaitForSeconds(0.01f);
+            yield return new WaitForSeconds(Time.deltaTime);
             if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= 20)
                 break;
         }

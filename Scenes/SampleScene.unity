@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -432,7 +432,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.01
+  near clip plane: 0.5
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -1068,7 +1068,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: 0.5
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -1363,6 +1363,7 @@ MonoBehaviour:
   timerSc: {fileID: 0}
   numOfPlayer: 0
   turnText: {fileID: 533215073}
+  spawnPoints: []
   wayPoints: []
   canvas: {fileID: 1409379792}
   selectAttackPathUI: {fileID: 0}
@@ -2247,6 +2248,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!1 &533215071
 GameObject:
   m_ObjectHideFlags: 0
@@ -2573,6 +2575,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!1 &600694476
 GameObject:
   m_ObjectHideFlags: 0
@@ -5159,6 +5162,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!114 &1275945854 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3618782605040564011, guid: 4f60c8f4a401e5a44a858a8f1bed0fe8, type: 3}
@@ -6145,6 +6149,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!1001 &1633201610
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6993,6 +6998,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!1 &2015525401
 GameObject:
   m_ObjectHideFlags: 0
@@ -7504,6 +7510,7 @@ MonoBehaviour:
   isClicked: 0
   parentSpawner: {fileID: 0}
   pathUI: {fileID: 0}
+  pathUI_SC: {fileID: 0}
 --- !u!1 &2073816670
 GameObject:
   m_ObjectHideFlags: 0

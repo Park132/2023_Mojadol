@@ -53,28 +53,37 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (stream.IsWriting)
 		{
 			stream.SendNext(this.gameObject.activeSelf);
-			stream.SendNext(stats.actorHealth.maxHealth);
-			stream.SendNext(stats.actorHealth.health);
-			stream.SendNext(stats.actorHealth.team);
-			stream.SendNext(stats.actorHealth.Atk);
-			stream.SendNext(stats.state);
-
-			stream.SendNext(nav.enabled ? Vector3.zero : nav.velocity);
 			stream.SendNext(rigid.position);
+			
+				stream.SendNext(stats.actorHealth.maxHealth);
+				stream.SendNext(stats.actorHealth.health);
+				stream.SendNext(stats.actorHealth.team);
+				stream.SendNext(stats.actorHealth.Atk);
+				stream.SendNext(stats.state);
+
+				stream.SendNext(nav.enabled ? Vector3.zero : nav.velocity);
+				
+			
 		}
 		else
 		{
-			this.gameObject.SetActive((bool)stream.ReceiveNext());
-			this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
-			this.stats.actorHealth.health = (int)stream.ReceiveNext();
-			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-			this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
-			this.stats.state = (MoonHeader.State)stream.ReceiveNext();
-			rigid.velocity = (Vector3)stream.ReceiveNext();
+			bool isActive_ = (bool)stream.ReceiveNext();
+			this.gameObject.SetActive(isActive_);
 			networkPosition = (Vector3)stream.ReceiveNext();
+			
+				this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
+				this.stats.actorHealth.health = (int)stream.ReceiveNext();
+				this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
+				this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
+				this.stats.state = (MoonHeader.State)stream.ReceiveNext();
 
-			float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTimestamp));
-			networkPosition += rigid.velocity * lag;
+
+				rigid.velocity = (Vector3)stream.ReceiveNext();
+				
+
+				float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.SentServerTimestamp)) *10;
+				networkPosition += rigid.velocity * lag;
+			
 		}
 	}
 

@@ -230,7 +230,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						if (target == hit.transform.gameObject)
 						{
-							GameObject dummy = PoolManager.Instance.Get_Particles(0);
+							GameObject dummy = PoolManager.Instance.Get_Particles(0, hit.point);
 							dummy.transform.position= hit.point;
 							break;
 						}

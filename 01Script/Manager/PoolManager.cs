@@ -32,7 +32,7 @@ public class PoolManager : MonoBehaviour
 
 	private bool once;
 
-	public int ReadyToStart_SpawnNum;
+	public int ReadyToStart_SpawnNum, ReadyToStart_SpawnNum_Particles;
 
 	private void Start()
 	{
@@ -56,13 +56,15 @@ public class PoolManager : MonoBehaviour
         for (int i = 0; i < poolList_Particles.Length; i++)
             poolList_Particles[i] = new List<GameObject>();
 
-		ReadyToStart_SpawnNum = 30;
+		ReadyToStart_SpawnNum = 50;
+		ReadyToStart_SpawnNum_Particles = 20;
     }
 
 	public IEnumerator ReadyToStart_Spawn()
 	{
 		if (PhotonNetwork.IsMasterClient)
 		{
+			// 미니언 미리 소환.
 			for (int i = 0; i < minions.Length; i++)
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum; j++)
@@ -78,6 +80,23 @@ public class PoolManager : MonoBehaviour
                 }
                 GameManager.Instance.LoadingUpdate();
             }
+			// 파티클 미리 소환.
+			for (int i = 0; i < particles.Length; i++)
+			{
+				for (int j = 0; j < ReadyToStart_SpawnNum_Particles; j++)
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					Get_Particles(i, Vector3.zero);
+					GameManager.Instance.LoadingUpdate();
+				}
+				foreach (GameObject item in poolList_Particles[i])
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					item.GetComponent<ParticleAutoDisable>().ParticleDisable();
+				}
+				GameManager.Instance.LoadingUpdate();
+			}
+
 			GameManager.Instance.PlayerReady();
 		}
 		else
@@ -179,7 +198,7 @@ public class PoolManager : MonoBehaviour
 	}
 
     // 파티클 반환
-    public GameObject Get_Particles(int index)
+    public GameObject Get_Particles(int index, Vector3 position_)
     {
         if (index >= particles.Length || index < 0)
             return null;
@@ -191,14 +210,17 @@ public class PoolManager : MonoBehaviour
             {
                 result = item;
                 item.SetActive(true);
+				item.GetComponent<ParticleAutoDisable>().ParticleEnable(position_);
                 break;
             }
         }
         if (ReferenceEquals(result, null))
         {
-            result = GameObject.Instantiate(particles[index], this.transform);
-            poolList_Particles[index].Add(result);
-        }
+            //result = GameObject.Instantiate(particles[index], this.transform);
+            //poolList_Particles[index].Add(result);
+			result = PhotonNetwork.Instantiate(particles[index].name, Vector3.one * 100, Quaternion.identity);
+			result.GetComponent<ParticleAutoDisable>().ParentSetting_Pool(index);
+		}
         return result;
     }
 }
