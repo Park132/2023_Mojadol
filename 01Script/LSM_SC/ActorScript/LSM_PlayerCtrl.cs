@@ -115,8 +115,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
     }
-    public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTeamAndName_RPC", RpcTarget.AllBuffered, t,n); }
-    [PunRPC] protected void SettingTeamAndName_RPC(int t, string n) { this.player.team = (MoonHeader.Team)t; this.playerName = n; }
+    public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTN_RPC", RpcTarget.AllBuffered, t,n); }
+    [PunRPC] protected void SettingTN_RPC(int t, string n) { this.player.team = (MoonHeader.Team)t; this.playerName = n; }
 
 	void Update()
     {
@@ -174,7 +174,6 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             // 플레이어가 선택한 상태였으나, 플레이어의 미니언이 사라졋다면 초기화
             if (!playerMinion.activeSelf)
             {
-                Debug.Log("Minion active false");
                 StartCoroutine(AttackPathSelectSetting());
                 Cursor.lockState = CursorLockMode.None;
             }
@@ -358,7 +357,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     {
         StartCoroutine(GameManager.Instance.ScreenFade(false));
         float originSize = mapCamCamera.orthographicSize;
-        subTarget_minion.stats.state = MoonHeader.State.Invincibility;
+
 
         minionStatsPannel.SetActive(false);
         for (int i = 0; i < 100; i++)

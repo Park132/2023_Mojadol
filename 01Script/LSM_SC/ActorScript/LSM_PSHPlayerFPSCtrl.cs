@@ -274,12 +274,12 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
         qDelay_ = 3.0f; eDelay_ = 7.0f;
     }
 
-    public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname, LSM_PlayerCtrl pctrl)
+    public void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         //Health = monHealth * 10;
         // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
         actorHealth = new MoonHeader.S_ActorState(100, 10, t);
-        actorHealth.health = monHealth * 10;
+        actorHealth.health = (short)(monHealth * 10);
         playerName = pname;
         myPlayerCtrl = pctrl;
         ChangeTeamColor(playerIcon);
@@ -294,7 +294,7 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
         
     }
 
-    public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+    public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
         if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
             return;
@@ -345,8 +345,8 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     }
 
     // I_Actor 인터페이스에 미리 선언해둔 함수들 구현
-    public int GetHealth() { return this.actorHealth.health; }
-    public int GetMaxHealth() { return this.actorHealth.maxHealth; }
+    public short GetHealth() { return this.actorHealth.health; }
+    public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
 
     public bool IsCanUseE() { return canUseE; }

@@ -61,7 +61,7 @@ public class PSH_SwordProjectile : MonoBehaviour
     {
         Debug.Log("Player Attack!");
         T ctrl = obj.GetComponent<T>();
-        ctrl.Damaged((int)damage, this.transform.position, script.actorHealth.team, script.gameObject);
+        ctrl.Damaged((short)damage, this.transform.position, script.actorHealth.team, script.gameObject);
         Destroy(this.gameObject);
     }
 

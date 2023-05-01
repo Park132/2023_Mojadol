@@ -43,7 +43,7 @@ public class PSH_MeleeCtrl : MonoBehaviour
     {
         Debug.Log("Player Attack!");
         T ctrl = obj.GetComponent<T>();
-        ctrl.Damaged((int)fpsc.currentdamage, fpsc.transform.position, fpsc.actorHealth.team, fpsc.gameObject);
+        ctrl.Damaged((short)fpsc.currentdamage, fpsc.transform.position, fpsc.actorHealth.team, fpsc.gameObject);
     }
 
 }

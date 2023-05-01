@@ -23,6 +23,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	protected Renderer[] bodies;  // 색상을 변경할 렌더러.
 
+	public GameObject waypoint;
 	public int TurretBelong;                        // 터렛의 위치
 													// # 터렛의 경로에 따라서 번호를 다르게 설정. 해당 경로와 동일하게 숫자가 같도록 설정.
 	//protected PhotonView photonView;
@@ -39,10 +40,10 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 		else
         {
-			this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
-			this.stats.actorHealth.health = (int)stream.ReceiveNext();
+			this.stats.actorHealth.maxHealth = (short)stream.ReceiveNext();
+			this.stats.actorHealth.health = (short)stream.ReceiveNext();
 			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-			this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
+			this.stats.actorHealth.Atk = (short)stream.ReceiveNext();
 		}
     }
 
@@ -63,6 +64,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		searchRadius = 10f;
 		target = null;
 
+		waypoint = this.transform.parent.gameObject;
     }
 
 	// 팀에 해당하는 색으로 변경.
@@ -102,7 +104,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	// I_Actor 인터페이스에 포함되어잇는 함수.
 	// 공격을 받을 시 데미지를 입음.
-	public virtual void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+	public virtual void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		if (!PhotonNetwork.IsMasterClient || t== this.stats.actorHealth.team)
 			return;
@@ -266,7 +268,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			target = null;
 	}
 
-	public virtual int GetHealth() { return this.stats.actorHealth.health; }
-	public virtual int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
+	public virtual short GetHealth() { return this.stats.actorHealth.health; }
+	public virtual short GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
 	public virtual MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
 }

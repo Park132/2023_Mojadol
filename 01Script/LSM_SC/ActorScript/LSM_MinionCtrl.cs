@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 using Photon.Pun;
+using Unity.VisualScripting;
 
 /* 2023_03_20_HSH_수정사항 : 미니언이 소속된 팀에 따라 Scene에서도 Color가 변경되도록 함(CHangeTeamColor).
  * ㄴ 미니언 피격 시 분홍색으로 하이라이트 + 넉백 추가(DamagedEffect)
@@ -66,30 +67,45 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (stream.IsWriting)
 		{
 			stream.SendNext(this.gameObject.activeSelf);
-			
-				stream.SendNext(stats.actorHealth.maxHealth);
-				stream.SendNext(stats.actorHealth.health);
-				stream.SendNext(stats.actorHealth.team);
-				stream.SendNext(stats.actorHealth.Atk);
-				stream.SendNext(stats.state);
 
-				stream.SendNext(nav.enabled ? nav.velocity : Vector3.zero );
+			// maxHealth 2byte, health 2byte, team 8bit, atk 8bit, state 8bit
+			ulong send_dummy = stats.SendDummyMaker();
+            //stream.SendNext(send_dummy);
+
+            int dummy_int1 = (int)(send_dummy & (ulong)uint.MaxValue);
+			int dummy_int2 = (int)((send_dummy >> 32) & (ulong)uint.MaxValue);
+            stream.SendNext(dummy_int1);
+            stream.SendNext(dummy_int2);
+
+            /*
+            stream.SendNext(stats.actorHealth.maxHealth);
+			stream.SendNext(stats.actorHealth.health);
+			stream.SendNext(stats.actorHealth.team);
+			stream.SendNext(stats.actorHealth.Atk);
+			stream.SendNext(stats.state);
+			*/
+
+            stream.SendNext(nav.enabled ? nav.velocity : Vector3.zero );
 				
-			
 		}
 		else
 		{
 			bool isActive_ = (bool)stream.ReceiveNext();
 			this.gameObject.SetActive(isActive_);
-			
-				this.stats.actorHealth.maxHealth = (int)stream.ReceiveNext();
-				this.stats.actorHealth.health = (int)stream.ReceiveNext();
-				this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-				this.stats.actorHealth.Atk = (int)stream.ReceiveNext();
-				this.stats.state = (MoonHeader.State)stream.ReceiveNext();
+			/*
+			this.stats.actorHealth.maxHealth = (short)stream.ReceiveNext();
+			this.stats.actorHealth.health = (short)stream.ReceiveNext();
+			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
+			this.stats.actorHealth.Atk = (short)stream.ReceiveNext();
+			this.stats.state = (MoonHeader.State)stream.ReceiveNext();
+			*/
 
+			ulong receive_dummy = (ulong)((int)stream.ReceiveNext());
+			receive_dummy += ((ulong)((int)stream.ReceiveNext()) << 32);
+            networkVelocity = (Vector3)stream.ReceiveNext();
 
-				networkVelocity= (Vector3)stream.ReceiveNext();
+            this.stats.ReceiveDummy(receive_dummy);
+
 				rigid.velocity = networkVelocity;
 
 				//float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.timestamp)) * 20;
@@ -179,9 +195,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     {
         if (!photonView.IsMine)
         {
-			transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
-            //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime * networkVelocity.magnitude);
-			//Debug.Log(string.Format("velocityMagnitude : {0}\nvelocity : {1}",networkVelocity.magnitude, stats.speed));
+            rigid.velocity = networkVelocity;
+            //transform.position = transform.position + (networkVelocity * Time.deltaTime);
+            //transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
+            //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime);
+            //Debug.Log(string.Format("velocityMagnitude : {0}\nvelocity : {1}",networkVelocity.magnitude, stats.speed));
         }
     }
 
@@ -199,8 +217,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		is_attackFinish_Act = false;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
-		photonView.RPC("MS_RPC", RpcTarget.All, (int)stats.actorHealth.maxHealth, (int)stats.actorHealth.Atk, (int)t, (int)stats.speed);
+		stats.Setting(10, 10f, 3, point.Ways, t, typeM);
+		photonView.RPC("MS_RPC", RpcTarget.All, (short)stats.actorHealth.maxHealth, (short)stats.actorHealth.Atk, (short)t, (int)stats.speed);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
@@ -223,7 +241,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	// 체력, 공격력, 팀
-	[PunRPC]private void MS_RPC(int mh, int atk, int t, int s)
+	[PunRPC]private void MS_RPC(short mh, short atk, short t, int s)
     {
 		this.stats.actorHealth.Atk = atk;
 		this.stats.actorHealth.maxHealth = mh;
@@ -393,8 +411,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking
 				|| stats.state == MoonHeader.State.Dead)
 			{ Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
+
 			else if (target_actor.GetTeam() == this.stats.actorHealth.team && target_attack.CompareTag("Turret"))
-			{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); }
+			{ CheckingTurretTeam(target_attack.GetComponent<LSM_TurretSc>().waypoint); StartCoroutine(AttackFin()); }
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
@@ -497,7 +516,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// dam = 미니언 혹은 포탑의 공격력. 미니언이 받는 데미지.
 	// origin = 공격을 하는 주체의 위치. 이를 이용하여 더욱 자연스러운 넉백이 가능해짐. // 현재 넉백을 제외하고있음.
 
-	public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+	public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		// 죽음 혹은 무적 상태일 경우 데미지를 입지않음. 바로 return
 		if (stats.state == MoonHeader.State.Invincibility || stats.state == MoonHeader.State.Dead || !PhotonNetwork.IsMasterClient)
@@ -542,7 +561,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		//this.gameObject.SetActive(false);
 		photonView.RPC("DeadP",RpcTarget.All);
 	}
-	public void MinionDisable() { photonView.RPC("DeadP", RpcTarget.All); }
+	public void MinionDisable() {photonView.RPC("DeadP",RpcTarget.MasterClient); photonView.RPC("DeadP", RpcTarget.All); }
 	[PunRPC]protected void DeadP()
 	{
         this.gameObject.SetActive(false);
@@ -652,7 +671,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		icon.SetActive(false);
 		playerIcon.SetActive(true);
-		
+		stats.state = MoonHeader.State.Invincibility;
 		//stats.team = MoonHeader.Team.Blue;
 	}
 
@@ -693,8 +712,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
     // I_Actor 구현 함수
     #region I_Actor
-    public int GetHealth(){return this.stats.actorHealth.health;}
-	public int GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
+    public short GetHealth(){return this.stats.actorHealth.health;}
+	public short GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
 	public MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
     #endregion
 }

@@ -18,7 +18,7 @@ public class LSM_NexusSC : LSM_TurretSc
 
 	}
 
-	public override void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+	public override void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		if (t == this.stats.actorHealth.team || !PhotonNetwork.IsMasterClient)
 			return;

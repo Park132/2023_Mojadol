@@ -5,6 +5,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using static MoonHeader;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
+using System.Runtime.CompilerServices;
 
 public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 {
@@ -67,7 +68,9 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     public LSM_PlayerCtrl myPlayerCtrl;
     public MoonHeader.State_P_Minion state_p;
 
-	// LSM */
+    private Vector3 networkPosition, networkVelocity;
+
+    // LSM */
 
     PhotonView pv;
 
@@ -77,20 +80,58 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         {
             stream.SendNext(playerName);
             //stream.SendNext(this.gameObject.activeSelf);
-            stream.SendNext(actorHealth.maxHealth);
-            stream.SendNext(actorHealth.health);
-            stream.SendNext(actorHealth.team);
-            stream.SendNext(actorHealth.Atk);
+            //stream.SendNext(actorHealth.maxHealth);
+            //stream.SendNext(actorHealth.health);
+            //stream.SendNext(actorHealth.team);
+            //stream.SendNext(actorHealth.Atk);
+            ulong send_dummy = SendDummyMaker_LSM();
+            int dummy_int1 = (int)(send_dummy & (ulong)uint.MaxValue);
+            int dummy_int2 = (int)((send_dummy >> 32) & (ulong)uint.MaxValue);
+            stream.SendNext(dummy_int1);
+            stream.SendNext(dummy_int2);
+            stream.SendNext(rigid.velocity);
         }
         else
         {
             this.playerName = (string)stream.ReceiveNext();
             //this.gameObject.SetActive((bool)stream.ReceiveNext());
-            this.actorHealth.maxHealth = (int)stream.ReceiveNext();
-            this.actorHealth.health = (int)stream.ReceiveNext();
+            /*
+            this.actorHealth.maxHealth = (short)stream.ReceiveNext();
+            this.actorHealth.health = (short)stream.ReceiveNext();
             this.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-            this.actorHealth.Atk = (int)stream.ReceiveNext();
+            this.actorHealth.Atk = (short)stream.ReceiveNext();
+            */
+            int d1 = (int)stream.ReceiveNext();
+            int d2 = (int)stream.ReceiveNext();
+
+            ulong receive_dummy = (ulong)(d1) & (ulong)uint.MaxValue;
+            receive_dummy += ((ulong)(d2) << 32);
+            ReceiveDummyUnZip(receive_dummy);
+            networkVelocity = (Vector3)stream.ReceiveNext();
+            rigid.velocity = networkVelocity;
         }
+    }
+
+    private ulong SendDummyMaker_LSM()
+    {
+        ulong send_dummy = 0;
+        send_dummy += ((ulong)actorHealth.maxHealth & (ulong)ushort.MaxValue);
+        send_dummy += ((ulong)(actorHealth.health) & (ulong)ushort.MaxValue) << 16;
+
+        send_dummy += ((ulong)(actorHealth.team) & (ulong)byte.MaxValue) << 32;
+        send_dummy += ((ulong)(actorHealth.Atk) & (ulong)byte.MaxValue) << 40;
+        send_dummy += ((ulong)(state_p) & (ulong)byte.MaxValue) << 48;
+        return send_dummy;
+    }
+    private void ReceiveDummyUnZip(ulong receive_dummy)
+    {
+        //actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        actorHealth.health = (short)((receive_dummy >> 16) & (ulong)ushort.MaxValue);
+        actorHealth.team = (MoonHeader.Team)((receive_dummy >> 32) & (ulong)byte.MaxValue);
+        actorHealth.Atk = (short)((receive_dummy >> 40) & (ulong)byte.MaxValue);
+        state_p = (MoonHeader.State_P_Minion)((receive_dummy >> 48) & (ulong)byte.MaxValue);
+        
     }
 
     private void Awake()
@@ -122,7 +163,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     void Update()
     {
         if (!photonView.IsMine)
-            return;
+        {
+            rigid.velocity = networkVelocity;
+            return; 
+        }
 
         // 이동, 카메라 조작
         if (canMove)
@@ -373,18 +417,18 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     }
 
     // LSM Spawn Setting
-    public void SpawnSetting(MoonHeader.Team t, int monHealth, string pname, LSM_PlayerCtrl pctrl)
+    public void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         //Health = monHealth * 10;
         // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
         this.photonView.RequestOwnership();
         actorHealth = new MoonHeader.S_ActorState(100, 10, t);
-        actorHealth.health = monHealth * 10;
+        actorHealth.health = (short)(monHealth * 10);
         playerName = pname;
         myPlayerCtrl = pctrl;
         state_p = MoonHeader.State_P_Minion.Normal;
 
-        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, 100, monHealth * 10, pname, (int)t);
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)100, (short)(monHealth * 10), pname, (int)t);
 
         // 초기화
         canAttack = true;
@@ -400,7 +444,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         invertCamera = false;
     }
 
-    [PunRPC]private void SpawnSetting_RPC(int mh, int h, string name, int t)
+    [PunRPC]private void SpawnSetting_RPC(short mh, short h, string name, int t)
     {
         this.actorHealth.maxHealth = mh;
         this.actorHealth.health = h;
@@ -414,23 +458,42 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
 
 
     // LSM Damaged 추가.
-    public void Damaged(int dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+    public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
+        
         if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
             return;
-        actorHealth.health -= dam;
+        //actorHealth.health -= dam;
         // 넉백이 되는 방향벡터를 구함.
         //Vector3 direction_knock = Vector3.Scale(this.transform.position - origin, Vector3.one - Vector3.up).normalized;
         //float scale_knock = 100f;
         //rigid.AddForce(direction_knock * scale_knock);
-        if (this.actorHealth.health <= 0)
-            StartCoroutine(DeadProcessing(other));
+        if (this.actorHealth.health - dam <= 0)
+        { StartCoroutine(DeadProcessing(other)); }
+        else
+        {
+            photonView.RPC("Dam_RPC", RpcTarget.All, dam);
+        }
         return;
+    }
+    [PunRPC]private void Dam_RPC(short dam)
+    {
+        if (photonView.IsMine)
+        {
+            actorHealth.health -= dam;
+            //if (actorHealth.health <= 0)
+            //{ actorHealth.health = 0; }
+        }
+    }
+    [PunRPC] private void Dead_RPC() { 
+        state_p = MoonHeader.State_P_Minion.Dead;
+        if (photonView.IsMine)
+            myPlayerCtrl.PlayerMinionDeadProcessing();
     }
     // LSM DeadProcessing
     public IEnumerator DeadProcessing(GameObject other)
     {
-        state_p = MoonHeader.State_P_Minion.Dead;
+        photonView.RPC("Dead_RPC", RpcTarget.All);
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
         // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
@@ -440,8 +503,9 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         }
         GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}",other.gameObject.name, this.name));
         yield return new WaitForSeconds(0.5f);
-        this.gameObject.SetActive(false);
-        myPlayerCtrl.PlayerMinionDeadProcessing();
+        MinionDisable();
+
+        
     }
 
     // 플레이어 아이콘 색변경.
@@ -483,8 +547,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     [PunRPC] protected void MinionEnable_RPC() { this.gameObject.SetActive(true); }
 
     // I_Actor 인터페이스에 미리 선언해둔 함수들 구현
-    public int GetHealth() { return this.actorHealth.health; }
-    public int GetMaxHealth() { return this.actorHealth.maxHealth; }
+    public short GetHealth() { return this.actorHealth.health; }
+    public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
 
     public bool IsCanUseE() { return canUseE; }
