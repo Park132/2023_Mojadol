@@ -16,6 +16,15 @@ public class PSH_PlayerUniversal : MonoBehaviour
     Animator anim;
     int attackcode = 0;
 
+    // 조작 부분
+    bool canMove = true;
+
+
+    // 조작 - 공격 관련 부분
+    bool canAttack = true;
+    bool canQ = true;
+    bool canE = true;
+
 
 
     #region Camera Variants
@@ -30,6 +39,7 @@ public class PSH_PlayerUniversal : MonoBehaviour
     public float maxLookAngle = 50f; // 상하 시야각
     #endregion
 
+    float time;
     // Start is called before the first frame update
     void Start()
     {
@@ -43,16 +53,23 @@ public class PSH_PlayerUniversal : MonoBehaviour
     // Update is called once per frame
     void Update() 
     {
-        Move();
-        // LookAround();
-        BasicAttack(true);
+        if (canMove)
+            Move();
 
-        /*
-        if (Input.GetMouseButtonDown(0)) // 바라보는 시점에 맞게 검을 휘둘러야함
+        if(Input.GetMouseButtonDown(0) && canAttack)
         {
-            anim.SetTrigger("basicAttack");
+            StartCoroutine(basicAttackDelay());
         }
-        */
+
+        if(Input.GetKeyDown(KeyCode.Q) && canQ)
+        {
+            StartCoroutine(Qskill());
+        }
+
+        ESkill();
+
+        // anim.SetBool("skillE_Bool", Input.GetKey(KeyCode.E));
+
     }
 
     private void LateUpdate()
@@ -80,7 +97,7 @@ public class PSH_PlayerUniversal : MonoBehaviour
         // 점프
         isGrounded = Physics.Raycast(this.transform.position-new Vector3(0f, 0.2f, 0f), Vector3.down * 5f);
         bool canJump = !isGrounded;
-        anim.SetBool("isJump", !canJump);
+        anim.SetBool("isJump", !canJump && canQ);
         if(canJump)
         {
             if(Input.GetKeyDown(KeyCode.Space))
@@ -111,7 +128,7 @@ public class PSH_PlayerUniversal : MonoBehaviour
 
             this.transform.localEulerAngles = new Vector3(0, yaw, 0);
 
-            // myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
+            myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
         }
@@ -133,17 +150,8 @@ public class PSH_PlayerUniversal : MonoBehaviour
                 anim.SetLayerWeight(1, 1f);
                 
                 anim.SetTrigger("basicAttack" + attackcode.ToString());
-
-                AnimatorStateInfo stateinfo = anim.GetCurrentAnimatorStateInfo(1);
-                Debug.Log($"stateinfo's name : {stateinfo.IsName("slash5")}");
-
-                if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime > 0.99f)
-                {
-                    
-                }
             }
         }
-
         #region 2개의 애니메이션 섞기
         /*
         float basic_attack_weight = 1.0f;
@@ -158,6 +166,80 @@ public class PSH_PlayerUniversal : MonoBehaviour
         }
         */
         #endregion
+    }
 
+    IEnumerator basicAttackDelay()
+    {
+        canAttack = false;
+        bool once = true;
+        if(once)
+        {
+            once = false;
+            attackcode++;
+            attackcode %= 2;
+        }
+        anim.SetLayerWeight(1, 1f);
+        anim.SetTrigger("basicAttack" + attackcode.ToString());
+
+        yield return new WaitForSecondsRealtime(1.5f);
+        anim.SetLayerWeight(1, 0f);
+        canAttack = true;
+        StopCoroutine(basicAttackDelay());
+    }
+
+    IEnumerator Qskill()
+    {
+        canQ = false;
+        anim.applyRootMotion = true;
+        anim.SetTrigger("skillQ_Trigger");
+        yield return new WaitForSecondsRealtime(2.0f);
+        canQ = true;
+        anim.applyRootMotion = false;
+    }
+
+    void ESkill() // 혹시 Late Upadate에?
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            anim.SetLayerWeight(1, 1f);
+            anim.SetTrigger("skillE_Trigger");
+            canMove = false;
+            canAttack = false;
+            canE = false;
+        }
+
+        if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime >= 0.35f && anim.GetCurrentAnimatorStateInfo(1).IsName("casting1") && 
+            Input.GetKey(KeyCode.E))
+        {
+            anim.speed = 0f;
+        }
+
+        if (Input.GetKeyUp(KeyCode.E))
+        {
+            canMove = true;
+            canAttack = true;
+            canE = true;
+            anim.speed = 1f;
+        }
+    }
+
+    IEnumerator Eskill()
+    {
+        anim.SetLayerWeight(1, 1f);
+        anim.SetTrigger("skillE_Trigger");
+        canMove = false;
+        canAttack = false;
+        canE = false;
+
+        if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime >= 0.35f && anim.GetCurrentAnimatorStateInfo(1).IsName("casting1"))
+            anim.speed = 0f;
+
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        canMove = true;
+        canAttack = true;
+        canE = true;
+        anim.speed = 1f;
+        StopCoroutine(Eskill());
     }
 }
