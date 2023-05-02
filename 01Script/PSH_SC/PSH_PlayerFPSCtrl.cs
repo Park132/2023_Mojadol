@@ -7,7 +7,7 @@ using static MoonHeader;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using System.Runtime.CompilerServices;
 
-public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
+public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters
 {
     // 근접 플레이어 구현
     // 플레이어 상태
@@ -550,7 +550,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     public short GetHealth() { return this.actorHealth.health; }
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
-
+    public void AddEXP(short exp) { }
     public bool IsCanUseE() { return canUseE; }
     public bool IsCanUseQ() { return canUseQ; }
 }

@@ -35,7 +35,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     private LSM_MinionCtrl subTarget_minion;            // 타겟으로 지정한 미니언의 스크립트
     private TextMeshProUGUI minionStatsPannel_txt;      // 미니언 스탯을 표기하는 UI - 그 중 텍스트.
     private GameObject playerMinion;                    // 플레이어가 선택한 미니언.
-    private PSH_PlayerFPSCtrl playerMinionCtrl;         // 플레이어 미니언의 스크립트
+    //private PSH_PlayerFPSCtrl playerMinionCtrl;         // 플레이어 미니언의 스크립트
     private GameObject playerWatchingTarget;            // 플레이어미니언이 보는 미니언 혹은 여러가지.
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
@@ -50,14 +50,14 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             stream.SendNext(playerName);
             stream.SendNext(player.team);
-            stream.SendNext(player.statep);
+            //stream.SendNext(player.statep);
             stream.SendNext(exp);
         }
         else
         {
             this.playerName = (string)stream.ReceiveNext();
             this.player.team = (MoonHeader.Team)stream.ReceiveNext();
-            this.player.statep = (MoonHeader.State_P)stream.ReceiveNext();
+            //this.player.statep = (MoonHeader.State_P)stream.ReceiveNext();
             this.exp = (int)stream.ReceiveNext();
             this_player_ping = (float)(PhotonNetwork.Time - info.SentServerTime);
         }
@@ -377,18 +377,19 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
         playerMinion = PoolManager.Instance.Get_PlayerMinion(0);
         //playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
-        
 
 
-        playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+
+        //playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
 
         // 카메라 지정. 및 초기세팅
-        PSH_PlayerFPSCtrl player_dummy = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+        //PSH_PlayerFPSCtrl player_dummy = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
+        I_Playable player_dummy = playerMinion.GetComponent<I_Playable>();
         player_dummy.SpawnSetting(player.team, subTarget_minion.stats.actorHealth.health, playerName, this.GetComponent<LSM_PlayerCtrl>());
-        player_dummy.playerCamera = MainCam.GetComponent<Camera>();
-        mapsubcam_target = player_dummy.camerapos;
+        //player_dummy.playerCamera = MainCam.GetComponent<Camera>();
+        mapsubcam_target = player_dummy.CameraSetting(MainCam);
         GameManager.Instance.gameUI.SetActive(true);
-        GameManager.Instance.gameUI_SC.playerHealth(playerMinionCtrl);
+        GameManager.Instance.gameUI_SC.playerHealth(playerMinion);
 
         Vector3 dummyPosition = subTarget_minion.transform.position;
         Quaternion dummyRotation = subTarget_minion.transform.rotation;

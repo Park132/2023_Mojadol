@@ -10,19 +10,22 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
     private void Start()
     {
         ps = this.GetComponent<ParticleSystem>();
-        StartCoroutine(CheckAlive());
+        if (PhotonNetwork.IsMasterClient)
+            StartCoroutine(CheckAlive());
     }
     private void OnEnable()
     {
-        StartCoroutine(CheckAlive());
+        if (PhotonNetwork.IsMasterClient)
+            StartCoroutine(CheckAlive());
     }
     private IEnumerator CheckAlive()
     {
         while (alive)
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(0.5f);
             if (!ps.isPlaying)
             {
+                Debug.Log("particle disable!");
                 photonView.RPC("ParticleDisable_RPC", RpcTarget.All);
                 break;
             }
@@ -31,9 +34,9 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
     public void ParticleDisable() { photonView.RPC("ParticleDisable_RPC", RpcTarget.All); }
     [PunRPC] private void ParticleDisable_RPC() { this.gameObject.SetActive(false); }
 
-    public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }
+    public void ParentSetting_Pool(int index) { photonView.RPC("ParentSP_RPC", RpcTarget.AllBuffered, index); }
     [PunRPC]
-    private void ParentSetting_Pool_RPC(int index)
+    private void ParentSP_RPC(int index)
     {
         this.transform.parent = PoolManager.Instance.gameObject.transform;
         PoolManager.Instance.poolList_Particles[index].Add(this.gameObject);

@@ -56,8 +56,8 @@ public class PoolManager : MonoBehaviour
         for (int i = 0; i < poolList_Particles.Length; i++)
             poolList_Particles[i] = new List<GameObject>();
 
-		ReadyToStart_SpawnNum = 50;
-		ReadyToStart_SpawnNum_Particles = 20;
+		ReadyToStart_SpawnNum = 100;
+		ReadyToStart_SpawnNum_Particles = 30;
     }
 
 	public IEnumerator ReadyToStart_Spawn()
@@ -157,7 +157,7 @@ public class PoolManager : MonoBehaviour
 			{
 				result = item;
 				item.SetActive(true);
-				item.GetComponent<PSH_PlayerFPSCtrl>().MinionEnable();
+				item.GetComponent<I_Playable>().MinionEnable();
 				break;
 			}
 		}
@@ -166,7 +166,7 @@ public class PoolManager : MonoBehaviour
 		{
 			//result = GameObject.Instantiate(playerMinions[index], this.transform);
 			result = PhotonNetwork.Instantiate(playerMinions[index].name,Vector3.zero, Quaternion.identity);
-			result.GetComponent<PSH_PlayerFPSCtrl>().ParentSetting_Pool(index);
+			result.GetComponent<I_Playable>().ParentSetting_Pool(index);
 			//result.transform.parent = this.transform;
 			//poolList_PlayerMinions[index].Add(result);
 		}

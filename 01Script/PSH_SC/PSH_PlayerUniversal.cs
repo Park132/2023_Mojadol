@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class PSH_PlayerUniversal : MonoBehaviour
+using Photon.Pun;
+public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters, I_Playable
 {
     GameObject playerCharacter;
     Rigidbody rigid;
@@ -25,13 +25,11 @@ public class PSH_PlayerUniversal : MonoBehaviour
     bool canQ = true;
     bool canE = true;
 
-
-
-    #region Camera Variants
-    // 카메라 관련 변수들
-    public Camera playerCamera;
+	#region Camera Variants
+	// 카메라 관련 변수들
+	public Camera playerCamera;
     public GameObject camerapos; // eyes 연결
-    bool cameraCanMove = true;
+    bool cameraCanMove = false;
     bool invertCamera = false;
     float yaw = 0.0f;
     float pitch = 0.0f;
@@ -40,19 +38,103 @@ public class PSH_PlayerUniversal : MonoBehaviour
     #endregion
 
     float time;
+
+    #region LSM Variable
+    public string playerName;
+    public MoonHeader.S_ActorState actorHealth;
+    private GameObject playerIcon;
+
+    public LSM_PlayerCtrl myPlayerCtrl;
+    public MoonHeader.State_P_Minion state_p;
+
+    private Vector3 networkPosition, networkVelocity;
+    #endregion
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(playerName);
+            
+            ulong send_dummy = SendDummyMaker_LSM();
+            int dummy_int1 = (int)(send_dummy & (ulong)uint.MaxValue);
+            int dummy_int2 = (int)((send_dummy >> 32) & (ulong)uint.MaxValue);
+            stream.SendNext(dummy_int1);
+            stream.SendNext(dummy_int2);
+            stream.SendNext(rigid.velocity);
+        }
+        else
+        {
+            this.playerName = (string)stream.ReceiveNext();
+            
+            int d1 = (int)stream.ReceiveNext();
+            int d2 = (int)stream.ReceiveNext();
+
+            ulong receive_dummy = (ulong)(d1) & (ulong)uint.MaxValue;
+            receive_dummy += ((ulong)(d2) << 32);
+            ReceiveDummyUnZip(receive_dummy);
+            networkVelocity = (Vector3)stream.ReceiveNext();
+            rigid.velocity = networkVelocity;
+        }
+    }
+
+    private ulong SendDummyMaker_LSM()
+    {
+        ulong send_dummy = 0;
+        send_dummy += ((ulong)actorHealth.maxHealth & (ulong)ushort.MaxValue);
+        send_dummy += ((ulong)(actorHealth.health) & (ulong)ushort.MaxValue) << 16;
+
+        send_dummy += ((ulong)(actorHealth.team) & (ulong)byte.MaxValue) << 32;
+        send_dummy += ((ulong)(actorHealth.Atk) & (ulong)byte.MaxValue) << 40;
+        send_dummy += ((ulong)(state_p) & (ulong)byte.MaxValue) << 48;
+        return send_dummy;
+    }
+    private void ReceiveDummyUnZip(ulong receive_dummy)
+    {
+        //actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        actorHealth.health = (short)((receive_dummy >> 16) & (ulong)ushort.MaxValue);
+        actorHealth.team = (MoonHeader.Team)((receive_dummy >> 32) & (ulong)byte.MaxValue);
+        actorHealth.Atk = (short)((receive_dummy >> 40) & (ulong)byte.MaxValue);
+        state_p = (MoonHeader.State_P_Minion)((receive_dummy >> 48) & (ulong)byte.MaxValue);
+
+    }
+
+
+	private void Awake()
+	{
+        rigid = this.gameObject.GetComponent<Rigidbody>();
+        playerCharacter = this.gameObject;
+        //playerCamera = Camera.main;
+        anim = this.gameObject.GetComponent<Animator>();
+        myspine = anim.GetBoneTransform(HumanBodyBones.Spine);
+        cameraCanMove = false;
+        invertCamera = false;
+
+        // LSM
+        playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
+        playerIcon.transform.localPosition = new Vector3(0, 60, 0);
+        //
+    }
+
+
     // Start is called before the first frame update
     void Start()
     {
-        rigid = this.gameObject.GetComponent<Rigidbody>();
-        playerCharacter = this.gameObject;
-        playerCamera = Camera.main;
-        anim = this.gameObject.GetComponent<Animator>();
-        myspine = anim.GetBoneTransform(HumanBodyBones.Spine);
+        
+        
+        
     }
 
     // Update is called once per frame
     void Update() 
     {
+        if (!photonView.IsMine)
+        {
+            rigid.velocity = networkVelocity;
+            return;
+        }
+
         if (canMove)
             Move();
 
@@ -74,13 +156,15 @@ public class PSH_PlayerUniversal : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!photonView.IsMine)
+            return;
         LookAround(); // 척추 움직임에 따른 시야 움직임이 적용될려면 이 함수가 LateUpdate()에서 호출 되어야함
     }
 
     void Move()
     {
-        float x = Input.GetAxis("Horizontal");
-        float y = Input.GetAxis("Vertical");
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
 
         // 애니메이션
         anim.SetBool("isRunFront", Input.GetKey(KeyCode.W));
@@ -131,10 +215,14 @@ public class PSH_PlayerUniversal : MonoBehaviour
             myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
+            playerCamera.transform.position = camerapos.transform.position;
         }
-        playerCamera.transform.position = camerapos.transform.position;
+        
         // playerCamera.transform.rotation = camerapos.transform.rotation;
     }
+
+    private void AnimatorLayerReset() { anim.SetLayerWeight(1, 0f); }
+    private void AnimatorRootMotionReset() { anim.applyRootMotion = false; }
 
     void BasicAttack(bool canAttack)
     {
@@ -178,31 +266,40 @@ public class PSH_PlayerUniversal : MonoBehaviour
             attackcode++;
             attackcode %= 2;
         }
-        anim.SetLayerWeight(1, 1f);
-        anim.SetTrigger("basicAttack" + attackcode.ToString());
+        //anim.SetLayerWeight(1, 1f);
+        //anim.SetTrigger("basicAttack" + attackcode.ToString());
+        photonView.RPC("basicAnim_RPC",RpcTarget.All, attackcode);
 
         yield return new WaitForSecondsRealtime(1.5f);
-        anim.SetLayerWeight(1, 0f);
+        //anim.SetLayerWeight(1, 0f);
         canAttack = true;
         StopCoroutine(basicAttackDelay());
+    }
+    [PunRPC] private void basicAnim_RPC(int attackcode) {
+        anim.SetLayerWeight(1, 1f);
+        anim.SetTrigger("basicAttack" + attackcode.ToString());
+        Invoke("AnimatorLayerReset", 1.5f);
     }
 
     IEnumerator Qskill()
     {
         canQ = false;
-        anim.applyRootMotion = true;
-        anim.SetTrigger("skillQ_Trigger");
+        //anim.applyRootMotion = true;
+        //anim.SetTrigger("skillQ_Trigger");
+        photonView.RPC("QAnim_RPC",RpcTarget.All);
         yield return new WaitForSecondsRealtime(2.0f);
         canQ = true;
-        anim.applyRootMotion = false;
+        //anim.applyRootMotion = false;
     }
+    [PunRPC] private void QAnim_RPC() { anim.applyRootMotion = true; anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",2.0f); }
 
     void ESkill() // 혹시 Late Upadate에?
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            anim.SetLayerWeight(1, 1f);
-            anim.SetTrigger("skillE_Trigger");
+            //anim.SetLayerWeight(1, 1f);
+            //anim.SetTrigger("skillE_Trigger");
+            photonView.RPC("EAnim_RPC", RpcTarget.All);
             canMove = false;
             canAttack = false;
             canE = false;
@@ -222,7 +319,11 @@ public class PSH_PlayerUniversal : MonoBehaviour
             anim.speed = 1f;
         }
     }
-
+    [PunRPC] private void EAnim_RPC() {
+        anim.SetLayerWeight(1, 1f);
+        anim.SetTrigger("skillE_Trigger");
+    }
+    
     IEnumerator Eskill()
     {
         anim.SetLayerWeight(1, 1f);
@@ -242,4 +343,163 @@ public class PSH_PlayerUniversal : MonoBehaviour
         anim.speed = 1f;
         StopCoroutine(Eskill());
     }
+
+
+
+
+	#region SpawnSetting
+	// LSM Spawn Setting
+	public void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
+    {
+        //Health = monHealth * 10;
+        // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
+        this.photonView.RequestOwnership();
+        actorHealth = new MoonHeader.S_ActorState(100, 10, t);
+        actorHealth.health = (short)(monHealth * 10);
+        playerName = pname;
+        myPlayerCtrl = pctrl;
+        state_p = MoonHeader.State_P_Minion.Normal;
+
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)100, (short)(monHealth * 10), pname, (int)t);
+
+        // 초기화
+        canAttack = true;
+        canMove = true;
+        speed = 15.0f;
+        canE = true;
+        canQ = true;
+        cameraCanMove = true;
+        invertCamera = false;
+    }
+
+    [PunRPC]
+    private void SpawnSetting_RPC(short mh, short h, string name, int t)
+    {
+        this.actorHealth.maxHealth = mh;
+        this.actorHealth.health = h;
+        this.playerName = name;
+        this.actorHealth.team = (MoonHeader.Team)t;
+
+        this.transform.name = playerName;
+        GameManager.Instance.playerMinions[(int)actorHealth.team].Add(this.gameObject);
+        ChangeTeamColor(playerIcon);
+    }
+	#endregion
+
+	#region Damaged()
+	// LSM Damaged 추가.
+	public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+    {
+
+        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
+            return;
+        if (this.actorHealth.health - dam <= 0)
+        { StartCoroutine(DeadProcessing(other)); }
+        else
+        {
+            photonView.RPC("Dam_RPC", RpcTarget.All, dam);
+        }
+        return;
+    }
+    [PunRPC]
+    private void Dam_RPC(short dam)
+    {
+        if (photonView.IsMine)
+        {
+            actorHealth.health -= dam;
+        }
+    }
+    [PunRPC]
+    private void Dead_RPC()
+    {
+        state_p = MoonHeader.State_P_Minion.Dead;
+        if (photonView.IsMine)
+            myPlayerCtrl.PlayerMinionDeadProcessing();
+    }
+    // LSM DeadProcessing
+    public IEnumerator DeadProcessing(GameObject other)
+    {
+        photonView.RPC("Dead_RPC", RpcTarget.All);
+        Debug.Log("PlayerMinion Dead");
+        GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
+        // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
+        if (other.transform.CompareTag("PlayerMinion"))
+        {
+            other.GetComponent<I_Characters>().AddEXP(50);
+            //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+        }
+        GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
+        yield return new WaitForSeconds(0.5f);
+        MinionDisable();
+
+        cameraCanMove = false;
+        playerCamera = null;
+
+    }
+
+	#endregion
+
+	#region ChangeTeamColor(obj)
+	// 플레이어 아이콘 색변경.
+	public void ChangeTeamColor(GameObject obj)
+    {
+        Color dummy_color;
+        switch (actorHealth.team)
+        {
+            case MoonHeader.Team.Red:
+                dummy_color = Color.red;
+                break;
+            case MoonHeader.Team.Blue:
+                dummy_color = Color.blue;
+                break;
+            case MoonHeader.Team.Yellow:
+                dummy_color = Color.yellow;
+                break;
+            default: dummy_color = Color.gray; break;
+        }
+        obj.GetComponent<Renderer>().material.color = dummy_color;
+    }
+	#endregion
+
+	#region ParentSetting
+	public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }
+    [PunRPC]
+    private void ParentSetting_Pool_RPC(int index)
+    {
+        this.transform.parent = PoolManager.Instance.gameObject.transform;
+        PoolManager.Instance.poolList_PlayerMinions[index].Add(this.gameObject);
+    }
+	#endregion
+
+	#region MinionDisable()
+	public void MinionDisable() { photonView.RPC("DeadProcessing", RpcTarget.All); }
+    [PunRPC]
+    protected void DeadProcessing()
+    {
+        if (photonView.IsMine)
+            myPlayerCtrl.PlayerMinionDeadProcessing();
+        this.gameObject.SetActive(false);
+    }
+	#endregion
+
+	#region MinionEnable()
+	public void MinionEnable() { photonView.RPC("MinionEnable_RPC", RpcTarget.All); }
+    [PunRPC] protected void MinionEnable_RPC() { this.gameObject.SetActive(true); }
+	#endregion
+
+	// I_Actor 인터페이스에 미리 선언해둔 함수들 구현
+	public short GetHealth() { return this.actorHealth.health; }
+    public short GetMaxHealth() { return this.actorHealth.maxHealth; }
+    public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
+    public void AddEXP(short exp) { }
+
+	#region I_Playable
+	public bool IsCanUseE() { return canE; }
+    public bool IsCanUseQ() { return canQ; }
+    public GameObject CameraSetting(GameObject cam)
+    {
+        playerCamera = cam.GetComponent<Camera>();
+        return camerapos;
+    }
+    #endregion
 }

@@ -139,9 +139,9 @@ MonoBehaviour:
   anim: {fileID: 0}
   CameraPosition: {fileID: 2816231537466286677}
   target_attack: {fileID: 0}
-  searchRadius: 10
+  searchRadius: 5
   minAtkRadius: 3
-  maxAtkRadius: 13
+  maxAtkRadius: 7
   minionBelong: 0
   minionType: 0
   debugging_minion: 0
@@ -190,7 +190,7 @@ MonoBehaviour:
   ObservedComponentsFoldoutOpen: 1
   Group: 0
   prefixField: -1
-  Synchronization: 1
+  Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
@@ -257,8 +257,14 @@ MonoBehaviour:
   - Type: 9
     SynchronizeType: 0
     Name: Attack
+  - Type: 4
+    SynchronizeType: 1
+    Name: Dead
+  - Type: 9
+    SynchronizeType: 0
+    Name: DeadAnim
   m_SynchronizeLayers:
-  - SynchronizeType: 2
+  - SynchronizeType: 1
     LayerIndex: 0
 --- !u!1001 &5434813673290300457
 PrefabInstance:

@@ -9,7 +9,7 @@ public class LSM_Spawner : MonoBehaviour
 {
 	// 소환에 대한 상수 설정.
 	float BASEDELAY = 1.5f;
-	float BASEWAVEDELAY = 10f;
+	float BASEWAVEDELAY = 20f;
 	int BASEMINIONMULTIPLER = 3;
 	int BASEMAXIMUMMELEE = 2;
 

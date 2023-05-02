@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1068,7 +1068,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.5
+  near clip plane: 0.1
   far clip plane: 1000
   field of view: 60
   orthographic: 0
@@ -1225,7 +1225,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &250167854
 GameObject:
@@ -1434,7 +1434,7 @@ MonoBehaviour:
   ObservedComponentsFoldoutOpen: 1
   Group: 0
   prefixField: -1
-  Synchronization: 2
+  Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
   ObservedComponents:
@@ -1628,7 +1628,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &382259312
 GameObject:
@@ -1892,7 +1892,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &460954314
 PrefabInstance:
@@ -2856,7 +2856,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &652815898
 GameObject:
@@ -3606,7 +3606,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &767461772
 GameObject:
@@ -5717,7 +5717,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 7
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1354306374
 GameObject:
@@ -6735,7 +6735,7 @@ MonoBehaviour:
   - {fileID: 8887907667050671287, guid: cb994eb333d5ae64185bce212c70e360, type: 3}
   - {fileID: 8887907667050671287, guid: 08dea0b7c67160c45b0b5d40a023c386, type: 3}
   playerMinions:
-  - {fileID: 4752272835364512656, guid: 33ac5eece6f0e474e91c126ba985a51c, type: 3}
+  - {fileID: 340671848994727326, guid: 02ed535f30cc16d4197776988a4ac460, type: 3}
   UIs:
   - {fileID: 7116788151370582358, guid: 6968fa7345637fb42a71b2011124a9bf, type: 3}
   particles:

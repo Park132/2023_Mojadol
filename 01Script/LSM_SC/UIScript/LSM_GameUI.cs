@@ -17,7 +17,7 @@ public class LSM_GameUI : MonoBehaviour
     public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
     
     private I_Actor player_ac, target_ac;
-    private PSH_PlayerFPSCtrl playerCtrl;
+    private I_Playable player_playable;
     private GameObject target_obj;
 
 
@@ -38,7 +38,7 @@ public class LSM_GameUI : MonoBehaviour
         target_obj = obj;
         target_ac = obj.GetComponent<I_Actor>();
     }
-    public void playerHealth(PSH_PlayerFPSCtrl ctrl) { playerUI.SetActive(true);  player_ac = ctrl.GetComponent<I_Actor>(); playerCtrl = ctrl; }
+    public void playerHealth(GameObject ctrl) { playerUI.SetActive(true);  player_ac = ctrl.GetComponent<I_Actor>(); player_playable = ctrl.GetComponent<I_Playable>(); }
     // 모든 캐릭터들이 갖고있는 공통적인 것. I_Actor를 받아와 구문을 최소화.
 
 
@@ -55,8 +55,8 @@ public class LSM_GameUI : MonoBehaviour
         if (playerUI.activeSelf)
         { 
             playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100;
-            QSkillCool.color = new Color32(0, 0, 0, (byte)(playerCtrl.IsCanUseQ() ? 0 : 150));
-            ESkillCool.color = new Color32(0, 0, 0, (byte)(playerCtrl.IsCanUseE() ? 0 : 150));
+            QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
+            ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
         }
     }
 }

@@ -118,8 +118,23 @@ public class MoonHeader : MonoBehaviour
 public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
 	void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
+
 	public short GetHealth();
 	public short GetMaxHealth();
 	public MoonHeader.Team GetTeam();
 }
+public interface I_Characters
+{
+	public void AddEXP(short exp);
+}
 
+public interface I_Playable 
+{
+	public bool IsCanUseE();
+	public bool IsCanUseQ();
+	public GameObject CameraSetting(GameObject cam);
+	public void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl);
+	public void MinionDisable();
+	public void MinionEnable();
+	public void ParentSetting_Pool(int index);
+}

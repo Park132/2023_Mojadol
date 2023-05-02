@@ -524,7 +524,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			foreach (GameObject obj in playerMinions[i])
 			{
-				obj.GetComponent<PSH_PlayerFPSCtrl>().MinionDisable();
+				obj.GetComponent<I_Playable>().MinionDisable();
 			}
 		}
 

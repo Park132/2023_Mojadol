@@ -17,7 +17,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     public MoonHeader.S_TurretStats stats;			// 터렛의 상태에 대한 구조체
 	protected GameObject mark;						// TopView에서 플레이어에게 보여질 아이콘
 	protected float timer, timer_attack;				// 탐색, 공격에 사용될 타이머
-	protected float searchRadius;						// 탐색 범위
+	protected float searchRadius;                       // 탐색 범위
+	protected float maxAttackRadius;
+
 	[SerializeField]protected GameObject target;        // 공격 타겟
 	protected I_Actor target_Actor;
 
@@ -62,6 +64,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		timer = 0;
 		searchRadius = 10f;
+		maxAttackRadius = 12f;
 		target = null;
 
 		waypoint = this.transform.parent.gameObject;
@@ -176,14 +179,16 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						LSM_MinionCtrl dummyCtr = hit.transform.GetComponent<LSM_MinionCtrl>();
 						dummy_actor = dummyCtr.stats.actorHealth;
-						dummy_bool = true;
+						if (dummy_actor.health > 0)
+							dummy_bool = true;
 					}
 					else if (hit.transform.CompareTag("PlayerMinion"))
 					{
 						Debug.Log("Player Find!");
-						PSH_PlayerFPSCtrl dummyCtr = hit.transform.GetComponent<PSH_PlayerFPSCtrl>();
-						dummy_actor = dummyCtr.actorHealth;
-						dummy_bool = true;
+						I_Actor dummyCtr = hit.transform.GetComponent<I_Actor>();
+						//dummy_actor = dummyCtr.actorHealth;
+						if (dummyCtr.GetHealth() > 0)
+							dummy_bool = true;
 					}
 
 
@@ -217,7 +222,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (timer_attack < ATTACKDELAY) timer_attack += Time.deltaTime;
 		if (!ReferenceEquals(target, null))
 		{
-			if (!target.activeSelf || target_Actor.GetTeam() == this.GetTeam())
+			if (!target.activeSelf || target_Actor.GetTeam() == this.GetTeam() || target_Actor.GetHealth() <= 0)
 			{ target = null;}
 			else
 			{
@@ -225,6 +230,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				{
 					//Debug.Log("Attack Minion!");
 					timer_attack = 0;
+					bool can_attack_dummy = false;
 
 					RaycastHit[] hits=Physics.RaycastAll(this.transform.position, (target.transform.position - this.transform.position).normalized, searchRadius, 1 << LayerMask.NameToLayer("Minion"));
 
@@ -232,11 +238,16 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						if (target == hit.transform.gameObject)
 						{
-							GameObject dummy = PoolManager.Instance.Get_Particles(0, hit.point);
-							dummy.transform.position= hit.point;
-							break;
+							if (hit.distance <= maxAttackRadius)
+							{
+								can_attack_dummy = true;
+								GameObject dummy = PoolManager.Instance.Get_Particles(0, hit.point);
+								dummy.transform.position = hit.point;
+								break;
+							}
 						}
 					}
+					if (!can_attack_dummy) return;
 
 					// 팀에 따라 제너릭 함수를 따로 사용.
 					switch (target.tag)
@@ -246,7 +257,11 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 							break;
 						case "PlayerMinion":
 							Debug.Log("PlayerMinion Attack!");
-							Attack_Actor<PSH_PlayerFPSCtrl>(target);
+							//Attack_Actor<PSH_PlayerFPSCtrl>(target);
+							I_Actor dummy_Actor = target.GetComponent<I_Actor>();
+							dummy_Actor.Damaged(this.stats.actorHealth.Atk, transform.position, this.stats.actorHealth.team, this.gameObject);
+							if (dummy_Actor.GetHealth() <= 0)
+								target = null;
 							break;
 						default:
 							break;
