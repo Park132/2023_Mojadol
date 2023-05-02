@@ -18,14 +18,14 @@ public class PSH_ChatManager : MonoBehaviourPunCallbacks
     GameObject m_ContentText;
 
     string m_strUserName;
+    private byte codeline = 0; // 0은 전체 채팅을 위한 것, 1은 팀 채팅을 위한 것
+    private byte myTeam; // 팀 구성
 
-    private byte code = 0; // 0은 전체 채팅을 위한 것, 1은 팀 채팅을 위한 것
-    private byte myTeam;
+    void Awake() => Screen.SetResolution(960, 600, false);
 
     // Start is called before the first frame update
     void Start() // 연결 및 초기화
     {
-        Screen.SetResolution(960, 600, false);
         PhotonNetwork.ConnectUsingSettings(); // 시작하자마자 연결
         m_ContentText = m_Content.transform.GetChild(0).gameObject;
         this.gameObject.GetComponent<PhotonView>();
@@ -58,9 +58,11 @@ public class PSH_ChatManager : MonoBehaviourPunCallbacks
         else
             myTeam = 0; // 짝수팀
 
+        Debug.Log($"myTeam Code : {myTeam}");
+
         // photonView.Group = myTeam;
         // Debug.Log($"photonView.Group : {photonView.Group}");
-        PhotonNetwork.SetPlayerCustomProperties(new HashTable { { "PlayerTeam", myTeam } });
+        // PhotonNetwork.SetPlayerCustomProperties(new HashTable { { "PlayerTeam", myTeam } });
 
     }
 
@@ -68,13 +70,9 @@ public class PSH_ChatManager : MonoBehaviourPunCallbacks
     {
         base.OnPlayerEnteredRoom(newPlayer);
 
-        Debug.Log($"newPlayer's CustomProperties : {newPlayer.CustomProperties}");
         Debug.Log($"newPlayer's UserId : {newPlayer.UserId}");
         Debug.Log($"newPlayer's ActorNumber : {newPlayer.ActorNumber}");
-//        Debug.Log($"newPlayer's ActorNumber : {newPlayer.ac}");
     }
-
-    
     #endregion
 
 
@@ -89,8 +87,9 @@ public class PSH_ChatManager : MonoBehaviourPunCallbacks
 
         if(Input.GetKeyDown(KeyCode.Tab))
         {
-            code++;
-            code %= 2;
+            codeline++;
+            codeline %= 2;
+            Debug.Log($"Chatting Line Code : {codeline}");
         }
     }
 
@@ -130,7 +129,7 @@ public class PSH_ChatManager : MonoBehaviourPunCallbacks
     void AddChatMessage(string message)
     {
         GameObject goText = Instantiate(m_ContentText, m_Content.transform);
-
+        
         goText.GetComponent<TextMeshProUGUI>().text = message;
         goText.GetComponent<TextMeshProUGUI>().fontSize = 8;
         m_Content.GetComponent<RectTransform>().anchoredPosition = Vector3.zero;
