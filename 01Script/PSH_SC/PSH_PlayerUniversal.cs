@@ -8,7 +8,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     Rigidbody rigid;
 
     // 이동속도, 점프 판별 함수
-    float speed = 15.0f;
+    public float speed = 15.0f;
     bool isGrounded;
 
     // 애니메이션 부분
@@ -48,6 +48,9 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public MoonHeader.State_P_Minion state_p;
 
     private Vector3 networkPosition, networkVelocity;
+
+    private MeshCollider weapon_C;
+
     #endregion
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
@@ -114,6 +117,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // LSM
         playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
         playerIcon.transform.localPosition = new Vector3(0, 60, 0);
+        weapon_C = transform.GetComponentInChildren<LSM_WeaponSC>().transform.GetComponent<MeshCollider>();
+        weapon_C.enabled = false;
         //
     }
 
@@ -129,9 +134,11 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     // Update is called once per frame
     void Update() 
     {
+        // 지연보상에대한 내용.
         if (!photonView.IsMine)
         {
             rigid.velocity = networkVelocity;
+            rigid.MovePosition(transform.position + networkVelocity * Time.deltaTime);
             return;
         }
 
@@ -143,7 +150,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             StartCoroutine(basicAttackDelay());
         }
 
-        if(Input.GetKeyDown(KeyCode.Q) && canQ)
+        if(Input.GetKeyDown(KeyCode.Q) && canQ && canAttack)
         {
             StartCoroutine(Qskill());
         }
@@ -167,25 +174,36 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         float y = Input.GetAxisRaw("Vertical");
 
         // 애니메이션
+        /*
         anim.SetBool("isRunFront", Input.GetKey(KeyCode.W));
         anim.SetBool("isRunBack", Input.GetKey(KeyCode.S));
         anim.SetBool("isRunRight", Input.GetKey(KeyCode.D));
         anim.SetBool("isRunLeft", Input.GetKey(KeyCode.A));
+        */
+        anim.SetFloat("Front", y);
+        anim.SetFloat("Right", x);
 
         Vector3 moveX = transform.right * x;
         Vector3 moveY = transform.forward * y;
 
-        Vector3 thisVelocity = (moveX + moveY).normalized * speed;
-        rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime);
+        Vector3 thisVelocity = (moveX + moveY).normalized;
+        //rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime * speed);       // 웬지 모르게 fps차이에 따라서 속도가 다름...
+        this.transform.position = this.transform.position + thisVelocity * speed * Time.deltaTime;
 
         // 점프
-        isGrounded = Physics.Raycast(this.transform.position-new Vector3(0f, 0.2f, 0f), Vector3.down * 5f);
-        bool canJump = !isGrounded;
-        anim.SetBool("isJump", !canJump && canQ);
-        if(canJump)
+        isGrounded = Physics.Raycast(this.transform.position+new Vector3(0f, 0.5f, 0f), Vector3.down, 1f, 1<<LayerMask.NameToLayer("Map"));
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, Vector3.down*1f, Color.red);
+        //bool canJump = !isGrounded;
+
+        anim.SetBool("InAir", !isGrounded);
+
+
+        //anim.SetBool("isJump", !canJump && canQ);
+        if(isGrounded)
         {
             if(Input.GetKeyDown(KeyCode.Space))
             {
+                anim.SetTrigger("Jump");
                 rigid.AddForce(Vector3.up * 500f);
             }
         }
@@ -221,8 +239,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // playerCamera.transform.rotation = camerapos.transform.rotation;
     }
 
-    private void AnimatorLayerReset() { anim.SetLayerWeight(1, 0f); }
-    private void AnimatorRootMotionReset() { anim.applyRootMotion = false; }
+    private void AnimatorLayerReset() { anim.SetLayerWeight(1, 0f); photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false); }
+    private void AnimatorRootMotionReset() { anim.applyRootMotion = false; photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false); }
+
+    [PunRPC] private void WeaponTriggerEnable (bool b) {
+        weapon_C.enabled = b;
+    }
 
     void BasicAttack(bool canAttack)
     {
@@ -270,13 +292,17 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         //anim.SetTrigger("basicAttack" + attackcode.ToString());
         photonView.RPC("basicAnim_RPC",RpcTarget.All, attackcode);
 
+        yield return new WaitForSeconds(0.5f);
+        photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
+
         yield return new WaitForSecondsRealtime(1.5f);
         //anim.SetLayerWeight(1, 0f);
         canAttack = true;
-        StopCoroutine(basicAttackDelay());
+        //StopCoroutine(basicAttackDelay());
     }
     [PunRPC] private void basicAnim_RPC(int attackcode) {
         anim.SetLayerWeight(1, 1f);
+        
         anim.SetTrigger("basicAttack" + attackcode.ToString());
         Invoke("AnimatorLayerReset", 1.5f);
     }
@@ -284,18 +310,27 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     IEnumerator Qskill()
     {
         canQ = false;
+        canAttack = false;
+        canMove = false;
         //anim.applyRootMotion = true;
         //anim.SetTrigger("skillQ_Trigger");
         photonView.RPC("QAnim_RPC",RpcTarget.All);
-        yield return new WaitForSecondsRealtime(2.0f);
+        yield return new WaitForSecondsRealtime(3.0f);
         canQ = true;
+        canAttack = true;
+        canMove = true;
         //anim.applyRootMotion = false;
     }
-    [PunRPC] private void QAnim_RPC() { anim.applyRootMotion = true; anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",2.0f); }
+    [PunRPC] private void QAnim_RPC() {
+        if (photonView.IsMine)
+            anim.applyRootMotion = true;
+        photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
+        anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",1.6f);
+    }
 
     void ESkill() // 혹시 Late Upadate에?
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.E) && canAttack)
         {
             //anim.SetLayerWeight(1, 1f);
             //anim.SetTrigger("skillE_Trigger");
@@ -317,13 +352,19 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             canAttack = true;
             canE = true;
             anim.speed = 1f;
+            photonView.RPC("EAnimE_RPC",RpcTarget.All);
         }
     }
     [PunRPC] private void EAnim_RPC() {
         anim.SetLayerWeight(1, 1f);
         anim.SetTrigger("skillE_Trigger");
     }
-    
+    [PunRPC] private void EAnimE_RPC()
+    {
+        Invoke("AnimatorLayerReset", 1.5f);
+        //AnimatorLayerReset();
+    }
+
     IEnumerator Eskill()
     {
         anim.SetLayerWeight(1, 1f);
@@ -341,10 +382,19 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         canAttack = true;
         canE = true;
         anim.speed = 1f;
-        StopCoroutine(Eskill());
+        //StopCoroutine(Eskill());
     }
 
 
+    public void AttackThem(GameObject obj)
+    {
+        if (!ReferenceEquals(obj.GetComponent<I_Actor>(), null))
+        {
+            obj.GetComponent<I_Actor>().Damaged(this.actorHealth.Atk, this.transform.position, this.actorHealth.team, this.gameObject);
+            
+            Debug.Log("Attack! : " +obj.name);
+        }
+    }
 
 
 	#region SpawnSetting

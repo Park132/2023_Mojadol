@@ -197,7 +197,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     {
         if (!photonView.IsMine)
         {
-            rigid.velocity = networkVelocity;
+			//rigid.velocity = networkVelocity;
+			rigid.MovePosition(transform.position + networkVelocity * Time.deltaTime);
             //transform.position = transform.position + (networkVelocity * Time.deltaTime);
             //transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
             //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime);
@@ -323,7 +324,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 						if (hit.transform.CompareTag("Minion"))
 						{
 							I_Actor dummy_actor = hit.transform.GetComponent<I_Actor>();
-							different_Team = (stats.actorHealth.team != dummy_actor.GetTeam() && dummy_actor.GetHealth() > 0);
+							LSM_MinionCtrl dummy_ctr = hit.transform.GetComponent<LSM_MinionCtrl>();
+							different_Team = (stats.actorHealth.team != dummy_actor.GetTeam() && dummy_actor.GetHealth() > 0 && dummy_ctr.stats.state != MoonHeader.State.Dead && dummy_ctr.stats.state != MoonHeader.State.Invincibility);
 						}  
 
 						else if (hit.transform.CompareTag("Turret"))

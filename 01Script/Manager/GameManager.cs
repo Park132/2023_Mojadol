@@ -58,10 +58,13 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 	public int ReadyToStart_LoadingGauge;
 	public int LoadingGauge, ReadyToStart_Player;
+	public int MaxPlayerNum;
 	public Image LoadingImage;
 	public TextMeshProUGUI pingText;
 
 	private float ping;
+
+	public bool debugging_bool;
 
 	// private 
 
@@ -187,6 +190,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		starting_ = false;
 
         loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Press O to Connect...";
+		MaxPlayerNum = 2;
     }
 
 	private void Start_function()
@@ -285,15 +289,24 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     #endregion
 
 
+    #region ForDebugging~~
+	private void Debugging_Setting()
+	{
+		PoolManager.Instance.ReadyToStart_SpawnNum = 0;
+		PoolManager.Instance.ReadyToStart_SpawnNum_Particles = 0;
+		MaxPlayerNum = 1;
+	}
+    #endregion
+
     private void Update()
 	{
 		if (Input.GetKeyDown(KeyCode.O) && !onceStart)
-			Connect();
+		{ Connect(); if (debugging_bool) { Debugging_Setting(); } }
 
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
 		{
 			
-			if (PhotonNetwork.CurrentRoom.PlayerCount == 2) // 일단 1명으로
+			if (PhotonNetwork.CurrentRoom.PlayerCount == MaxPlayerNum) // 일단 1명으로
 			{
 				if (!starting_)
 				{
