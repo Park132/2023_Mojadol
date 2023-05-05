@@ -39,18 +39,24 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 		}
 	}
 
+	private void Awake()
+	{
+		// 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
+		GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
+		foreach (GameObject s in dummySpawners)
+		{
+			LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
+			if (sSC.team == this.team) { this_teamSpawner = sSC; break; }
+		}
+	}
+
 	private void Start()
 	{
 		// 디버깅용
 		selectedNumber = 0;
 		MaximumSpawnNum = 6;
 
-		// 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
-		GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
-		foreach (GameObject s in dummySpawners) { 
-			LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
-			if (sSC.team == this.team) { this_teamSpawner = sSC; break; }
-		}
+
 		// 마스터스포너에 존재하는 스폰포인트의 개수만큼 배열의 크기를 지정.
 		AttackPathNumber = new int[this_teamSpawner.spawnpoints.Length];
         AttackPathNum_past = new int[this_teamSpawner.spawnpoints.Length];

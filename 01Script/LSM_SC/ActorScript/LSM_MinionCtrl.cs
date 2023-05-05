@@ -208,7 +208,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
     // 미니언의 기본 스탯과 목적지를 정하는 함수. Spawner.cs에서 사용
     // 모든 변수 초기화
-    public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.MonType typeM)
+    public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.AttackType typeM)
 	{
 		nav_ob.enabled = false;
 		nav.enabled = true;
@@ -221,7 +221,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
 		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
-		photonView.RPC("MS_RPC", RpcTarget.All, (short)stats.actorHealth.maxHealth, (short)stats.actorHealth.Atk, (short)t, (int)stats.speed);
+		photonView.RPC("MS_RPC", RpcTarget.All, (short)stats.actorHealth.maxHealth, (short)stats.actorHealth.Atk, (short)t, (int)stats.speed, typeM);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
 
@@ -244,7 +244,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	// 체력, 공격력, 팀
-	[PunRPC]private void MS_RPC(short mh, short atk, short t, int s)
+	[PunRPC]private void MS_RPC(short mh, short atk, short t, int s, MoonHeader.AttackType typeM)
     {
 		
 		this.stats.actorHealth.Atk = atk;
@@ -252,6 +252,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.stats.actorHealth.health = mh;
 		this.stats.speed = s;
 		this.stats.actorHealth.team = (MoonHeader.Team)t;
+		this.stats.actorHealth.type = typeM;
 		PlayerDisConnect();
 		ChangeTeamColor();
     }
@@ -336,7 +337,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 						else if (hit.transform.CompareTag("PlayerMinion"))
 						{
 							I_Actor dummy_actor = hit.transform.GetComponent<I_Actor>();
-							different_Team = (stats.actorHealth.team != dummy_actor.GetTeam() && dummy_actor.GetHealth() > 0);
+							different_Team = (stats.actorHealth.team != dummy_actor.GetTeam() && hit.transform.GetComponent<I_Characters>().GetState() != (int)MoonHeader.State_P_Minion.Dead);
 						}
 						else if (hit.transform.CompareTag("Nexus"))
 						{
@@ -419,8 +420,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (!ReferenceEquals(target_attack, null))
 		{
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
-			if (!target_attack.activeSelf && stats.state != MoonHeader.State.Thinking
-				|| stats.state == MoonHeader.State.Dead || target_actor.GetHealth() <= 0)
+			if (!target_attack.activeSelf && this.stats.state != MoonHeader.State.Thinking
+				|| this.stats.state == MoonHeader.State.Dead || (!ReferenceEquals(target_attack.GetComponent<I_Characters>(),null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
 			{ Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
 
 			else if (target_actor.GetTeam() == this.stats.actorHealth.team && target_attack.CompareTag("Turret"))
@@ -744,5 +745,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public short GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
 	public MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
 	public void AddEXP(short exp) { }
+	public MoonHeader.S_ActorState GetActor() { return this.stats.actorHealth; }
+	public GameObject GetCameraPos() { return CameraPosition; }
+	public int GetState() { return (int)stats.state; }
+	public void Selected() { }
 	#endregion
 }

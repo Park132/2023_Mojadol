@@ -28,7 +28,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public GameObject waypoint;
 	public int TurretBelong;                        // 터렛의 위치
 													// # 터렛의 경로에 따라서 번호를 다르게 설정. 해당 경로와 동일하게 숫자가 같도록 설정.
-	//protected PhotonView photonView;
+													//protected PhotonView photonView;
+	public GameObject CameraPos;
+
 
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
@@ -60,7 +62,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		
 		// 디버그용으로 미리 설정.
 		stats = new MoonHeader.S_TurretStats(100,6);
-		ChangeColor();
+		stats.actorHealth.type = MoonHeader.AttackType.Turret;
+		ChangeTeamColor();
 
 		timer = 0;
 		searchRadius = 10f;
@@ -72,7 +75,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	// 팀에 해당하는 색으로 변경.
 
-	protected void ChangeColor()
+	public void ChangeTeamColor()
 	{
 		Color dummy_c = Color.white;
 
@@ -132,7 +135,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	[PunRPC] protected void DestroyProcessing_RPC() {
-		ChangeColor();
+		ChangeTeamColor();
 	}
 
 
@@ -149,7 +152,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		foreach (Renderer item in bodies)
 			item.material.color = recovered;
-		ChangeColor();
+		ChangeTeamColor();
 	}
 
 	protected virtual void DestroyProcessing(GameObject other)
@@ -285,5 +288,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	public virtual short GetHealth() { return this.stats.actorHealth.health; }
 	public virtual short GetMaxHealth() { return this.stats.actorHealth.maxHealth; }
+	public MoonHeader.S_ActorState GetActor() { return this.stats.actorHealth; }
 	public virtual MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
+	public GameObject GetCameraPos() { return CameraPos; }
+	public void Selected() { }
 }

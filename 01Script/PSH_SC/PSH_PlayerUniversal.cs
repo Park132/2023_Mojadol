@@ -37,6 +37,10 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public float maxLookAngle = 50f; // 상하 시야각
     #endregion
 
+    // 쿨타임 관련 변수.
+    float CoolTime_Q, CoolTime_E;
+    float timer_Q, timer_E;
+
     float time;
 
     #region LSM Variable
@@ -81,6 +85,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         }
     }
 
+    // 패킷을 줄이기 위하여 압축해서 데이터를 전송.
     private ulong SendDummyMaker_LSM()
     {
         ulong send_dummy = 0;
@@ -92,6 +97,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         send_dummy += ((ulong)(state_p) & (ulong)byte.MaxValue) << 48;
         return send_dummy;
     }
+    // 압축된 데이터를 언집
     private void ReceiveDummyUnZip(ulong receive_dummy)
     {
         //actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
@@ -120,6 +126,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         weapon_C = transform.GetComponentInChildren<LSM_WeaponSC>().transform.GetComponent<MeshCollider>();
         weapon_C.enabled = false;
         //
+        CoolTime_E = 5f;
+        CoolTime_Q = 3f;
     }
 
 
@@ -144,29 +152,37 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         if (canMove)
             Move();
-
-        if(Input.GetMouseButtonDown(0) && canAttack)
-        {
-            StartCoroutine(basicAttackDelay());
-        }
-
-        if(Input.GetKeyDown(KeyCode.Q) && canQ && canAttack)
-        {
-            StartCoroutine(Qskill());
-        }
-
-        ESkill();
-
+        AttackFunction();
+        
         // anim.SetBool("skillE_Bool", Input.GetKey(KeyCode.E));
 
     }
-
     private void LateUpdate()
     {
         if (!photonView.IsMine)
             return;
         LookAround(); // 척추 움직임에 따른 시야 움직임이 적용될려면 이 함수가 LateUpdate()에서 호출 되어야함
     }
+
+    
+
+    private void AttackFunction()
+    {
+        if (Input.GetMouseButtonDown(0) && canAttack)
+        {
+            StartCoroutine(basicAttackDelay());
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q) && canQ && canAttack)
+        {
+            StartCoroutine(Qskill());
+        }
+
+        ESkill();
+        CoolManager();
+    }
+
+    
 
     void Move()
     {
@@ -203,11 +219,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         {
             if(Input.GetKeyDown(KeyCode.Space))
             {
-                anim.SetTrigger("Jump");
+                photonView.RPC("Jump_RPC", RpcTarget.All);
                 rigid.AddForce(Vector3.up * 500f);
             }
         }
     }
+    [PunRPC] private void Jump_RPC() { anim.SetTrigger("Jump"); }
 
     void LookAround()
     {
@@ -312,11 +329,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         canQ = false;
         canAttack = false;
         canMove = false;
+        timer_Q = 0;
         //anim.applyRootMotion = true;
         //anim.SetTrigger("skillQ_Trigger");
         photonView.RPC("QAnim_RPC",RpcTarget.All);
-        yield return new WaitForSecondsRealtime(3.0f);
-        canQ = true;
+        yield return new WaitForSecondsRealtime(2.0f);
+        //canQ = true;
         canAttack = true;
         canMove = true;
         //anim.applyRootMotion = false;
@@ -330,7 +348,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     void ESkill() // 혹시 Late Upadate에?
     {
-        if (Input.GetKeyDown(KeyCode.E) && canAttack)
+        if (Input.GetKeyDown(KeyCode.E) && canAttack && canE)
         {
             //anim.SetLayerWeight(1, 1f);
             //anim.SetTrigger("skillE_Trigger");
@@ -338,29 +356,31 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             canMove = false;
             canAttack = false;
             canE = false;
+            timer_E = 0;
         }
 
         if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime >= 0.35f && anim.GetCurrentAnimatorStateInfo(1).IsName("casting1") && 
             Input.GetKey(KeyCode.E))
         {
-            anim.speed = 0f;
+            photonView.RPC("EAnim_Pause", RpcTarget.All);
         }
 
         if (Input.GetKeyUp(KeyCode.E))
         {
-            canMove = true;
-            canAttack = true;
-            canE = true;
-            anim.speed = 1f;
+            Invoke("EskillOver", 1f);
+            //canE = true;
             photonView.RPC("EAnimE_RPC",RpcTarget.All);
         }
     }
+    private void EskillOver() { canMove = true; canAttack = true; }
     [PunRPC] private void EAnim_RPC() {
         anim.SetLayerWeight(1, 1f);
         anim.SetTrigger("skillE_Trigger");
     }
+    [PunRPC] private void EAnim_Pause() { anim.speed = 0f; }
     [PunRPC] private void EAnimE_RPC()
     {
+        anim.speed = 1f;
         Invoke("AnimatorLayerReset", 1.5f);
         //AnimatorLayerReset();
     }
@@ -383,6 +403,26 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         canE = true;
         anim.speed = 1f;
         //StopCoroutine(Eskill());
+    }
+
+    private void CoolManager()
+    {
+        if (!canE)
+        {
+            timer_E += Time.deltaTime;
+            if (CoolTime_E <= timer_E)
+            {
+                timer_E = 0; canE = true;
+            }
+        }
+        if (!canQ)
+        {
+            timer_Q += Time.deltaTime;
+            if (CoolTime_Q <= timer_Q)
+            {
+                timer_Q = 0; canQ = true;
+            }
+        }
     }
 
 
@@ -415,11 +455,13 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // 초기화
         canAttack = true;
         canMove = true;
-        speed = 15.0f;
+        speed = 5.0f;
         canE = true;
         canQ = true;
         cameraCanMove = true;
         invertCamera = false;
+        timer_E = 0;
+        timer_Q = 0;
     }
 
     [PunRPC]
@@ -429,6 +471,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         this.actorHealth.health = h;
         this.playerName = name;
         this.actorHealth.team = (MoonHeader.Team)t;
+        this.actorHealth.type = MoonHeader.AttackType.Melee;
 
         this.transform.name = playerName;
         GameManager.Instance.playerMinions[(int)actorHealth.team].Add(this.gameObject);
@@ -469,6 +512,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     // LSM DeadProcessing
     public IEnumerator DeadProcessing(GameObject other)
     {
+        canMove = false;
         photonView.RPC("Dead_RPC", RpcTarget.All);
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
@@ -487,10 +531,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     }
 
-	#endregion
+    #endregion
 
-	#region ChangeTeamColor(obj)
-	// 플레이어 아이콘 색변경.
+    #region ChangeTeamColor(obj)
+    // 플레이어 아이콘 색변경.
+    public void ChangeTeamColor() { ChangeTeamColor(playerIcon); }
+
 	public void ChangeTeamColor(GameObject obj)
     {
         Color dummy_color;
@@ -542,9 +588,13 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
     public void AddEXP(short exp) { }
+    public MoonHeader.S_ActorState GetActor() { return this.actorHealth; }
+    public GameObject GetCameraPos() { return camerapos; }
+    public void Selected() { }
+    public int GetState() { return (int)state_p; }
 
-	#region I_Playable
-	public bool IsCanUseE() { return canE; }
+    #region I_Playable
+    public bool IsCanUseE() { return canE; }
     public bool IsCanUseQ() { return canQ; }
     public GameObject CameraSetting(GameObject cam)
     {

@@ -509,6 +509,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     }
 
     // 플레이어 아이콘 색변경.
+    public void ChangeTeamColor() { ChangeTeamColor(playerIcon); }
     public void ChangeTeamColor(GameObject obj)
     {
         Color dummy_color;
@@ -551,6 +552,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
     public void AddEXP(short exp) { }
+    public MoonHeader.S_ActorState GetActor() { return this.actorHealth; }
     public bool IsCanUseE() { return canUseE; }
     public bool IsCanUseQ() { return canUseQ; }
+    public GameObject GetCameraPos() { return null; }
+    public void Selected() { }
+    public int GetState() { return 0; }
 }

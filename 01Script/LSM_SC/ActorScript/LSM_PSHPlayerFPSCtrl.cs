@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using static MoonHeader;
-
+/*
 public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
 {
     enum State { Normal, Attacking, Blocking, Casting, Exhausting};
@@ -352,3 +352,4 @@ public class LSM_PSHPlayerFPSCtrl : MonoBehaviour, I_Actor
     public bool IsCanUseE() { return canUseE; }
     public bool IsCanUseQ() { return canUseQ; }
 }
+*/

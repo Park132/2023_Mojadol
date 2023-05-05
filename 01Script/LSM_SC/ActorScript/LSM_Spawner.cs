@@ -31,6 +31,8 @@ public class LSM_Spawner : MonoBehaviour
 
 	private PhotonView photonView;
 
+	public LSM_NexusSC thisNexus;
+
 	private void Awake()
 	{
 		state = MoonHeader.SpawnerState.None;
@@ -56,6 +58,7 @@ public class LSM_Spawner : MonoBehaviour
 		selectedNum = 0;
 		MAX_NUM_MINION = 0;
 		photonView = this.GetComponent<PhotonView>();
+		thisNexus = this.GetComponentInChildren<LSM_NexusSC>();
 	}
 
 	private void Update()
@@ -95,12 +98,12 @@ public class LSM_Spawner : MonoBehaviour
 						if (spawnpoints[i].num > spawnpoints[i].summon_)
 						{
 							GameObject dummy;
-							MoonHeader.MonType monT;
+							MoonHeader.AttackType monT;
 							// 근접 미니언의 소환 수보다 적게 소환됐다면, 근접.
 							if (spawnpoints[i].summon_ % BASEMINIONMULTIPLER < BASEMAXIMUMMELEE)
-							{ dummy = PoolManager.Instance.Get_Minion(0); monT = MoonHeader.MonType.Melee; }
+							{ dummy = PoolManager.Instance.Get_Minion(0); monT = MoonHeader.AttackType.Melee; }
 							else 
-							{ dummy = PoolManager.Instance.Get_Minion(1); monT = MoonHeader.MonType.Range; }
+							{ dummy = PoolManager.Instance.Get_Minion(1); monT = MoonHeader.AttackType.Range; }
 
 							dummy.transform.position = spawnpoints[i].path.transform.position;
 							//dummy.transform.parent = this.transform;

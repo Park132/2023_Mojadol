@@ -13,9 +13,9 @@ public class LSM_NexusSC : LSM_TurretSc
 		parentSpawner = this.GetComponentInParent<LSM_Spawner>();
 		base.Start();
 		stats = new MoonHeader.S_TurretStats(100, 10, parentSpawner.team);
-		base.ChangeColor();
+		base.ChangeTeamColor();
 		ATTACKDELAY = 1.5f;
-
+		stats.actorHealth.type = MoonHeader.AttackType.Turret;
 	}
 
 	public override void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)

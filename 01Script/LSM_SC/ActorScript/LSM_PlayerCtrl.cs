@@ -30,9 +30,11 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                                                                     
     public Vector3 mapCamBasePosition;                  // TopView카메라의 초기위치
                                                         // # Y축만 95로 설정
-    public GameObject minionStatsPannel;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
+    public GameObject minionStatsPannel, minionStatsPannel_SelectButton;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
                                                         // # Canvas의 자식 오브젝트 중 MinionStatpanel
     private LSM_MinionCtrl subTarget_minion;            // 타겟으로 지정한 미니언의 스크립트
+    private I_Actor subTarget_Actor;
+
     private TextMeshProUGUI minionStatsPannel_txt;      // 미니언 스탯을 표기하는 UI - 그 중 텍스트.
     private GameObject playerMinion;                    // 플레이어가 선택한 미니언.
     //private PSH_PlayerFPSCtrl playerMinionCtrl;         // 플레이어 미니언의 스크립트
@@ -97,8 +99,10 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
             if (minionStatsPannel != null)
             {
+                minionStatsPannel_SelectButton = minionStatsPannel.GetComponentInChildren<Button>().transform.gameObject;
                 minionStatsPannel.SetActive(false);
                 minionStatsPannel_txt = minionStatsPannel.GetComponentInChildren<TextMeshProUGUI>();
+                
             }
                 
             playerWatchingTarget = null;
@@ -155,7 +159,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             // 만약 미니언을 클릭하여 해당 미니언의 스탯을 보고있을 때 휠 또는 키보드 버튼을 클릭한다면, 클릭했던 타겟 미니언을 null로 변경. 다시 일반 상태로 변경됨.
             if (!ReferenceEquals(mapcamSub_Target, null) && (scroll != 0 || move_f != Vector3.zero))
             {
-                subTarget_minion.ChangeTeamColor();
+                //subTarget_minion.ChangeTeamColor();
+                subTarget_Actor.ChangeTeamColor();
                 mapcamSub_Target = null;
                 is_zoomIn = false;
                 StopCoroutine(zoomIn);
@@ -221,7 +226,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             mapCamCamera.orthographicSize = MapCamBaseSize;
             MapSubCam.SetActive(true);
             is_zoomIn = false;
-            subTarget_minion = null;
+            //subTarget_minion = null;
+            subTarget_Actor = null;
             GameManager.Instance.mapUI.SetActive(true);
             StartCoroutine(GameManager.Instance.ScreenFade(true));
         }
@@ -237,9 +243,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out hit, 100, 1 << LayerMask.NameToLayer("Icon")))
             {
-                //Debug.Log(hit.transform.name + " : " +hit.transform.tag);
+                Debug.Log(hit.transform.name + " : " +hit.transform.tag);
 
                 switch (GameManager.Instance.gameState)
                 {
@@ -249,7 +255,32 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
                     // 게임 중 플레이어가 미니언 마크를 클릭했다면,
                     case MoonHeader.GameState.Gaming:
-                        
+                        // 미니언, 플레이어, 포탑 제외 나머지를 클릭시 실행 안됨.
+                        //if (!hit.transform.CompareTag("Minion") && !hit.transform.CompareTag("PlayerMinion") && !hit.transform.CompareTag("Turret") && !hit.transform.CompareTag("Nexus")) { return; }
+                        I_Actor dummy = hit.transform.GetComponentInParent<I_Actor>();
+                        if (ReferenceEquals(dummy, null)) { return; }
+
+                        // 현재 미니언이 클릭되어 있으나, 다른 미니언을 클릭하였다면, 전에 클릭했던 미니언의 아이콘을 원래 상태로 복구
+                        if (!ReferenceEquals(mapcamSub_Target, null) && !ReferenceEquals(mapcamSub_Target, hit.transform.gameObject))
+                            subTarget_Actor.ChangeTeamColor();
+                        // 클릭된 미니언에 대하여.. 카메라의 위치를 이동 및 고정. 천천히 줌인하는 코루틴 실행
+                        if (ReferenceEquals(mapcamSub_Target, null) || (!ReferenceEquals(mapcamSub_Target, null) &&
+                            !ReferenceEquals(mapcamSub_Target, hit.transform.gameObject)))
+                        {
+                            is_zoomIn = true;
+                            //subTarget_Actor = hit.transform.GetComponent<I_Actor>();
+                            subTarget_Actor = dummy;
+
+                            mapcamSub_Target = hit.transform.gameObject;
+                            mapsubcam_target = subTarget_Actor.GetCameraPos();
+                            minionStatsPannel.SetActive(false);
+                            StopCoroutine(zoomIn);
+                            zoomIn = ZoomInMinion();
+                            StartCoroutine(zoomIn);
+                            subTarget_Actor.Selected();
+                        }
+
+                        /*
                         if (hit.transform.CompareTag("Minion"))
                         {
                             // 현재 미니언이 클릭되어 있으나, 다른 미니언을 클릭하였다면, 전에 클릭했던 미니언의 아이콘을 원래 상태로 복구
@@ -258,11 +289,14 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                                 //if (!ReferenceEquals(mapcamSub_Target, hit.transform.gameObject))
                                     subTarget_minion.ChangeTeamColor();
                             }
+
                             // 클릭된 미니언에 대하여.. 카메라의 위치를 이동 및 고정. 천천히 줌인하는 코루틴 실행
                             if (ReferenceEquals(mapcamSub_Target, null) || (!ReferenceEquals(mapcamSub_Target, null)&& 
                                 !ReferenceEquals(mapcamSub_Target,hit.transform.gameObject))) {
                                 is_zoomIn = true;
                                 subTarget_minion = hit.transform.GetComponent<LSM_MinionCtrl>();
+
+
                                 mapcamSub_Target = hit.transform.gameObject;
                                 mapsubcam_target = subTarget_minion.CameraPosition;
                                 minionStatsPannel.SetActive(false);
@@ -275,6 +309,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
                             //GameManager.Instance.MapCam.GetComponent<Camera>().orthographicSize = 20;
                         }
+                        */
                         break;
                 }
 
@@ -296,9 +331,15 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             }
             else
             {
+                //minionStatsPannel_SelectButton.SetActive(subTarget_minion.stats.actorHealth.team == this.player.team);
+                minionStatsPannel_SelectButton.SetActive(subTarget_Actor.GetActor().team == this.player.team && mapcamSub_Target.CompareTag("Minion"));
                 // 미니언 미리보기 창 글씨.
-                minionStatsPannel_txt.text = string.Format("Minion : {0}\nHealth : {1}\nATK : {2}",
-                                subTarget_minion.stats.type, subTarget_minion.stats.actorHealth.health, subTarget_minion.stats.actorHealth.Atk);
+                //minionStatsPannel_txt.text = string.Format("Minion : {0}\nHealth : {1}\nATK : {2}",
+                                //subTarget_minion.stats.actorHealth.type, subTarget_minion.stats.actorHealth.health, subTarget_minion.stats.actorHealth.Atk);
+
+                minionStatsPannel_txt.text = string.Format("Type : {0}\nHealth : {1}\nATK : {2}",
+                                subTarget_Actor.GetActor().type, subTarget_Actor.GetActor().health, subTarget_Actor.GetActor().Atk);
+
                 MapCam.transform.position = (mapcamSub_Target.transform.position + Vector3.up * 95);
                 MapSubCam.transform.position = mapsubcam_target.transform.position;
                 MapSubCam.transform.rotation = mapsubcam_target.transform.rotation;
@@ -342,12 +383,17 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     // select버튼 클릭 시 
     public void SelectPlayerMinion()
     {
-        if (!ReferenceEquals(mapcamSub_Target, null) && player.statep == MoonHeader.State_P.None && subTarget_minion.stats.state != MoonHeader.State.Dead &&
-            subTarget_minion.stats.actorHealth.team == this.player.team)
+        if (ReferenceEquals(mapcamSub_Target, null) || ReferenceEquals(mapcamSub_Target.GetComponent<LSM_MinionCtrl>(), null)) { return; }
+
+        LSM_MinionCtrl dummy_minion = mapcamSub_Target.GetComponent<LSM_MinionCtrl>();
+
+        
+        if (player.statep == MoonHeader.State_P.None && dummy_minion.stats.state != MoonHeader.State.Dead &&
+            dummy_minion.stats.actorHealth.team == this.player.team)
         {
             player.statep = MoonHeader.State_P.Possession;
-            subTarget_minion.PlayerConnect();
-            playerMinion = subTarget_minion.transform.gameObject;
+            dummy_minion.PlayerConnect();
+            playerMinion = dummy_minion.transform.gameObject;
             StartCoroutine(ZoomPossession());
         }
     }
@@ -385,15 +431,15 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         // 카메라 지정. 및 초기세팅
         //PSH_PlayerFPSCtrl player_dummy = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
         I_Playable player_dummy = playerMinion.GetComponent<I_Playable>();
-        player_dummy.SpawnSetting(player.team, subTarget_minion.stats.actorHealth.health, playerName, this.GetComponent<LSM_PlayerCtrl>());
+        player_dummy.SpawnSetting(player.team, subTarget_Actor.GetActor().health, playerName, this.GetComponent<LSM_PlayerCtrl>());
         //player_dummy.playerCamera = MainCam.GetComponent<Camera>();
         mapsubcam_target = player_dummy.CameraSetting(MainCam);
         GameManager.Instance.gameUI.SetActive(true);
         GameManager.Instance.gameUI_SC.playerHealth(playerMinion);
 
-        Vector3 dummyPosition = subTarget_minion.transform.position;
-        Quaternion dummyRotation = subTarget_minion.transform.rotation;
-        subTarget_minion.MinionDisable();
+        Vector3 dummyPosition = mapcamSub_Target.transform.position;
+        Quaternion dummyRotation = mapcamSub_Target.transform.rotation;
+        mapcamSub_Target.GetComponent<LSM_MinionCtrl>().MinionDisable();
 
         playerMinion.transform.position = dummyPosition;
         playerMinion.transform.rotation = dummyRotation;

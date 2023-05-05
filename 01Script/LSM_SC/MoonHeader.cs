@@ -21,6 +21,7 @@ public class MoonHeader : MonoBehaviour
 																// Normal: 현재 생존, Dead: 죽음, Attack: 공격하는 중, Invincibility: 무적 상태.
 	public enum MonType { Melee, Range };   // 몬스터 타입
 											// Melee: 근접, Range: 원거리
+	public enum AttackType { None = 0, Melee = 1, Range = 2, Turret = 3 };
 
 	[Serializable]
 	public struct S_ActorState		// 모든 액터들이 갖는 구조체. 체력, 공격력, 팀 등을 갖고있게 설정.
@@ -29,8 +30,10 @@ public class MoonHeader : MonoBehaviour
 		public short maxHealth;
 		public short health;
 		public short Atk;
+		public AttackType type;
 
-		public S_ActorState(short hp, short at, Team t) { team = t; maxHealth = hp; health = maxHealth; Atk = at; }
+		public S_ActorState(short hp, short at, Team t) { team = t; maxHealth = hp; health = maxHealth; Atk = at; type = AttackType.None; }
+		public S_ActorState(short hp, short at, Team t, AttackType ty) { team = t; maxHealth = hp; health = maxHealth; Atk = at; type = ty; }
 	}
 
 	[Serializable]
@@ -49,21 +52,21 @@ public class MoonHeader : MonoBehaviour
 		//public int health;			// 미니언의 체력.
 		public float speed;			// 이동 속도
 		//public int Atk;				// 공격력
-		public MonType type;        // 타입 -> 근접, 원거리 구현
+		//public MonType type;        // 타입 -> 근접, 원거리 구현
 		public S_ActorState actorHealth;
 		public int exp;
 		public GameObject[] destination;	// 미니언의 이동 경로. 배열로 받아옴.
 
 		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t)	// 아래 함수의 오버로드. MonType 관련 매개변수를 받지 않음.
-		{ this.Setting(mh,sp,atk,des,t,MonType.Melee, 100); }
-		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, MonType type_d)
+		{ this.Setting(mh,sp,atk,des,t,AttackType.Melee, 100); }
+		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d)
 		{ this.Setting(mh, sp, atk, des, t, type_d, 100); }
 
 		// 미니언이 소환될 때의 기초 설정을 위한 함수. 
 		// mh: 최대 체력, sp: 스피드, atk: 공격력, des: 스포너로부터 받아올 이동경로, t: 미니언의 팀, type_d: 미니언의 타입,
 		// e: 죽었을때, 혹은 게임이 종료되었을 때 얻는 경험치
-		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, MonType type_d, int e)    
-		{ speed = sp; destination = des; state = State.Normal; type = type_d; actorHealth = new S_ActorState(mh, atk, t); exp = e; }
+		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d, int e)    
+		{ speed = sp; destination = des; state = State.Normal; actorHealth = new S_ActorState(mh, atk, t,type_d); exp = e; }
 
 		public ulong SendDummyMaker()
 		{
@@ -121,11 +124,16 @@ public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 
 	public short GetHealth();
 	public short GetMaxHealth();
+	public MoonHeader.S_ActorState GetActor();
 	public MoonHeader.Team GetTeam();
+	public void ChangeTeamColor();
+	public GameObject GetCameraPos();
+	public void Selected();
 }
 public interface I_Characters
 {
 	public void AddEXP(short exp);
+	public int GetState();
 }
 
 public interface I_Playable 
