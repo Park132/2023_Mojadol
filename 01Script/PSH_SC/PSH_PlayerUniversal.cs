@@ -38,10 +38,10 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     #endregion
 
     // 쿨타임 관련 변수.
-    float CoolTime_Q, CoolTime_E;
-    float timer_Q, timer_E;
+    private float CoolTime_Q, CoolTime_E;
+    private float timer_Q, timer_E;
 
-    float time;
+    private float time;
 
     #region LSM Variable
     public string playerName;
@@ -54,7 +54,11 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     private Vector3 networkPosition, networkVelocity;
 
     private MeshCollider weapon_C;
+    private MeshRenderer icon_ren;
+    private List<Material> icon_materialL;
+    private bool selected_e;
 
+    public float CollectingRadius, timer_collect;
     #endregion
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
@@ -128,6 +132,9 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         //
         CoolTime_E = 5f;
         CoolTime_Q = 3f;
+        icon_materialL = new List<Material>();
+        selected_e = false;
+        CollectingRadius = 5;
     }
 
 
@@ -153,7 +160,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         if (canMove)
             Move();
         AttackFunction();
-        
+        CollectingArea();
         // anim.SetBool("skillE_Bool", Input.GetKey(KeyCode.E));
 
     }
@@ -472,6 +479,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         this.playerName = name;
         this.actorHealth.team = (MoonHeader.Team)t;
         this.actorHealth.type = MoonHeader.AttackType.Melee;
+        //if (selected_e)
+            //Unselected();
 
         this.transform.name = playerName;
         GameManager.Instance.playerMinions[(int)actorHealth.team].Add(this.gameObject);
@@ -590,7 +599,32 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public void AddEXP(short exp) { }
     public MoonHeader.S_ActorState GetActor() { return this.actorHealth; }
     public GameObject GetCameraPos() { return camerapos; }
-    public void Selected() { }
+    public void Selected()
+    {
+        /*
+        icon_ren = playerIcon.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(icon_ren.materials);
+        icon_materialL.Add(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+        selected_e = true;
+        */
+        this.playerIcon.GetComponent<Renderer>().material.color = MoonHeader.SelectedColors[(int)this.actorHealth.team];
+    }
+
+    public void Unselected()
+    {
+        MeshRenderer renderer_d = playerIcon.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(renderer_d.materials);
+        icon_materialL.Remove(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+        selected_e = false;
+    }
     public int GetState() { return (int)state_p; }
 
     #region I_Playable
@@ -601,5 +635,25 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         playerCamera = cam.GetComponent<Camera>();
         return camerapos;
     }
+
+    public void CollectingArea()
+    {
+        timer_collect += Time.deltaTime;
+        if (timer_collect >= 0.5f)
+        {
+            timer_collect = 0;
+            RaycastHit[] hits = Physics.SphereCastAll(transform.position, CollectingRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Item"));
+            foreach(RaycastHit item in hits)
+            {
+                LSM_ItemSC dummy_i = item.transform.GetComponent<LSM_ItemSC>();
+                if (!dummy_i.isCollecting)
+                {
+                    dummy_i.Getting();
+                }
+            }
+        }
+        
+    }
+
     #endregion
 }

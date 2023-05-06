@@ -35,6 +35,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	public GameObject CameraPosition;       // 카메라를 초기화할 때 사용할 변수.
 	private GameObject icon, playerIcon;    // 미니언에 존재하는 아이콘, 플레이어 아이콘
+    public MeshRenderer icon_ren;
+	List<Material> icon_materialL;
+	bool selected_e;
 
 	[SerializeField] protected GameObject target_attack;    // 미니언의 타겟
 	protected I_Actor target_actor;
@@ -148,13 +151,15 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
 		playerIcon.transform.localPosition = new Vector3(0, 60, 0);
 		playerIcon.SetActive(false);
+		icon_materialL = new List<Material>();
+        selected_e = false;
 
-		// 디버그용 미리 설정. 현재 Melee
-		//searchRadius = 10f;
-		//minAtkRadius = 9f;
-		//maxAtkRadius = 13f;
+        // 디버그용 미리 설정. 현재 Melee
+        //searchRadius = 10f;
+        //minAtkRadius = 9f;
+        //maxAtkRadius = 13f;
 
-	}
+    }
 	private void Start()
 	{
 
@@ -255,6 +260,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.stats.actorHealth.type = typeM;
 		PlayerDisConnect();
 		ChangeTeamColor();
+		//if (selected_e)
+			//Unselected();
     }
 
 
@@ -748,6 +755,32 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public MoonHeader.S_ActorState GetActor() { return this.stats.actorHealth; }
 	public GameObject GetCameraPos() { return CameraPosition; }
 	public int GetState() { return (int)stats.state; }
-	public void Selected() { }
+	public void Selected() 
+	{
+		/*
+		icon_ren = icon.GetComponent<MeshRenderer>();
+
+		icon_materialL.Clear();
+		icon_materialL.AddRange(icon_ren.materials);
+		icon_materialL.Add(PrefabManager.Instance.outline);
+
+		icon_ren.materials = icon_materialL.ToArray();
+		selected_e = true;
+		*/
+        this.icon.GetComponent<Renderer>().material.color = MoonHeader.SelectedColors[(int)this.stats.actorHealth.team];
+    }
+
+	public void Unselected()
+	{
+        MeshRenderer renderer_d = icon.GetComponent<MeshRenderer>();
+
+		icon_materialL.Clear();
+		icon_materialL.AddRange(renderer_d.materials);
+		icon_materialL.Remove(PrefabManager.Instance.outline);
+
+		icon_ren.materials = icon_materialL.ToArray();
+		selected_e = false;
+
+    }
 	#endregion
 }

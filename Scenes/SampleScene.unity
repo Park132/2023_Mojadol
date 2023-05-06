@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1347,6 +1347,7 @@ MonoBehaviour:
   - {fileID: 5839500482625192984, guid: 0df279190cf16f74f81298212b07ef7b, type: 3}
   players:
   - {fileID: 4752272835364512656, guid: 33ac5eece6f0e474e91c126ba985a51c, type: 3}
+  outline: {fileID: 0}
 --- !u!114 &254482920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1402,7 +1403,7 @@ Transform:
   - {fileID: 452454440}
   - {fileID: 605355092}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &254482922
 MonoBehaviour:
@@ -6227,7 +6228,7 @@ RectTransform:
   - {fileID: 1469738302}
   - {fileID: 894441328}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -7034,6 +7035,8 @@ MonoBehaviour:
   - {fileID: 7116788151370582358, guid: 6968fa7345637fb42a71b2011124a9bf, type: 3}
   particles:
   - {fileID: 1829163952570794, guid: 77cc4b117e817d84d9fe0c9400da91ab, type: 3}
+  Items:
+  - {fileID: 2969412085012658152, guid: 6318203bdfc8610428cbd96789aceae2, type: 3}
   ReadyToStart_SpawnNum: 0
   ReadyToStart_SpawnNum_Particles: 0
 --- !u!4 &1850861373
@@ -7049,7 +7052,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1895082913
 GameObject:

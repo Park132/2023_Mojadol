@@ -21,7 +21,9 @@ public class PoolManager : MonoBehaviour
 	public GameObject[] minions;		// # 0: LSM 폴더 내의 Minion1, 1: LSM 폴더 내의 Minion2
 	public GameObject[] playerMinions;	// # 0: PSH 폴더 내의 MeleeCharacter
 	public GameObject[] UIs;            // # 0: Icon 폴더 내의 display
-	public GameObject[] particles;
+	public GameObject[] particles;      // # 0: Explosion
+	public GameObject[] Items;			// # 0: Coin
+
 	private GameObject alwaysEnableUI;
 
 	// 풀 저장 변수
@@ -29,6 +31,7 @@ public class PoolManager : MonoBehaviour
 	public List<GameObject>[] poolList_PlayerMinions;
 	public List<GameObject>[] poolList_UIs;
 	public List<GameObject>[] poolList_Particles;
+	public List<GameObject>[] poolList_Items;
 
 	private bool once;
 
@@ -55,6 +58,9 @@ public class PoolManager : MonoBehaviour
         poolList_Particles = new List<GameObject>[particles.Length];
         for (int i = 0; i < poolList_Particles.Length; i++)
             poolList_Particles[i] = new List<GameObject>();
+		poolList_Items = new List<GameObject>[Items.Length];
+		for (int i = 0; i < poolList_Items.Length; i++)
+			poolList_Items[i] = new List<GameObject>();
 
 		ReadyToStart_SpawnNum = 100;
 		ReadyToStart_SpawnNum_Particles = 30;
@@ -223,4 +229,29 @@ public class PoolManager : MonoBehaviour
 		}
         return result;
     }
+
+	// 아이템 반환
+	public GameObject Get_Item(int index)
+	{
+		if (index >= Items.Length || index < 0)
+			return null;
+		GameObject result = null;
+
+		foreach(GameObject item in poolList_Items[index])
+		{
+			if (!item.activeSelf)
+			{
+				result = item;
+				item.SetActive(true);
+				item.GetComponent<LSM_ItemSC>().ItemEnable();
+				break;
+			}
+		}
+		if (ReferenceEquals(result, null))
+		{
+			result = PhotonNetwork.Instantiate(Items[index].name, Vector3.one * 100, Quaternion.identity);
+			result.GetComponent<LSM_ItemSC>().ParentSetting_Pool(index);
+		}
+		return result;
+	}
 }

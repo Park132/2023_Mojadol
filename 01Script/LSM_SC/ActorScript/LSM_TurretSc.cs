@@ -31,8 +31,11 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 													//protected PhotonView photonView;
 	public GameObject CameraPos;
 
+    MeshRenderer icon_ren;
+    List<Material> icon_materialL;
+	bool selected_e;
 
-	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
 		if(stream.IsWriting)
         {
@@ -71,11 +74,15 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		target = null;
 
 		waypoint = this.transform.parent.gameObject;
+        icon_materialL = new List<Material>();
+		selected_e = false;
     }
 
 	// 팀에 해당하는 색으로 변경.
 
-	public void ChangeTeamColor()
+
+	public void ChangeTeamColor() { ChangeTeamColor(mark); }
+	public void ChangeTeamColor(GameObject obj)
 	{
 		Color dummy_c = Color.white;
 
@@ -91,8 +98,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				dummy_c = Color.yellow;
 				break;
 		}
-		mark.GetComponent<Renderer>().material.color = dummy_c;
-		bodies[0].GetComponent<Renderer>().material.color = dummy_c;
+		obj.GetComponent<Renderer>().material.color = dummy_c;
+		//bodies[0].GetComponent<Renderer>().material.color = dummy_c;
 	}
 
 	protected void Update()
@@ -136,6 +143,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	[PunRPC] protected void DestroyProcessing_RPC() {
 		ChangeTeamColor();
+		ChangeTeamColor(bodies[0].gameObject);
 	}
 
 
@@ -152,7 +160,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		foreach (Renderer item in bodies)
 			item.material.color = recovered;
-		ChangeTeamColor();
+		ChangeTeamColor(bodies[0].gameObject);
 	}
 
 	protected virtual void DestroyProcessing(GameObject other)
@@ -291,5 +299,30 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public MoonHeader.S_ActorState GetActor() { return this.stats.actorHealth; }
 	public virtual MoonHeader.Team GetTeam() { return this.stats.actorHealth.team; }
 	public GameObject GetCameraPos() { return CameraPos; }
-	public void Selected() { }
+    public void Selected()
+    {
+        /*
+        icon_ren = mark.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(icon_ren.materials);
+        icon_materialL.Add(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+		selected_e = true;
+		*/
+        this.mark.GetComponent<Renderer>().material.color = MoonHeader.SelectedColors[(int)this.stats.actorHealth.team];
+    }
+
+    public void Unselected()
+    {
+        MeshRenderer renderer_d = mark.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(renderer_d.materials);
+        icon_materialL.Remove(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+		selected_e = false;
+    }
 }

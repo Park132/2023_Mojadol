@@ -70,6 +70,10 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
 
     private Vector3 networkPosition, networkVelocity;
 
+    MeshRenderer icon_ren;
+    List<Material> icon_materialL;
+    bool selected_e;
+
     // LSM */
 
     PhotonView pv;
@@ -145,6 +149,8 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         pv = this.GetComponent<PhotonView>();
         int id = PhotonNetwork.AllocateViewID(pv.ViewID);
         pv.ViewID = id;
+        icon_materialL = new List<Material>();
+        selected_e = false;
     }
 
 
@@ -556,6 +562,28 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
     public bool IsCanUseE() { return canUseE; }
     public bool IsCanUseQ() { return canUseQ; }
     public GameObject GetCameraPos() { return null; }
-    public void Selected() { }
+    public void Selected()
+    {
+        icon_ren = playerIcon.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(icon_ren.materials);
+        icon_materialL.Add(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+        selected_e = true;
+    }
+
+    public void Unselected()
+    {
+        MeshRenderer renderer_d = playerIcon.GetComponent<MeshRenderer>();
+
+        icon_materialL.Clear();
+        icon_materialL.AddRange(renderer_d.materials);
+        icon_materialL.Remove(PrefabManager.Instance.outline);
+
+        icon_ren.materials = icon_materialL.ToArray();
+        selected_e = false;
+    }
     public int GetState() { return 0; }
 }

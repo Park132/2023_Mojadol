@@ -23,6 +23,8 @@ public class MoonHeader : MonoBehaviour
 											// Melee: 근접, Range: 원거리
 	public enum AttackType { None = 0, Melee = 1, Range = 2, Turret = 3 };
 
+	public static Color32[] SelectedColors = {new Color32(120,0,0,255), new Color32(0,0,120,255), new Color32(120,120,0,255) };
+
 	[Serializable]
 	public struct S_ActorState		// 모든 액터들이 갖는 구조체. 체력, 공격력, 팀 등을 갖고있게 설정.
 	{
@@ -129,6 +131,7 @@ public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 	public void ChangeTeamColor();
 	public GameObject GetCameraPos();
 	public void Selected();
+	public void Unselected();
 }
 public interface I_Characters
 {
@@ -145,4 +148,5 @@ public interface I_Playable
 	public void MinionDisable();
 	public void MinionEnable();
 	public void ParentSetting_Pool(int index);
+	public void CollectingArea();
 }

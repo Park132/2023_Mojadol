@@ -161,6 +161,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             {
                 //subTarget_minion.ChangeTeamColor();
                 subTarget_Actor.ChangeTeamColor();
+                //subTarget_Actor.Unselected();
+
                 mapcamSub_Target = null;
                 is_zoomIn = false;
                 StopCoroutine(zoomIn);
@@ -263,6 +265,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                         // 현재 미니언이 클릭되어 있으나, 다른 미니언을 클릭하였다면, 전에 클릭했던 미니언의 아이콘을 원래 상태로 복구
                         if (!ReferenceEquals(mapcamSub_Target, null) && !ReferenceEquals(mapcamSub_Target, hit.transform.gameObject))
                             subTarget_Actor.ChangeTeamColor();
+                            //subTarget_Actor.Unselected();
+                        
                         // 클릭된 미니언에 대하여.. 카메라의 위치를 이동 및 고정. 천천히 줌인하는 코루틴 실행
                         if (ReferenceEquals(mapcamSub_Target, null) || (!ReferenceEquals(mapcamSub_Target, null) &&
                             !ReferenceEquals(mapcamSub_Target, hit.transform.gameObject)))
