@@ -59,7 +59,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 				this.transform.position = mapcam.WorldToScreenPoint(spawnPoint.transform.position);
 				num.text = parentSpawner.spawnpoints[spawnPoint.number].num.ToString();
 			}
-			this.transform.localScale = Vector3.one * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 40) * 0.015f));
+			this.transform.localScale = Vector3.one * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 60) * 0.015f));
 		}
 		
 	}

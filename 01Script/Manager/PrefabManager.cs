@@ -10,7 +10,7 @@ public class PrefabManager : MonoBehaviour
 	{
 		if (instance == null)
 			instance = this;
-        outline = new Material(Shader.Find("Draw/OutlineShader"));
+        //outline = new Material(Shader.Find("Draw/OutlineShader"));
     }
 	public static PrefabManager Instance
 	{
@@ -29,6 +29,6 @@ public class PrefabManager : MonoBehaviour
 	// # 0: PSH 폴더 내의 MeleeCharacter
 	public GameObject[] players;
 	// OutLine 마테리얼
-	public Material outline;
+	//public Material outline;
 	
 }

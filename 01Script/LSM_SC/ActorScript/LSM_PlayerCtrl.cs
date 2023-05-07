@@ -42,7 +42,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
 
-    private int exp;
+    private int exp, gold;
 
     public float this_player_ping;
 

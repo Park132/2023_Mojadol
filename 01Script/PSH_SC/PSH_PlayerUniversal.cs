@@ -134,7 +134,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         CoolTime_Q = 3f;
         icon_materialL = new List<Material>();
         selected_e = false;
-        CollectingRadius = 5;
+        CollectingRadius = 1.5f;
     }
 
 
@@ -195,6 +195,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     {
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
+        bool sprint = Input.GetButton("Sprint");
 
         // 애니메이션
         /*
@@ -211,7 +212,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         Vector3 thisVelocity = (moveX + moveY).normalized;
         //rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime * speed);       // 웬지 모르게 fps차이에 따라서 속도가 다름...
-        this.transform.position = this.transform.position + thisVelocity * speed * Time.deltaTime;
+        this.transform.position = this.transform.position + thisVelocity * speed * Time.deltaTime * (sprint?1.5f:1f);
 
         // 점프
         isGrounded = Physics.Raycast(this.transform.position+new Vector3(0f, 0.5f, 0f), Vector3.down, 1f, 1<<LayerMask.NameToLayer("Map"));
@@ -620,7 +621,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         icon_materialL.Clear();
         icon_materialL.AddRange(renderer_d.materials);
-        icon_materialL.Remove(PrefabManager.Instance.outline);
+        //icon_materialL.Remove(PrefabManager.Instance.outline);
 
         icon_ren.materials = icon_materialL.ToArray();
         selected_e = false;

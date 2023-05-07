@@ -12,6 +12,8 @@ public class LSM_GameUI : MonoBehaviour
     public Image playerHP, targetHP;            // # Player의 자식 오브젝트 중 CurrentHP        -> playerHP
                                                 // # Enemy의 자식 오브젝트 중 CurrentHP         -> targetHP
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
+    public TextMeshProUGUI playerHP_txt;
+
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
     public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
@@ -55,6 +57,7 @@ public class LSM_GameUI : MonoBehaviour
         if (playerUI.activeSelf)
         { 
             playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100;
+            playerHP_txt.text = player_ac.GetHealth() + " / " + player_ac.GetMaxHealth();
             QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
         }

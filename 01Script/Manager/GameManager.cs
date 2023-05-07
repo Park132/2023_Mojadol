@@ -31,7 +31,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 	public LSM_TimerSc timerSc;			// 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
 	
-	public int numOfPlayer;				// 현재 플레이어의 수.
+	public int numOfPlayer, numOfSkipClickedPlayer;             // 현재 플레이어의 수.
+	private bool isClickSkip;
 	public TextMeshProUGUI turnText;	// 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
 										// # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
 	public GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
@@ -169,7 +170,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		spawnPoints = GameObject.FindGameObjectsWithTag("Spawner");
 		canvas = GameObject.Find("Canvas");
 		selectAttackPathUI = GameObject.Find("AttackPathUIs");
-		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(timerSc.TimerOut);		// 스킵버튼에 해당. 클릭 시 TimerSC에 존재하는 TimerOut함수가 실행되도록 설정.
+		selectAttackPathUI.GetComponentInChildren<Button>().onClick.AddListener(SkipClick);		// 스킵버튼에 해당. 클릭 시 TimerSC에 존재하는 TimerOut함수가 실행되도록 설정.
 
 		selectAttackPathUI.SetActive(false);
 		mapUI = GameObject.Find("MapUIs");
@@ -191,6 +192,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
         loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Press O to Connect...";
 		MaxPlayerNum = 2;
+		numOfSkipClickedPlayer = 0;
+		isClickSkip = false;
     }
 
 	private void Start_function()
@@ -340,6 +343,16 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		pingText.text = ping.ToString() + " ms";
 	}
 
+	public void SkipClick()
+	{
+		if (isClickSkip)
+			return;
+		isClickSkip = true;
+		numOfSkipClickedPlayer += 1;
+		photonView.RPC("SkipNumSynch", RpcTarget.All, numOfSkipClickedPlayer);
+		selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(false);
+	}
+	[PunRPC] private void SkipNumSynch(int num) { numOfSkipClickedPlayer = num; }
 
 	// 게임 진행 중 모든 상황을 처리하는 함수.
 	// 보통 처음 시작, 혹은 처리 완료일 경우에 실행됨.
@@ -350,26 +363,28 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		// 게임매니저의 상태가 현재 Ready일경우.
 		if (state == MoonHeader.ManagerState.Ready)
 		{
-			switch (gameState)	// 게임의 현재 상태에 따라 처리.
+			switch (gameState)  // 게임의 현재 상태에 따라 처리.
 			{
 				// 플레이어가 각각 공격로를 설정하는 턴
 				case MoonHeader.GameState.SettingAttackPath:
-					
+
 					state = MoonHeader.ManagerState.Processing;
 					timerSc.TimerStart(SELECTATTACKPATHTIME);   // 게임매니저에 설정된 공격로 설정 시간만큼 타이머 시작.
 					photonView.RPC("SettingAttackPathReady_RPC", RpcTarget.AllBuffered);
+					numOfSkipClickedPlayer = 0;
+					isClickSkip = false;
 					break;
 
 				// 공격로 지정이 모두 완료 후 게임을 시작하기 전 카운트 다운
 				case MoonHeader.GameState.StartGame:
-					timerSc.TimerStart(3.5f, true);				//타이머 세팅. 3.5초의 설정 시간.
+					timerSc.TimerStart(3.5f, true);             //타이머 세팅. 3.5초의 설정 시간.
 					state = MoonHeader.ManagerState.Processing;
 					photonView.RPC("StartGameReady_RPC", RpcTarget.AllBuffered);
 					break;
 
 				// 현재 게임을 시작
 				case MoonHeader.GameState.Gaming:
-					
+
 					state = MoonHeader.ManagerState.Processing;
 					timerSc.TimerStart(ROUNDTIME);  // 게임매니저에 설정된 게임 진행 시간만큼 타이머 시작.
 													//MapCam.SetActive(false); MainCam.SetActive(true);
@@ -377,24 +392,37 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 					break;
 			}
 		}
+		// 게임매니저으 상태가 Processing(진행 중)일 경우
+		else if (state == MoonHeader.ManagerState.Processing)
+		{
+			switch (gameState)
+			{
+				case MoonHeader.GameState.SettingAttackPath:
+					if (numOfSkipClickedPlayer >= numOfPlayer)
+					{
+						timerSc.TimerOut();
+					}
+					break;
+			}
+		}
 		// 게임매니저의 상태가 End(처리완료)상태일 경우.
 		else if (state == MoonHeader.ManagerState.End)
 		{
-			switch (gameState)	// 게임의 현재 상태에 따라 처리.
+			switch (gameState)  // 게임의 현재 상태에 따라 처리.
 			{
 				// 공격로 선택의 시간이 종료되었다면, 약간의 시간이 흐른 후 시작되도록 설정.
 				case MoonHeader.GameState.SettingAttackPath:
-					
+
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.StartGame;
 					photonView.RPC("SettingAttackPathEnd_RPC", RpcTarget.AllBuffered);
 					break;
 				// 게임 턴이 종료되었다면.
 				case MoonHeader.GameState.Gaming:
-					
-					
+
+
 					ChangeRound_AllRemover();
-					
+
 					state = MoonHeader.ManagerState.Ready;
 					gameState = MoonHeader.GameState.SettingAttackPath;
 					photonView.RPC("GamingEnd_RPC", RpcTarget.AllBuffered);

@@ -51,6 +51,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public bool debugging_minion; // 디버깅 확인용...
 	private Vector3 networkPosition, networkVelocity;
 
+	
+
 
     // 기즈모
     
@@ -400,7 +402,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			if (dist > maxAtkRadius && stats.state != MoonHeader.State.Thinking && stats.state != MoonHeader.State.Dead)
 			{
 				//Debug.Log("target setting null. : distance : " + Vector3.Distance(target_attack.transform.position, this.transform.position) + "target : " +target_attack.name);
-				Debug.Log("AttackFinish in Far away");
+				//Debug.Log("AttackFinish in Far away");
 				StartCoroutine(AttackFin());
 			}
 
@@ -429,7 +431,10 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
 			if (!target_attack.activeSelf && this.stats.state != MoonHeader.State.Thinking
 				|| this.stats.state == MoonHeader.State.Dead || (!ReferenceEquals(target_attack.GetComponent<I_Characters>(),null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
-			{ Debug.Log("Attack Finish in Destroy"); StartCoroutine(AttackFin()); }
+			{
+				//Debug.Log("Attack Finish in Destroy"); 
+				StartCoroutine(AttackFin()); 
+			}
 
 			else if (target_actor.GetTeam() == this.stats.actorHealth.team && target_attack.CompareTag("Turret"))
 			{ CheckingTurretTeam(target_attack.GetComponent<LSM_TurretSc>().waypoint); StartCoroutine(AttackFin()); }
@@ -514,7 +519,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					Attack_other<LSM_TurretSc>(target_attack);
 					LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
 					if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
-					{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); Debug.Log("Attack Finish in Turret destroy"); }
+					{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); //Debug.Log("Attack Finish in Turret destroy");
+					}
 
 					break;
 				case "PlayerMinion":
@@ -584,8 +590,14 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
 			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
 		}
+		yield return new WaitForSeconds(2f);
+		// 골드주는 오브젝트 생성.
+		GameObject dummy_item = PoolManager.Instance.Get_Item(0);
+		dummy_item.transform.position = this.transform.position;
+		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold);
 
-		yield return new WaitForSeconds(3f);
+
+		yield return new WaitForSeconds(1f);
 		//this.gameObject.SetActive(false);
 		anim.SetBool("Dead",false);
 		photonView.RPC("DeadP",RpcTarget.All);
@@ -631,7 +643,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (!PlayerSelect && !is_attackFinish_Act)
 		{
 			is_attackFinish_Act = true;
-			Debug.Log("Attack Finish");
+			//Debug.Log("Attack Finish");
 			this.stats.state = MoonHeader.State.Thinking;
 
 			StopCoroutine(navenable_IE);
@@ -776,7 +788,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		icon_materialL.Clear();
 		icon_materialL.AddRange(renderer_d.materials);
-		icon_materialL.Remove(PrefabManager.Instance.outline);
+		//icon_materialL.Remove(PrefabManager.Instance.outline);
 
 		icon_ren.materials = icon_materialL.ToArray();
 		selected_e = false;

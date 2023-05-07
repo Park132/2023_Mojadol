@@ -23,6 +23,7 @@ public class MoonHeader : MonoBehaviour
 											// Melee: 근접, Range: 원거리
 	public enum AttackType { None = 0, Melee = 1, Range = 2, Turret = 3 };
 
+	//선택될 경우 사용하는 아이콘 색상. 이후에 변경 가능.
 	public static Color32[] SelectedColors = {new Color32(120,0,0,255), new Color32(0,0,120,255), new Color32(120,120,0,255) };
 
 	[Serializable]
@@ -56,19 +57,19 @@ public class MoonHeader : MonoBehaviour
 		//public int Atk;				// 공격력
 		//public MonType type;        // 타입 -> 근접, 원거리 구현
 		public S_ActorState actorHealth;
-		public int exp;
+		public int exp, gold;
 		public GameObject[] destination;	// 미니언의 이동 경로. 배열로 받아옴.
 
 		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t)	// 아래 함수의 오버로드. MonType 관련 매개변수를 받지 않음.
-		{ this.Setting(mh,sp,atk,des,t,AttackType.Melee, 100); }
+		{ this.Setting(mh,sp,atk,des,t,AttackType.Melee, 100, 100); }
 		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d)
-		{ this.Setting(mh, sp, atk, des, t, type_d, 100); }
+		{ this.Setting(mh, sp, atk, des, t, type_d, 100, 100); }
 
 		// 미니언이 소환될 때의 기초 설정을 위한 함수. 
 		// mh: 최대 체력, sp: 스피드, atk: 공격력, des: 스포너로부터 받아올 이동경로, t: 미니언의 팀, type_d: 미니언의 타입,
 		// e: 죽었을때, 혹은 게임이 종료되었을 때 얻는 경험치
-		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d, int e)    
-		{ speed = sp; destination = des; state = State.Normal; actorHealth = new S_ActorState(mh, atk, t,type_d); exp = e; }
+		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d, int e, int g)
+		{ speed = sp; destination = des; state = State.Normal; actorHealth = new S_ActorState(mh, atk, t,type_d); exp = e; gold = g; }
 
 		public ulong SendDummyMaker()
 		{

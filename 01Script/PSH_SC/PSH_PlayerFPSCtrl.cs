@@ -568,7 +568,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
 
         icon_materialL.Clear();
         icon_materialL.AddRange(icon_ren.materials);
-        icon_materialL.Add(PrefabManager.Instance.outline);
+        //icon_materialL.Add(PrefabManager.Instance.outline);
 
         icon_ren.materials = icon_materialL.ToArray();
         selected_e = true;
@@ -580,7 +580,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
 
         icon_materialL.Clear();
         icon_materialL.AddRange(renderer_d.materials);
-        icon_materialL.Remove(PrefabManager.Instance.outline);
+        //icon_materialL.Remove(PrefabManager.Instance.outline);
 
         icon_ren.materials = icon_materialL.ToArray();
         selected_e = false;
