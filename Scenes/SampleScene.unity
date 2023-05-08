@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657826, g: 0.49641263, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44402242, g: 0.49316543, b: 0.5722324, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -3362,7 +3362,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -7213,6 +7213,7 @@ MonoBehaviour:
   - {fileID: 2969412085012658152, guid: 6318203bdfc8610428cbd96789aceae2, type: 3}
   ReadyToStart_SpawnNum: 0
   ReadyToStart_SpawnNum_Particles: 0
+  ReadyToStart_SpawnNum_Item: 0
 --- !u!4 &1850861373
 Transform:
   m_ObjectHideFlags: 0

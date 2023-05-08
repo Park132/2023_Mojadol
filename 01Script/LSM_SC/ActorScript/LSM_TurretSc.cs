@@ -67,6 +67,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		stats = new MoonHeader.S_TurretStats(100,6);
 		stats.actorHealth.type = MoonHeader.AttackType.Turret;
 		ChangeTeamColor();
+		ChangeTeamColor(bodies[0].gameObject);
 
 		timer = 0;
 		searchRadius = 10f;

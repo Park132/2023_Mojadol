@@ -78,8 +78,8 @@ public class MoonHeader : MonoBehaviour
             send_dummy += ((ulong)actorHealth.maxHealth & (ulong)ushort.MaxValue);
             send_dummy += ((ulong)(actorHealth.health) & (ulong)ushort.MaxValue) << 16;
             send_dummy += ((ulong)(actorHealth.team) & (ulong)byte.MaxValue) << 32;
-            send_dummy += ((ulong)(actorHealth.Atk) & (ulong)byte.MaxValue) << 40;
-            send_dummy += ((ulong)(state) & (ulong)byte.MaxValue) << 48;
+            send_dummy += ((ulong)(actorHealth.Atk) & (ulong)ushort.MaxValue) << 40;
+            send_dummy += ((ulong)(state) & (ulong)byte.MaxValue) << 56;
 			return send_dummy;
 		}
 
@@ -88,8 +88,8 @@ public class MoonHeader : MonoBehaviour
             actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
             actorHealth.health = (short)((receive_dummy >> 16) & (ulong)ushort.MaxValue);
             actorHealth.team = (MoonHeader.Team)((receive_dummy >> 32) & (ulong)byte.MaxValue);
-            actorHealth.Atk = (short)((receive_dummy >> 40) & (ulong)byte.MaxValue);
-            state = (MoonHeader.State)((receive_dummy >> 48) & (ulong)byte.MaxValue);
+            actorHealth.Atk = (short)((receive_dummy >> 40) & (ulong)ushort.MaxValue);
+            state = (MoonHeader.State)((receive_dummy >> 56) & (ulong)byte.MaxValue);
 			
         }
     }

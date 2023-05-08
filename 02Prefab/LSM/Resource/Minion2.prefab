@@ -126,18 +126,20 @@ MonoBehaviour:
   stats:
     state: 0
     speed: 0
-    type: 0
     actorHealth:
       team: 0
       maxHealth: 0
       health: 0
       Atk: 0
+      type: 0
     exp: 0
+    gold: 0
     destination: []
   mySpawner: {fileID: 0}
   way_index: 0
   anim: {fileID: 0}
   CameraPosition: {fileID: 2816231537466286677}
+  icon_ren: {fileID: 0}
   target_attack: {fileID: 0}
   searchRadius: 12
   minAtkRadius: 10
@@ -155,7 +157,7 @@ NavMeshObstacle:
   m_Enabled: 0
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 0.35, y: 1.25, z: 0.35}
+  m_Extents: {x: 0.25, y: 1.25, z: 0.25}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 0

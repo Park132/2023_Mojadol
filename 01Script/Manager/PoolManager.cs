@@ -35,7 +35,7 @@ public class PoolManager : MonoBehaviour
 
 	private bool once;
 
-	public int ReadyToStart_SpawnNum, ReadyToStart_SpawnNum_Particles;
+	public int ReadyToStart_SpawnNum, ReadyToStart_SpawnNum_Particles, ReadyToStart_SpawnNum_Item;
 
 	private void Start()
 	{
@@ -62,8 +62,9 @@ public class PoolManager : MonoBehaviour
 		for (int i = 0; i < poolList_Items.Length; i++)
 			poolList_Items[i] = new List<GameObject>();
 
-		ReadyToStart_SpawnNum = 100;
+		ReadyToStart_SpawnNum = 50;
 		ReadyToStart_SpawnNum_Particles = 30;
+		ReadyToStart_SpawnNum_Item = 50;
     }
 
 	public IEnumerator ReadyToStart_Spawn()
@@ -102,9 +103,25 @@ public class PoolManager : MonoBehaviour
 				}
 				GameManager.Instance.LoadingUpdate();
 			}
+			// 아이템 미리 소환.
+			for (int i = 0; i < Items.Length; i++)
+			{
+				for (int j = 0; j < ReadyToStart_SpawnNum_Item; j++)
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					Get_Item(i);
+					GameManager.Instance.LoadingUpdate();
+				}
+				foreach(GameObject item in poolList_Items[i])
+				{
+					yield return new WaitForSeconds(Time.deltaTime);
+					item.GetComponent<LSM_ItemSC>().ItemDisable();
+				}
+				GameManager.Instance.LoadingUpdate();
+			}
 
-			GameManager.Instance.PlayerReady();
-		}
+            GameManager.Instance.PlayerReady();
+        }
 		else
 		{
 			while (true)

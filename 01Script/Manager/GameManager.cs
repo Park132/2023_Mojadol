@@ -242,8 +242,10 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         Start_function();
         ReadyToStart_LoadingGauge = PoolManager.Instance.minions.Length * PoolManager.Instance.ReadyToStart_SpawnNum
 			+ PoolManager.Instance.particles.Length * PoolManager.Instance.ReadyToStart_SpawnNum_Particles
+			+ PoolManager.Instance.Items.Length * PoolManager.Instance.ReadyToStart_SpawnNum_Item
 			+ PoolManager.Instance.minions.Length - 1
-			+ PoolManager.Instance.particles.Length - 1;
+			+ PoolManager.Instance.particles.Length - 1
+			+ PoolManager.Instance.Items.Length - 1;
 		LoadingGauge = 0;
 		//yield return new WaitForSeconds(3f);
 		yield return StartCoroutine(PoolManager.Instance.ReadyToStart_Spawn());

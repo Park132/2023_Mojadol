@@ -43,7 +43,7 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
 
     public int Getting() { photonView.RPC("Getting_RPC", RpcTarget.All); return size; }
     [PunRPC] private void Getting_RPC() { isCollecting = true; Invoke("ItemDisable", 1f); }
-    private void ItemDisable() { photonView.RPC("ItemD_RPC",RpcTarget.All); }
+    public void ItemDisable() { photonView.RPC("ItemD_RPC",RpcTarget.All); }
     [PunRPC] private void ItemD_RPC() { this.transform.gameObject.SetActive(false); }
 
     public void ParentSetting_Pool(int index) { photonView.RPC("ParentSetting_Pool_RPC", RpcTarget.AllBuffered, index); }

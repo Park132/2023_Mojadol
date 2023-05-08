@@ -21,6 +21,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	// ±âÁî¸ð
 	private void OnDrawGizmos()
 	{
+		/*
 		for (int i = 0; i < Ways.Length; i++)
 		{
 			Vector3 one;
@@ -29,6 +30,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			Gizmos.color = Color.red;
 			Gizmos.DrawRay(one, Ways[i].transform.position - one);
 		}
+		*/
 	}
 
 	private void Start()
