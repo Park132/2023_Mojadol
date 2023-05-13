@@ -126,7 +126,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         // LSM
         playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
-        playerIcon.transform.localPosition = new Vector3(0, 60, 0);
+        playerIcon.transform.localPosition = new Vector3(0, 33, 0);
         weapon_C = transform.GetComponentInChildren<LSM_WeaponSC>().transform.GetComponent<MeshCollider>();
         weapon_C.enabled = false;
         //
@@ -134,7 +134,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         CoolTime_Q = 3f;
         icon_materialL = new List<Material>();
         selected_e = false;
-        CollectingRadius = 1.5f;
+        CollectingRadius = 5f;
     }
 
 
@@ -444,6 +444,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         }
     }
 
+    private void DamagedRotation(Vector3 origin)
+    {
+        GameObject dummy_u = GameObject.Instantiate(PrefabManager.Instance.icons[5], GameManager.Instance.gameUI_SC.DamagedDirection.transform);
+        LSM_DamagedDirection d = dummy_u.GetComponent<LSM_DamagedDirection>();
+        d.SpawnSetting(this.gameObject, origin);
+    }
 
 	#region SpawnSetting
 	// LSM Spawn Setting
@@ -500,16 +506,17 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         { StartCoroutine(DeadProcessing(other)); }
         else
         {
-            photonView.RPC("Dam_RPC", RpcTarget.All, dam);
+            photonView.RPC("Dam_RPC", RpcTarget.All, dam, origin);
         }
         return;
     }
     [PunRPC]
-    private void Dam_RPC(short dam)
+    private void Dam_RPC(short dam, Vector3 origin)
     {
         if (photonView.IsMine)
         {
             actorHealth.health -= dam;
+            DamagedRotation(origin);
         }
     }
     [PunRPC]
@@ -597,7 +604,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 	public short GetHealth() { return this.actorHealth.health; }
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
-    public void AddEXP(short exp) { }
+    public void AddEXP(short exp) { this.myPlayerCtrl.GetExp(exp); }
     public MoonHeader.S_ActorState GetActor() { return this.actorHealth; }
     public GameObject GetCameraPos() { return camerapos; }
     public void Selected()
@@ -649,12 +656,18 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
                 LSM_ItemSC dummy_i = item.transform.GetComponent<LSM_ItemSC>();
                 if (!dummy_i.isCollecting)
                 {
-                    dummy_i.Getting();
+                    int size_d = dummy_i.Getting();
+                    dummy_i.ItemDisable();
+                    GameObject dummy_e = PoolManager.Instance.Get_Local_Item(0);
+                    dummy_e.transform.position = item.transform.position + Vector3.up * 1f;
+                    dummy_e.GetComponent<LSM_ItemCollectAnim>().TargetLockOn(this.gameObject, size_d);
                 }
             }
         }
         
     }
+
+    public void AddCollector(int s) { myPlayerCtrl.GetGold(s); }
 
     #endregion
 }

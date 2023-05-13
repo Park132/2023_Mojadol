@@ -585,6 +585,15 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 				}
 			}
 		}
+
+		for (int i = 0; i < wayPoints.Length; i++)
+		{
+			LSM_TurretSc dummy_sc = wayPoints[i].GetComponentInChildren<LSM_TurretSc>();
+			if (!ReferenceEquals(dummy_sc, null))
+			{
+				dummy_sc.ResetTurret();
+			}
+		}
 	}
 	[PunRPC]private void ChangeRound_AllRemover_RPC() { playerMinions[0].Clear(); playerMinions[1].Clear(); }
 

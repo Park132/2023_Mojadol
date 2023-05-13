@@ -60,28 +60,34 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
 		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
 		mark.transform.localPosition = Vector3.up * 10;
-		
+		waypoint = this.transform.parent.gameObject;
 		// health, atk
-		
-		// 디버그용으로 미리 설정.
-		stats = new MoonHeader.S_TurretStats(100,6);
-		stats.actorHealth.type = MoonHeader.AttackType.Turret;
-		ChangeTeamColor();
-		ChangeTeamColor(bodies[0].gameObject);
 
-		timer = 0;
+		// 디버그용으로 미리 설정.
+		ResetTurret();
+		
 		searchRadius = 10f;
 		maxAttackRadius = 12f;
-		target = null;
+		
 
-		waypoint = this.transform.parent.gameObject;
+		// 선택시 하이라이트 주기 위한 변수였음. 하지만 실패 후 더미로 남김.
         icon_materialL = new List<Material>();
 		selected_e = false;
     }
 
+	// 포탑 초기화
+	public void ResetTurret() 
+	{
+		stats = new MoonHeader.S_TurretStats(100, 6);
+		stats.actorHealth.type = MoonHeader.AttackType.Turret;
+		ChangeTeamColor();
+		ChangeTeamColor(bodies[0].gameObject);
+		timer = 0;
+		target = null;
+
+	}
+
 	// 팀에 해당하는 색으로 변경.
-
-
 	public void ChangeTeamColor() { ChangeTeamColor(mark); }
 	public void ChangeTeamColor(GameObject obj)
 	{

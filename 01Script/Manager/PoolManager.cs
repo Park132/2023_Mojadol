@@ -22,7 +22,8 @@ public class PoolManager : MonoBehaviour
 	public GameObject[] playerMinions;	// # 0: PSH 폴더 내의 MeleeCharacter
 	public GameObject[] UIs;            // # 0: Icon 폴더 내의 display
 	public GameObject[] particles;      // # 0: Explosion
-	public GameObject[] Items;			// # 0: Coin
+	public GameObject[] Items;          // # 0: Coin
+	public GameObject[] Local_Items;	// # 0: CollectObj
 
 	private GameObject alwaysEnableUI;
 
@@ -32,6 +33,7 @@ public class PoolManager : MonoBehaviour
 	public List<GameObject>[] poolList_UIs;
 	public List<GameObject>[] poolList_Particles;
 	public List<GameObject>[] poolList_Items;
+	public List<GameObject>[] poolList_Local_Items;
 
 	private bool once;
 
@@ -61,6 +63,10 @@ public class PoolManager : MonoBehaviour
 		poolList_Items = new List<GameObject>[Items.Length];
 		for (int i = 0; i < poolList_Items.Length; i++)
 			poolList_Items[i] = new List<GameObject>();
+		poolList_Local_Items = new List<GameObject>[Local_Items.Length];
+		for (int i = 0; i < poolList_Local_Items.Length; i++)
+			poolList_Local_Items[i] = new List<GameObject>();
+
 
 		ReadyToStart_SpawnNum = 50;
 		ReadyToStart_SpawnNum_Particles = 30;
@@ -78,15 +84,15 @@ public class PoolManager : MonoBehaviour
 				{
 					yield return new WaitForSeconds(Time.deltaTime);
 					Get_Minion(i);
-                    GameManager.Instance.LoadingUpdate();
-                }
+					GameManager.Instance.LoadingUpdate();
+				}
 				foreach (GameObject item in poolList_Minion[i])
 				{
 					yield return new WaitForSeconds(Time.deltaTime);
 					item.GetComponent<LSM_MinionCtrl>().MinionDisable();
-                }
-                GameManager.Instance.LoadingUpdate();
-            }
+				}
+				GameManager.Instance.LoadingUpdate();
+			}
 			// 파티클 미리 소환.
 			for (int i = 0; i < particles.Length; i++)
 			{
@@ -268,6 +274,29 @@ public class PoolManager : MonoBehaviour
 		{
 			result = PhotonNetwork.Instantiate(Items[index].name, Vector3.one * 100, Quaternion.identity);
 			result.GetComponent<LSM_ItemSC>().ParentSetting_Pool(index);
+		}
+		return result;
+	}
+	// 로컬에서 쓰이는 아이템들 소환.
+	public GameObject Get_Local_Item(int index)
+	{
+		if (index >= Local_Items.Length || index < 0)
+			return null;
+		GameObject result = null;
+
+		foreach (GameObject item in poolList_Local_Items[index])
+		{
+			if (!item.activeSelf)
+			{
+				result = item;
+				item.SetActive(true);
+				break;
+			}
+		}
+		if (ReferenceEquals(result, null))
+		{
+			result = GameObject.Instantiate(Local_Items[index], Vector3.one * 100, Quaternion.identity, this.transform);
+			poolList_Local_Items[index].Add(result);
 		}
 		return result;
 	}

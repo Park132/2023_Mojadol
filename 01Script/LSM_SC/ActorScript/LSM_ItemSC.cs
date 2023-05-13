@@ -12,31 +12,59 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
 	private void Awake()
 	{
         rigid = GetComponent<Rigidbody>();
-        size = 0; isCollecting = false;
+        size = 0;
+        photonView.RPC("ReadyCollect", RpcTarget.All, true);
         discard_IE = Discard();
     }
-
-    private void SpawnAnim() 
+	private void OnEnable()
+	{
+        photonView.RPC("ReadyCollect", RpcTarget.All, true);
+    }
+	private void SpawnAnim(float x, float z) 
     {
-        rigid.AddExplosionForce(500, this.transform.position + new Vector3(Random.Range(-5f,5f),-1f,Random.Range(-5f,5f)), 8, 5);
+        rigid.useGravity = true;
+        rigid.AddExplosionForce(500, this.transform.position + new Vector3(x,-1f,z), 8, 5);
     }
 
-    public void SpawnSetting(int s)
+    [PunRPC] private void SettingItem(int s,Vector3 position, float x, float z)
     {
-        photonView.RPC("SpawnS_RPC",RpcTarget.All, s);
-        Invoke("SpawnAnim", 0.5f);
-        StopCoroutine(discard_IE);
-        discard_IE = Discard();
-        StartCoroutine(discard_IE);
+        rigid.useGravity = false;
+        size = s;
+        this.transform.position = position;
+        StartCoroutine(CollectSetting(x,z));
+    }
+    public void SpawnSetting(int s, Vector3 position)
+    {
+        photonView.RPC("ReadyCollect", RpcTarget.All, true);
+        float dummyx = Random.Range(-5f, 5f), dummyz = Random.Range(-5f, 5f);
+        photonView.RPC("SettingItem", RpcTarget.All, s, position, dummyx, dummyz);
+        //photonView.RPC("SpawnS_RPC", RpcTarget.All, s);
+        //StartCoroutine(CollectSetting());
+    }
+    private IEnumerator CollectSetting(float x, float z)
+    {
+        yield return new WaitForSeconds(0.1f);
+        SpawnAnim(x,z);
         
+        yield return new WaitForSeconds(1f);
+        //photonView.RPC("ReadyCollect", RpcTarget.All, false);
+        isCollecting = false;
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StopCoroutine(discard_IE);
+            discard_IE = Discard();
+            StartCoroutine(discard_IE);
+        }
     }
+
     private IEnumerator Discard()
     {
         yield return new WaitForSeconds(5f);
         if (!isCollecting)
             ItemDisable();
     }
-    [PunRPC] private void SpawnS_RPC(int s) { size = s; isCollecting = false; }
+    [PunRPC] private void ReadyCollect(bool c) { isCollecting = c; }
+    [PunRPC] private void SpawnS_RPC(int s) { size = s; }
 
     public void ItemEnable() { photonView.RPC("ItemE_RPC", RpcTarget.All); }
     [PunRPC] private void ItemE_RPC() { this.gameObject.SetActive(true); }

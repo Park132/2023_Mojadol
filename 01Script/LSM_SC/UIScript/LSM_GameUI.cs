@@ -17,6 +17,7 @@ public class LSM_GameUI : MonoBehaviour
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
     public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
+    public GameObject DamagedDirection;
     
     private I_Actor player_ac, target_ac;
     private I_Playable player_playable;
@@ -62,4 +63,5 @@ public class LSM_GameUI : MonoBehaviour
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
         }
     }
+
 }

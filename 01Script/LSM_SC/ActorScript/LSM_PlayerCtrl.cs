@@ -196,8 +196,12 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 Debug.DrawRay(MainCam.transform.position, MainCam.transform.forward * 10, Color.green, 0.1f);
                 if (Physics.Raycast(MainCam.transform.position, MainCam.transform.forward, out hit, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret")))
                 {
+                    // 만약 플레이어 캐릭터가 탐색 레이에 발견됐다면, 취소.
+                    if (hit.transform.name.Equals(this.playerName))
+                    { playerWatchingTarget = null; GameManager.Instance.gameUI_SC.enableTargetUI(false); }
                     //Debug.Log("Player Searching! : " +hit.transform.name);
-                    if (!ReferenceEquals(hit.transform.gameObject,playerWatchingTarget))
+
+                    else if (!ReferenceEquals(hit.transform.gameObject,playerWatchingTarget))
                     {
                         playerWatchingTarget = hit.transform.gameObject;
                         GameManager.Instance.gameUI_SC.enableTargetUI(true, playerWatchingTarget);
@@ -212,6 +216,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
     }
+
+
 
     // 플레이어의 현 상태를 리셋. 공격로 선택턴이 시작하였을때 사용
     public IEnumerator AttackPathSelectSetting()
@@ -469,4 +475,5 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     {
         exp += exp_dummy;
     }
+    public void GetGold(int gold_dummy) { gold += gold_dummy; }
 }

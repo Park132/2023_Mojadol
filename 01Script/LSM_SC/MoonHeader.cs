@@ -150,4 +150,5 @@ public interface I_Playable
 	public void MinionEnable();
 	public void ParentSetting_Pool(int index);
 	public void CollectingArea();
+	public void AddCollector(int s);
 }

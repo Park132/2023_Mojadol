@@ -519,7 +519,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					Attack_other<LSM_TurretSc>(target_attack);
 					LSM_TurretSc dummy_Sc = target_attack.GetComponent<LSM_TurretSc>();
 					if (dummy_Sc.stats.actorHealth.team == stats.actorHealth.team && stats.state == MoonHeader.State.Attack && stats.state != MoonHeader.State.Dead)
-					{ CheckingTurretTeam(target_attack.transform.parent.gameObject); StartCoroutine(AttackFin()); //Debug.Log("Attack Finish in Turret destroy");
+					{ CheckingTurretTeam(dummy_Sc.waypoint); StartCoroutine(AttackFin()); //Debug.Log("Attack Finish in Turret destroy");
 					}
 
 					break;
@@ -585,7 +585,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		{ nav.velocity = Vector3.zero; nav.isStopped = true; }
 		if (other.transform.CompareTag("PlayerMinion"))
 		{
-			other.GetComponent<I_Characters>().AddEXP(50);
+			other.GetComponent<I_Characters>().AddEXP((short)stats.exp);		// 잡은 미니언이 플레이어 미니언이라면 경험치를 한번 더 줌.
 			//other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
 																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
 			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
@@ -593,8 +593,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		yield return new WaitForSeconds(2f);
 		// 골드주는 오브젝트 생성.
 		GameObject dummy_item = PoolManager.Instance.Get_Item(0);
-		dummy_item.transform.position = this.transform.position;
-		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold);
+		//dummy_item.transform.position = this.transform.position;
+		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold, this.transform.position);
+		GiveExp();
 
 
 		yield return new WaitForSeconds(1f);
@@ -603,6 +604,20 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		photonView.RPC("DeadP",RpcTarget.All);
 	}
 	public void MinionDisable() {photonView.RPC("DeadP",RpcTarget.MasterClient); photonView.RPC("DeadP", RpcTarget.All); }
+
+	public void GiveExp() 
+	{
+		RaycastHit[] hits;
+		float expRadius = 10f;
+		hits = Physics.SphereCastAll(transform.position, expRadius, Vector3.up, 0, 1 << LayerMask.NameToLayer("Minion"));
+		foreach (RaycastHit hit in hits)
+		{
+			if (hit.transform.CompareTag("PlayerMinion"))
+			{
+				hit.transform.GetComponent<I_Characters>().AddEXP((short)stats.exp);
+			}
+		}
+	}
 
 	[PunRPC]
 	protected void DeadAnim()
