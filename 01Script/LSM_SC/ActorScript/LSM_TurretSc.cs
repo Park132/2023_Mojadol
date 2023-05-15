@@ -59,7 +59,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 초기화
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
 		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
-		mark.transform.localPosition = Vector3.up * 10;
+		//mark.transform.parent = GameManager.Instance.teamManagers[(int)stats.actorHealth.team].transform;
+		mark.transform.localPosition = new Vector3(5,30,-5);
 		waypoint = this.transform.parent.gameObject;
 		// health, atk
 

@@ -38,7 +38,7 @@ public class LSM_DamagedDirection : MonoBehaviour
         Vector3 dam_dir = (Vector2D_XZ(damaged) - Vector2D_XZ(origin)).normalized;
         Vector3 right_dir = Vector3.Cross(origin_forward, Vector3.up);
         float angle_d = Vector3.Angle(Vector2D_XZ(origin_forward), Vector2D_XZ(dam_dir));
-        float sign_d = Mathf.Sign(Vector3.Dot(Vector2D_XZ(origin_forward), right_dir));
+        float sign_d = Mathf.Sign(Vector3.Dot(Vector2D_XZ(dam_dir), right_dir));
         float z_d = angle_d * sign_d;
         this.transform.rotation = Quaternion.Euler(0,0,z_d);
 

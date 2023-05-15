@@ -258,7 +258,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
-            playerCamera.transform.position = camerapos.transform.position;
+            playerCamera.transform.position = camerapos.transform.position + this.transform.forward * 0.2f;
         }
         
         // playerCamera.transform.rotation = camerapos.transform.rotation;
@@ -351,7 +351,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         if (photonView.IsMine)
             anim.applyRootMotion = true;
         photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
-        anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",1.6f);
+        anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",1.65f);
     }
 
     void ESkill() // 혹시 Late Upadate에?

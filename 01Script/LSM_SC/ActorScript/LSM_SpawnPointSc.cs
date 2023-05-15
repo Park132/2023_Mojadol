@@ -21,7 +21,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 	// ±âÁî¸ð
 	private void OnDrawGizmos()
 	{
-		/*
+		
 		for (int i = 0; i < Ways.Length; i++)
 		{
 			Vector3 one;
@@ -30,7 +30,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			Gizmos.color = Color.red;
 			Gizmos.DrawRay(one, Ways[i].transform.position - one);
 		}
-		*/
+		
 	}
 
 	private void Start()
@@ -83,7 +83,7 @@ public class LSM_SpawnPointSc : MonoBehaviour
 			Paths[i].transform.rotation = Quaternion.Euler(Paths[i].transform.rotation.eulerAngles + (Vector3.right * 90));
 			Paths[i].transform.localPosition += Vector3.up * 50;
 			float dummy_distance = Vector3.Distance(origin, Ways[i].transform.position);
-			Paths[i].transform.localScale = Vector3.one + (Vector3.up * dummy_distance * 0.8f) + (Vector3.right * (dummy_distance * 0.3f)); 
+			Paths[i].transform.localScale = Vector3.one + (Vector3.up * Mathf.Min(50,dummy_distance * 0.8f)) + (Vector3.right * Mathf.Min(10,dummy_distance * 0.3f)); 
 
 		}
 	}
