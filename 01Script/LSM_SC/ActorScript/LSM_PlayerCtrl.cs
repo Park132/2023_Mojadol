@@ -147,14 +147,32 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             // 마우스 휠에 따라 확대, 축소
             float scroll = Input.GetAxis("Mouse ScrollWheel") * wheelSpeed;
-            mapCamCamera.orthographicSize = Mathf.Min(MapCamBaseSize + 40, Mathf.Max(MapCamBaseSize-40, mapCamCamera.orthographicSize - scroll));
+            float camOrthoSize = Mathf.Clamp(mapCamCamera.orthographicSize - scroll, MapCamBaseSize - 30, MapCamBaseSize + 30);
+            mapCamCamera.orthographicSize = camOrthoSize;
+
+
 
             // 방향키 이동에 따라서 맵의 이동
-            Vector3 mapcampPosition = MapCam.transform.position;
+            Vector3 mapcamPosition = MapCam.transform.position;
             Vector3 move_f = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")) * map_move * Time.deltaTime;
+
+            Vector3 mapcamPosition_dummy = mapcamPosition + move_f;
+            float width = Screen.width, height = Screen.height;
+            float size_width = camOrthoSize * (width / height), size_height = camOrthoSize;
+            float cam_left = mapcamPosition_dummy.x - size_width, cam_right = mapcamPosition_dummy.x + size_width, 
+                cam_top = mapcamPosition_dummy.z + size_height, cam_bottom = mapcamPosition_dummy.z - size_height;
+
+
+            
             MapCam.transform.position = new Vector3(
-                mapcampPosition.x+ move_f.x, mapcampPosition.y,
-                mapcampPosition.z+ move_f.z);
+                mapcamPosition.x + ((cam_left >= LSM_MapInfo.Instance.Left && cam_right <= LSM_MapInfo.Instance.Right)? move_f.x : 
+                    (((mapcamPosition.x - size_width) < LSM_MapInfo.Instance.Left)? LSM_MapInfo.Instance.Left - (mapcamPosition.x - size_width) :
+                    ((mapcamPosition.x + size_width) > LSM_MapInfo.Instance.Right) ? LSM_MapInfo.Instance.Right - (mapcamPosition.x + size_width) : 0)),
+                mapcamPosition.y,
+                mapcamPosition.z+ ((cam_top <= LSM_MapInfo.Instance.Top && cam_bottom >= LSM_MapInfo.Instance.Bottom)?move_f.z:
+                (((mapcamPosition.z - size_height) < LSM_MapInfo.Instance.Bottom) ? LSM_MapInfo.Instance.Bottom - (mapcamPosition.z - size_height) :
+                    ((mapcamPosition.z + size_height) > LSM_MapInfo.Instance.Top) ? LSM_MapInfo.Instance.Top - (mapcamPosition.z + size_height)  : 0))
+                );
 
             // 만약 미니언을 클릭하여 해당 미니언의 스탯을 보고있을 때 휠 또는 키보드 버튼을 클릭한다면, 클릭했던 타겟 미니언을 null로 변경. 다시 일반 상태로 변경됨.
             if (!ReferenceEquals(mapcamSub_Target, null) && (scroll != 0 || move_f != Vector3.zero))

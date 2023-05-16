@@ -299,6 +299,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	{
 		PoolManager.Instance.ReadyToStart_SpawnNum = 0;
 		PoolManager.Instance.ReadyToStart_SpawnNum_Particles = 0;
+		PoolManager.Instance.ReadyToStart_SpawnNum_Item = 0;
 		MaxPlayerNum = 1;
 	}
     #endregion

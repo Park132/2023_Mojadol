@@ -11,6 +11,8 @@ public class LSM_GameUI : MonoBehaviour
                                                 // # Canvas 안 GameUI의 자식오브젝트
     public Image playerHP, targetHP;            // # Player의 자식 오브젝트 중 CurrentHP        -> playerHP
                                                 // # Enemy의 자식 오브젝트 중 CurrentHP         -> targetHP
+    public Image playerExp;
+
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
     public TextMeshProUGUI playerHP_txt;
 
