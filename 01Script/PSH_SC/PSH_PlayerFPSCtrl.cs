@@ -505,7 +505,7 @@ public class PSH_PlayerFPSCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObserva
         // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
         if (other.transform.CompareTag("PlayerMinion"))
         {
-            other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp( 50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+            other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.SetExp( 50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
         }
         GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}",other.gameObject.name, this.name));
         yield return new WaitForSeconds(0.5f);

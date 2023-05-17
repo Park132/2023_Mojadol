@@ -14,7 +14,7 @@ public class LSM_GameUI : MonoBehaviour
     public Image playerExp;
 
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
-    public TextMeshProUGUI playerHP_txt;
+    public TextMeshProUGUI playerHP_txt, playerGold_txt;
 
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
@@ -61,6 +61,9 @@ public class LSM_GameUI : MonoBehaviour
         { 
             playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100;
             playerHP_txt.text = player_ac.GetHealth() + " / " + player_ac.GetMaxHealth();
+            playerGold_txt.text = player_playable.GetGold() + " G";
+            playerExp.fillAmount = (Mathf.Round(((float)player_playable.GetExp() / 200) * 100) / 100) * ((float)45/100) + 0.55f;
+
             QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
         }

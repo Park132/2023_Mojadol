@@ -39,7 +39,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     // 쿨타임 관련 변수.
     private float CoolTime_Q, CoolTime_E;
-    private float timer_Q, timer_E;
+    private float timer_Q, timer_E, timer_Combo;
 
     private float time;
 
@@ -53,6 +53,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     private Vector3 networkPosition, networkVelocity;
 
+    private LSM_WeaponSC weaponSC;
     private MeshCollider weapon_C;
     private MeshRenderer icon_ren;
     private List<Material> icon_materialL;
@@ -127,7 +128,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // LSM
         playerIcon = GameObject.Instantiate(PrefabManager.Instance.icons[4], transform);
         playerIcon.transform.localPosition = new Vector3(0, 33, 0);
-        weapon_C = transform.GetComponentInChildren<LSM_WeaponSC>().transform.GetComponent<MeshCollider>();
+        weaponSC = this.transform.GetComponentInChildren<LSM_WeaponSC>();
+        weapon_C = weaponSC.transform.GetComponent<MeshCollider>();
         weapon_C.enabled = false;
         //
         CoolTime_E = 5f;
@@ -177,6 +179,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     {
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
+            canAttack= false;
             StartCoroutine(basicAttackDelay());
         }
 
@@ -187,6 +190,16 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         ESkill();
         CoolManager();
+
+        if (attackcode == 1)
+        {
+            timer_Combo += Time.deltaTime;
+            if (timer_Combo >= 3f)
+            {
+                attackcode = 0;
+                timer_Combo = 0f;
+            }
+        }
     }
 
     
@@ -303,33 +316,45 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         #endregion
     }
 
+    // 일반 공격
     IEnumerator basicAttackDelay()
     {
         canAttack = false;
-        bool once = true;
-        if(once)
-        {
-            once = false;
-            attackcode++;
-            attackcode %= 2;
-        }
+        
         //anim.SetLayerWeight(1, 1f);
         //anim.SetTrigger("basicAttack" + attackcode.ToString());
+        StartCoroutine(weaponSC.SwordEffect(attackcode));
         photonView.RPC("basicAnim_RPC",RpcTarget.All, attackcode);
 
+        attackcode++;
         yield return new WaitForSeconds(0.5f);
         photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
+        yield return new WaitForSecondsRealtime(attackcode == 2? 3f: 1f);
+        attackcode %= 2;
+        timer_Combo = 0;
 
-        yield return new WaitForSecondsRealtime(1.5f);
         //anim.SetLayerWeight(1, 0f);
         canAttack = true;
         //StopCoroutine(basicAttackDelay());
     }
+
     [PunRPC] private void basicAnim_RPC(int attackcode) {
         anim.SetLayerWeight(1, 1f);
         
         anim.SetTrigger("basicAttack" + attackcode.ToString());
         Invoke("AnimatorLayerReset", 1.5f);
+    }
+    public void AttackEffect_B(Vector3 dummypos, Vector3 n, float s) 
+    {
+        photonView.RPC("AttackEB_RPC", RpcTarget.MasterClient, dummypos, n, s);
+    }
+    [PunRPC] public void AttackEB_RPC(Vector3 dummypos, Vector3 n, float s) 
+    {
+        GameObject effect_d = PoolManager.Instance.Get_Particles(1, dummypos);
+        effect_d.transform.position = dummypos;
+        effect_d.transform.LookAt(this.playerCamera.transform.forward + dummypos, n);
+        effect_d.transform.localScale = Vector3.one * s;
+        effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, this.actorHealth.Atk, this.GetComponent<I_Actor>(), 1f);
     }
 
     IEnumerator Qskill()
@@ -341,7 +366,9 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         //anim.applyRootMotion = true;
         //anim.SetTrigger("skillQ_Trigger");
         photonView.RPC("QAnim_RPC",RpcTarget.All);
-        yield return new WaitForSecondsRealtime(2.0f);
+        yield return new WaitForSecondsRealtime(1.3f);
+        photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient);
+        yield return new WaitForSecondsRealtime(0.7f);
         //canQ = true;
         canAttack = true;
         canMove = true;
@@ -353,6 +380,15 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
         anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",1.65f);
     }
+    [PunRPC]private void AttackEffect_Q() 
+    {
+        GameObject effect_d = PoolManager.Instance.Get_Particles(2, this.transform.position);
+        effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+            effect_d.transform.LookAt(this.playerCamera.transform.forward + effect_d.transform.position, this.transform.right);
+        effect_d.transform.localScale = Vector3.one * 1.7f;
+        effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 5f);
+    }
+
 
     void ESkill() // 혹시 Late Upadate에?
     {
@@ -390,8 +426,18 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     {
         anim.speed = 1f;
         Invoke("AnimatorLayerReset", 1.5f);
+        if (PhotonNetwork.IsMasterClient) Invoke("AttackEffect_E", 0.5f);
         //AnimatorLayerReset();
     }
+    private void AttackEffect_E()
+    {
+        GameObject effect_d = PoolManager.Instance.Get_Particles(3, this.transform.position);
+        effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+        effect_d.transform.LookAt(this.playerCamera.transform.forward + effect_d.transform.position, this.transform.right);
+        effect_d.transform.localScale = Vector3.one * 1.7f;
+        effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 2f), this.GetComponent<I_Actor>(), 8f);
+    }
+
 
     IEnumerator Eskill()
     {
@@ -604,7 +650,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 	public short GetHealth() { return this.actorHealth.health; }
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }
     public MoonHeader.Team GetTeam() { return this.actorHealth.team; }
-    public void AddEXP(short exp) { this.myPlayerCtrl.GetExp(exp); }
+    public void AddEXP(short exp) { this.myPlayerCtrl.SetExp(exp); }
     public MoonHeader.S_ActorState GetActor() { return this.actorHealth; }
     public GameObject GetCameraPos() { return camerapos; }
     public void Selected()
@@ -643,6 +689,11 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         playerCamera = cam.GetComponent<Camera>();
         return camerapos;
     }
+    public int GetExp()
+    {
+        return myPlayerCtrl.GetExp();
+    }
+    public int GetGold() { return myPlayerCtrl.GetGold(); }
 
     public void CollectingArea()
     {

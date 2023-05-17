@@ -66,6 +66,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			Gizmos.DrawCube(networkPosition, Vector3.one * 2);
 		}
 		*/
+		if (nav.enabled)
+			Gizmos.DrawCube(nav.destination + (Vector3.up * 12), Vector3.one * 1);
     }
 
     #region IPUnalsdfjaow
@@ -174,7 +176,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (once_changeRound && GameManager.Instance.gameState != MoonHeader.GameState.Gaming)
 		{
 			// 공격하고있지 않으며, Agent가 활성화되어있을 때
-			if (nav.enabled && stats.state != MoonHeader.State.Attack)
+			if (!nav.isStopped && stats.state != MoonHeader.State.Attack)
 			{ nav.velocity = Vector3.zero; nav.isStopped = true; }
 			rigid.velocity = Vector3.zero;
 			rigid.angularVelocity = Vector3.zero;
@@ -192,7 +194,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		{
 			SearchingTarget();
 			Attack();
-			MyDestination();
+			//MyDestination();
 			AnimationSetting();
 		}
 
@@ -217,9 +219,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     // 모든 변수 초기화
     public void MonSetting(LSM_SpawnPointSc point, MoonHeader.Team t, LSM_Spawner spawn, MoonHeader.AttackType typeM)
 	{
-		nav_ob.enabled = false;
-		nav.enabled = true;
-		PlayerSelect = false;
+        //nav_ob.enabled = false;
+        nav.enabled = true;
+        nav.isStopped = false;
+
+        PlayerSelect = false;
 		timer_Searching = 0;
 		timer_Attack = 0;
 		target_attack = null;
@@ -234,7 +238,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		// 스폰포인트에 저장된 공격로로 목적지 지정.
 		transform.LookAt(stats.destination[way_index].transform);
-		nav.destination = stats.destination[way_index].transform.position;
+		MyDestination();
 		//nav.avoidancePriority = 50;
 		nav.isStopped = false;
 
@@ -260,6 +264,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.stats.speed = s;
 		this.stats.actorHealth.team = (MoonHeader.Team)t;
 		this.stats.actorHealth.type = typeM;
+		this.transform.name = this.stats.actorHealth.team.ToString() + "Minion";
 		PlayerDisConnect();
 		ChangeTeamColor();
 		//if (selected_e)
@@ -281,30 +286,50 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 
 	// 미니언이 다음 길로 넘어가는 것을 구현한 함수.
-	// NavObstacle을 사용하기 위해 목표 지점을 1/2정도의 위치로 이동하게 설정.
-	// 미니언이 가야하는 방향벡터와, 거리를 구한 후 0.5를 곱하여 NavMeshObstacle의 활성/비활성화시의 멈칫거림을 줄이기 위한 코드.
 	public void MyDestination()
 	{
 		if (ReferenceEquals(target_attack, null) && nav.enabled)
 		{
-			Vector3 destination_direction = (stats.destination[way_index].transform.position - this.transform.position).normalized;
-			float destination_distance = Vector3.Distance(stats.destination[way_index].transform.position, this.transform.position);
-			//nav.destination = this.transform.position + (destination_direction * (destination_distance * 0.5f));
-			nav.destination = stats.destination[way_index].transform.position;
+			nav.destination = CheckingPosition_NavMesh(stats.destination[way_index].transform.position);
 		}
+	}
+
+	private Vector3 CheckingPosition_NavMesh(Vector3 pos)
+	{
+		Vector3 pos_dummy = new Vector3(pos.x, this.transform.position.y, pos.z);
+        // 목적지에 NavMesh가 존재하지 않을 경우, 문제점이 존재할 수 있음.
+        Vector3 destination_direction = (this.transform.position - pos_dummy).normalized;
+        float dist_dummy = 0;
+        float destination_distance = Vector3.Distance(pos_dummy, this.transform.position);
+		Vector3 result = pos_dummy;
+
+		// 그러므로 해당 지점에서 미니언을 향하는 방향을 저장.
+		// NavMesh의 SamplePosition을 사용하여 조금씩 미니언 방향으로 NavMesh가 존재하는지 확인.
+		// 이후 해당 Hit Position을 목표로 지정.
+        while (true)
+        {
+            dist_dummy += 0.25f;
+            NavMeshHit hit;
+            Vector3 dummy_position = pos_dummy + (destination_direction * dist_dummy);
+            if (NavMesh.SamplePosition(dummy_position, out hit, 1f, NavMesh.AllAreas))
+            { result = hit.position; break; }
+            if (dist_dummy >= destination_distance * 0.8f)
+            {Debug.Log("Fail To NavMesh"); break; }
+        }
+
+
+        return result;
 	}
 
 	// 터렛에 대하여. 받아온 터렛이 현재 자신이 목표로한 터렛이 맞는지 확인.
 	// 만약 동일하다면 way_index를 상승시켜 다음 지점으로 이동.
 	private void CheckingTurretTeam(GameObject obj)
 	{
-		if (stats.destination[way_index].Equals(obj))
+        LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
+		if (dummySc.stats.actorHealth.health <= 0 || dummySc.stats.actorHealth.team == this.stats.actorHealth.team)
 		{
-			LSM_TurretSc dummySc = obj.transform.GetComponentInChildren<LSM_TurretSc>();
-			if (dummySc.stats.actorHealth.health <= 0 || dummySc.stats.actorHealth.team == this.stats.actorHealth.team)
-			{
-				way_index++;
-			}
+			if (stats.destination[way_index].Equals(dummySc.waypoint))
+			{ way_index++; MyDestination(); }
 		}
 	}
 
@@ -340,6 +365,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 						else if (hit.transform.CompareTag("Turret"))
 						{
+							CheckingTurretTeam(hit.transform.GetComponent<LSM_TurretSc>().waypoint);
 							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_TurretSc>().stats.actorHealth.team)
 								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;
 						}   //자신과 같은 공격로의 터렛만 대상으로 지정
@@ -364,8 +390,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				if (!ReferenceEquals(target_attack, null)) { target_actor = target_attack.GetComponent<I_Actor>(); }
 
 				// 타겟을 찾았으며, 이동중이라면.. 자신의 목표를 타겟으로 지정. 해당 지점으로 이동
-				if (nav.enabled && !ReferenceEquals(target_attack, null))
-					nav.destination = target_attack.transform.position;
+				if (!nav.isStopped && !ReferenceEquals(target_attack, null))
+					nav.destination = CheckingPosition_NavMesh(target_attack.transform.position);
 				// 
 				//else if (ReferenceEquals(target_attack,null) && nav.enabled && nav.isStopped) { nav.isStopped = false; }
 				// 타겟을 찾지 못하였으며, NavMeshAgent가 비활성화되어있을경우, Obstacle 비활성화, Agent 활성화
@@ -374,14 +400,14 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 
 		// 타겟을 찾았으며, 플레이어가 강령하지 않았고, 현재 Agent가 활성화 되어있을 경우
-		else if (!ReferenceEquals(target_attack, null) && !PlayerSelect && nav.enabled)
+		else if (!ReferenceEquals(target_attack, null) && !PlayerSelect && !nav.isStopped)
 		{
 			// Agent의 목적지를 타겟의 위치로 설정.
-			nav.destination = target_attack.transform.position;
+			nav.destination = CheckingPosition_NavMesh(target_attack.transform.position);
 
 
-			// 레이캐스트를 쏴서 몸체에 가까이 있는지 확인.
-			RaycastHit[] hits = Physics.RaycastAll(this.transform.position, (target_attack.transform.position - this.transform.position).normalized, maxAtkRadius);
+            // 레이캐스트를 쏴서 몸체에 가까이 있는지 확인.
+            RaycastHit[] hits = Physics.RaycastAll(this.transform.position, (target_attack.transform.position - this.transform.position).normalized, maxAtkRadius);
 			//Debug.DrawRay(this.transform.position, (target_attack.transform.position - this.transform.position).normalized * maxAtkRadius, Color.red);
 			float dist = Vector3.Distance(target_attack.transform.position, this.transform.position);
 			foreach (RaycastHit hit in hits)
@@ -430,7 +456,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		{
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
 			if (!target_attack.activeSelf && this.stats.state != MoonHeader.State.Thinking
-				|| this.stats.state == MoonHeader.State.Dead || (!ReferenceEquals(target_attack.GetComponent<I_Characters>(),null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
+				|| this.stats.state == MoonHeader.State.Dead ||
+				(!ReferenceEquals(target_attack.GetComponent<I_Characters>(),null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
 			{
 				//Debug.Log("Attack Finish in Destroy"); 
 				StartCoroutine(AttackFin()); 
@@ -577,7 +604,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	private IEnumerator DeadProcessing(GameObject other)
 	{
 		stats.state = MoonHeader.State.Dead;
-		nav_ob.enabled = false;
+		//nav_ob.enabled = false;
+		nav.isStopped = true;
+
 		anim.SetBool("Dead",true);
 		photonView.RPC("DeadAnim",RpcTarget.All);
 
@@ -619,8 +648,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		}
 	}
 
-	[PunRPC]
-	protected void DeadAnim()
+	[PunRPC]protected void DeadAnim()
 	{
 		
 		anim.SetTrigger("DeadAnim");
@@ -664,11 +692,13 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			StopCoroutine(navenable_IE);
 			navenable_IE = NavEnable(true);
 			yield return StartCoroutine(navenable_IE);
+			yield return new WaitForSeconds(0.5f);
 			target_attack = null;
 			this.stats.state = MoonHeader.State.Normal;
+            MyDestination();
 
-			//nav.isStopped = false;
-			timer_Searching = SEARCHTARGET_DELAY;
+            //nav.isStopped = false;
+            timer_Searching = SEARCHTARGET_DELAY;
 			is_attackFinish_Act = false;
 		}
 	}
@@ -682,16 +712,18 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		rigid.velocity = Vector3.zero;
 		if (!on)
 		{
-			nav.enabled = false;
+			//nav.enabled = false;
 			yield return new WaitForSeconds(0.1f);
-			nav_ob.enabled = true;
+			//nav_ob.enabled = true;
+			nav.isStopped = true;
+			nav.velocity = Vector3.zero;
 		}
 		else
 		{
 			nav_ob.enabled = false;
 			yield return new WaitForSeconds(0.1f);
 			nav.enabled = true;
-
+			nav.isStopped = false;
 		}
 	}
 
@@ -744,8 +776,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	public void PlayerDisConnect()
 	{
 		PlayerSelect = false;
-		nav_ob.enabled = false;
+		//nav_ob.enabled = false;
 		nav.enabled = true;
+		nav.isStopped = false;
 
 		icon.SetActive(true);
 		playerIcon.SetActive(false);

@@ -42,7 +42,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
 
-    private int exp, gold;
+    [SerializeField]private int exp, gold;
 
     public float this_player_ping;
 
@@ -398,10 +398,10 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * 95;
             MapCam.transform.position = Vector3.MoveTowards(MapCam.transform.position,
                 targetPosition, map_move * 2 * Time.deltaTime);
-            mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > 20) ?
-                mapCamCamera.orthographicSize - map_move * Time.deltaTime : 20;
+            mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > MapCamBaseSize - 25) ?
+                mapCamCamera.orthographicSize - map_move * Time.deltaTime : MapCamBaseSize - 25;
             yield return new WaitForSeconds(Time.deltaTime);
-            if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= 20)
+            if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= MapCamBaseSize - 25)
                 break;
         }
         is_zoomIn=false;
@@ -489,9 +489,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    public void GetExp(int exp_dummy)
-    {
-        exp += exp_dummy;
-    }
+    public void SetExp(int exp_dummy)
+    {exp += exp_dummy;}
+    public int GetExp() { return exp; }
+    public int GetGold() { return gold; }
     public void GetGold(int gold_dummy) { gold += gold_dummy; }
 }

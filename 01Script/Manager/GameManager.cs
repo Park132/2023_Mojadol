@@ -284,6 +284,10 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	{
 		photonView.RPC("LoadingUpdate_RPC", RpcTarget.AllBuffered);
 	}
+
+	public void LoadingTxtUpdate(string update_) { photonView.RPC("LTU", RpcTarget.All, update_); }
+	[PunRPC] private void LTU(string u) { loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = u; }
+
 	[PunRPC]public void LoadingUpdate_RPC()
 	{
 		LoadingGauge++;
@@ -603,12 +607,12 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	private void DisplayEnable()
 	{
 		timer_log += Time.deltaTime;
-		if (logUIs.Count <= 5 && logUIs_Reservation.Count > 0 && timer_log >= 1f)
+		if (logUIs.Count <= 3 && logUIs_Reservation.Count > 0 && timer_log >= 1f)
 		{
 			timer_log = 0;
 			GameObject dummy = PoolManager.Instance.Get_UI(0);
 			dummy.GetComponentInChildren<TextMeshProUGUI>().text = logUIs_Reservation[0];
-			dummy.GetComponent<RectTransform>().anchoredPosition = new Vector3(-50, -100, 0);
+			dummy.GetComponent<RectTransform>().anchoredPosition = new Vector3(-205, -260, 0);
 			logUIs.Add(dummy);
 			logUIs_Reservation.RemoveAt(0);
 		}

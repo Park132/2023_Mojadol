@@ -78,6 +78,7 @@ public class PoolManager : MonoBehaviour
 		if (PhotonNetwork.IsMasterClient)
 		{
 			// 미니언 미리 소환.
+			GameManager.Instance.LoadingTxtUpdate("좀비 생성 중..");
 			for (int i = 0; i < minions.Length; i++)
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum; j++)
@@ -93,8 +94,9 @@ public class PoolManager : MonoBehaviour
 				}
 				GameManager.Instance.LoadingUpdate();
 			}
-			// 파티클 미리 소환.
-			for (int i = 0; i < particles.Length; i++)
+            // 파티클 미리 소환.
+            GameManager.Instance.LoadingTxtUpdate("마법 구현 중..");
+            for (int i = 0; i < particles.Length; i++)
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum_Particles; j++)
 				{
@@ -109,8 +111,9 @@ public class PoolManager : MonoBehaviour
 				}
 				GameManager.Instance.LoadingUpdate();
 			}
-			// 아이템 미리 소환.
-			for (int i = 0; i < Items.Length; i++)
+            // 아이템 미리 소환.
+            GameManager.Instance.LoadingTxtUpdate("아이템 생성 중..");
+            for (int i = 0; i < Items.Length; i++)
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum_Item; j++)
 				{

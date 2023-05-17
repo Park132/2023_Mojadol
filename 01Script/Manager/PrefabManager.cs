@@ -30,5 +30,4 @@ public class PrefabManager : MonoBehaviour
 	public GameObject[] players;
 	// OutLine 마테리얼
 	//public Material outline;
-	
 }

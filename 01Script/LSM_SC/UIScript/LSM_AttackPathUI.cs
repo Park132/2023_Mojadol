@@ -14,6 +14,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 	public LSM_SpawnPointSc spawnPoint;		// 해당 UI가 사용되는 스폰포인트
 	private Camera mapcam;                  // 맵을 볼때 사용되는 카메라
 	private bool once;
+	private Vector3 originSize;
 
     private void Awake()
     {
@@ -25,6 +26,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 		once = true;
 		num.text = sl.value.ToString();
 		mapcam = GameManager.Instance.mainPlayer.MapCam.GetComponent<Camera>();
+		originSize = Vector3.one;
 		//transform.SetAsFirstSibling();	// 해당 UI가 다른 UI를 가리지 않기 위해 가장 상단으로 위치. 해당 부분은 EmptyObject내에 자식 오브젝트로 생성하기에 필요없는 부분이 되었음.
 	}
 
@@ -51,6 +53,7 @@ public class LSM_AttackPathUI : MonoBehaviour
 				this.transform.position = mapcam.WorldToScreenPoint(spawnPoint.Paths[0].transform.position);
 				//num.text = GameManager.Instance.teamManagers[(int)parentSpawner.team].AttackPathNumber[spawnPoint.number].ToString();
 				num.text = sl.value.ToString();
+				originSize = Vector3.one;
 			}
 			// 게임 중, 스폰포인트의 위치에 UI를 위치하도록 구현.
 			else if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
@@ -58,8 +61,9 @@ public class LSM_AttackPathUI : MonoBehaviour
 				//this.transform.position = Camera.main.WorldToScreenPoint(spawnPoint.transform.position);
 				this.transform.position = mapcam.WorldToScreenPoint(spawnPoint.transform.position);
 				num.text = parentSpawner.spawnpoints[spawnPoint.number].num.ToString();
+				originSize = Vector3.one * 0.5f;
 			}
-			this.transform.localScale = Vector3.one * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 60) * 0.015f));
+			this.transform.localScale = originSize * Mathf.Max(0.1f, Mathf.Min(1, 1 - (mapcam.orthographicSize - 60) * 0.015f));
 		}
 		
 	}
