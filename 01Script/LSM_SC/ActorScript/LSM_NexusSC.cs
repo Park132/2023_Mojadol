@@ -12,7 +12,17 @@ public class LSM_NexusSC : LSM_TurretSc
 	{
 		parentSpawner = this.GetComponentInParent<LSM_Spawner>();
 		base.Start();
-		stats = new MoonHeader.S_TurretStats(100, 10, parentSpawner.team);
+
+		GameObject.Destroy(mark);
+		GameObject.Destroy(mark_obj);
+
+        mark = GameObject.Instantiate(PrefabManager.Instance.icons[7], GameManager.Instance.mapUI.transform);
+        mark.GetComponent<LSM_TurretIconUI>().Setting(this.gameObject);
+        mark_obj = GameManager.Instantiate(PrefabManager.Instance.icons[8], transform);
+        mark_obj.transform.localPosition = new Vector3(5, 30, -5);
+		mark_obj.transform.rotation = Quaternion.Euler(90, 0, 0);
+
+        stats = new MoonHeader.S_TurretStats(300, 10, parentSpawner.team);
 		base.ChangeTeamColor();
 		ATTACKDELAY = 1.5f;
 		stats.actorHealth.type = MoonHeader.AttackType.Turret;
@@ -26,6 +36,7 @@ public class LSM_NexusSC : LSM_TurretSc
 		StartCoroutine(DamagedEffect());
 		if (this.stats.actorHealth.health <= 0)
 		{
+			DestroyProcessing(other);
 			GameManager.Instance.GameEndingProcess(this.stats.actorHealth.team);
 		}
 

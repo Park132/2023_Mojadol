@@ -18,7 +18,7 @@ GameObject:
   - component: {fileID: 1175655596310068651}
   m_Layer: 9
   m_Name: SwordSlash_Effect
-  m_TagString: Untagged
+  m_TagString: DamageArea
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4964,4 +4964,4 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 2.5, y: 0.2, z: 1.8}
-  m_Center: {x: 0, y: 0, z: -0.2}
+  m_Center: {x: 0, y: 0, z: 0}

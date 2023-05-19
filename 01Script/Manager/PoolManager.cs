@@ -5,6 +5,7 @@ using UnityEngine;
 using System;
 using Unity.VisualScripting;
 
+
 public class PoolManager : MonoBehaviour
 {
 	// 싱글톤 //
@@ -229,8 +230,10 @@ public class PoolManager : MonoBehaviour
 		return result;
 	}
 
-    // 파티클 반환
-    public GameObject Get_Particles(int index, Vector3 position_)
+	// 파티클 반환
+	public GameObject Get_Particles(int index, Vector3 position_)
+	{ return Get_Particles(index, position_, Vector3.one); }
+    public GameObject Get_Particles(int index, Vector3 position_, Vector3 rot)
     {
         if (index >= particles.Length || index < 0)
             return null;
@@ -242,7 +245,7 @@ public class PoolManager : MonoBehaviour
             {
                 result = item;
                 item.SetActive(true);
-				item.GetComponent<ParticleAutoDisable>().ParticleEnable(position_);
+				item.GetComponent<ParticleAutoDisable>().ParticleEnable(position_, rot);
                 break;
             }
         }
@@ -252,7 +255,8 @@ public class PoolManager : MonoBehaviour
             //poolList_Particles[index].Add(result);
 			result = PhotonNetwork.Instantiate(particles[index].name, Vector3.one * 100, Quaternion.identity);
 			result.GetComponent<ParticleAutoDisable>().ParentSetting_Pool(index);
-		}
+            result.GetComponent<ParticleAutoDisable>().ParticleEnable(position_, rot);
+        }
         return result;
     }
 

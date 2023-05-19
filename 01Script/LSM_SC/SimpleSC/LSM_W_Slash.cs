@@ -16,6 +16,7 @@ public class LSM_W_Slash : MonoBehaviour
     public void Setting(GameObject obj, int d, I_Actor ac, float v) { orner = obj; dam = d; orner_ac = ac; speed = v; }
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("Player Slash Effect Dectected : " +other.name);
         if (!other.gameObject.Equals(orner) && PhotonNetwork.IsMasterClient && !ReferenceEquals(null, other.GetComponent<I_Actor>()))
         {
             Debug.Log("Player Effect Detect Other");

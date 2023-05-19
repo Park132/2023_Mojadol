@@ -117,6 +117,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
                 if (sSC.team == this.player.team) { mySpawner = s; break; }
             }
+            
         }
     }
     public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTN_RPC", RpcTarget.AllBuffered, t,n); }
@@ -210,18 +211,32 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
                 // 메인카메라를 기준. 메인카메라가 보고있는 방향으로 레이를 쏴, 미니언 혹은 플레이어, 터렛 등을 식별.
                 // 이후 게임UI에 정보를 전달.
-                RaycastHit hit;
-                Debug.DrawRay(MainCam.transform.position, MainCam.transform.forward * 10, Color.green, 0.1f);
-                if (Physics.Raycast(MainCam.transform.position, MainCam.transform.forward, out hit, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret")))
+                RaycastHit[] hits;
+                Debug.DrawRay(MainCam.transform.position + MainCam.transform.forward * 0.15f, MainCam.transform.forward * 10, Color.green, Time.deltaTime);
+                //if (Physics.Raycast(MainCam.transform.position + MainCam.transform.forward * 0.15f, MainCam.transform.forward, out hit, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret")))
+                hits = Physics.RaycastAll(MainCam.transform.position, MainCam.transform.forward, 10, 1 << LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret"));
+                GameObject dummy = null;
+                float dist = float.MaxValue;
+
+                foreach(RaycastHit hit in hits)
+                {
+                    if (hit.transform.name.Equals(this.playerName)) { continue; }
+                    else
+                    {
+                        if (dist > hit.distance)
+                        {
+                            dist = hit.distance;
+                            dummy = hit.transform.gameObject;
+                        }
+                    }
+                }
+
+                if(!ReferenceEquals(dummy, null))
                 {
                     // 만약 플레이어 캐릭터가 탐색 레이에 발견됐다면, 취소.
-                    if (hit.transform.name.Equals(this.playerName))
-                    { playerWatchingTarget = null; GameManager.Instance.gameUI_SC.enableTargetUI(false); }
-                    //Debug.Log("Player Searching! : " +hit.transform.name);
-
-                    else if (!ReferenceEquals(hit.transform.gameObject,playerWatchingTarget))
+                    if (!ReferenceEquals(dummy,playerWatchingTarget))
                     {
-                        playerWatchingTarget = hit.transform.gameObject;
+                        playerWatchingTarget = dummy;
                         GameManager.Instance.gameUI_SC.enableTargetUI(true, playerWatchingTarget);
                     }
                 }
@@ -283,7 +298,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                     case MoonHeader.GameState.Gaming:
                         // 미니언, 플레이어, 포탑 제외 나머지를 클릭시 실행 안됨.
                         //if (!hit.transform.CompareTag("Minion") && !hit.transform.CompareTag("PlayerMinion") && !hit.transform.CompareTag("Turret") && !hit.transform.CompareTag("Nexus")) { return; }
+
                         I_Actor dummy = hit.transform.GetComponentInParent<I_Actor>();
+                        
                         if (ReferenceEquals(dummy, null)) { return; }
 
                         // 현재 미니언이 클릭되어 있으나, 다른 미니언을 클릭하였다면, 전에 클릭했던 미니언의 아이콘을 원래 상태로 복구
@@ -465,9 +482,12 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         GameManager.Instance.gameUI.SetActive(true);
         GameManager.Instance.gameUI_SC.playerHealth(playerMinion);
 
-        Vector3 dummyPosition = mapcamSub_Target.transform.position;
-        Quaternion dummyRotation = mapcamSub_Target.transform.rotation;
+        Transform dummy_m = mapcamSub_Target.transform;
         mapcamSub_Target.GetComponent<LSM_MinionCtrl>().MinionDisable();
+
+        Vector3 dummyPosition = dummy_m.position;
+        Quaternion dummyRotation = dummy_m.rotation;
+        
 
         playerMinion.transform.position = dummyPosition;
         playerMinion.transform.rotation = dummyRotation;
@@ -490,7 +510,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     public void SetExp(int exp_dummy)
-    {exp += exp_dummy;}
+    { photonView.RPC("ExpPlus", RpcTarget.All, exp_dummy); }
+    [PunRPC] private void ExpPlus(int d) { exp += d; }
+
     public int GetExp() { return exp; }
     public int GetGold() { return gold; }
     public void GetGold(int gold_dummy) { gold += gold_dummy; }
