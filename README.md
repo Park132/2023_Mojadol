@@ -24,3 +24,10 @@ OOO_Scene.unity, OOO_PlayerCtrl.cs 이런식으로 자신이 작업한 신이나
 2. 프로젝트/Assets경로에 clone repository
 
 3. 그 다음 생성된 폴더 내에서 작업하면 됩니당
+
+## mlagents package 다운로드 받는 법
+
+1. Window -> Package Manager 열기
+2. 설정 : 'Packages:Unity Registry'
+3. ml agents 검색
+4. 다운로드(버전이 2.0.0이 넘어야 함)
