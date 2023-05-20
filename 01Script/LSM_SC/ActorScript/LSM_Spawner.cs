@@ -134,6 +134,11 @@ public class LSM_Spawner : MonoBehaviour
 
 	}
 
+	public void SliderDisable()
+	{
+		foreach (MoonHeader.S_SpawnerPaths item in spawnpoints) { item.path.GetComponent<LSM_SpawnPointSc>().pathUI.GetComponent<LSM_AttackPathUI>().InvisibleSlider(false); }
+	}
+
 	//턴이 변경될때마다 게임매니저에서 호출
 	public void ChangeTurn()
 	{

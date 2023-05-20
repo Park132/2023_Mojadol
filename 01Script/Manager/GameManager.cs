@@ -7,6 +7,8 @@ using System;
 using Photon.Pun;
 using Photon.Realtime;
 
+//탈출 제작, 낭떠러지에 빠지면 즉사.
+
 // 전체 게임에 대한 매니저.
 // LSM담당 스크립트지만 톱니바퀴 아이콘이 맘에들어서.. 머쓱
 public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
@@ -32,7 +34,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public LSM_TimerSc timerSc;			// 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
 	
 	public int numOfPlayer, numOfSkipClickedPlayer;             // 현재 플레이어의 수.
-	private bool isClickSkip;
+	public bool isClickSkip;
 	public TextMeshProUGUI turnText;	// 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
 										// # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
 	public GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
@@ -359,7 +361,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		photonView.RPC("SkipNumSynch", RpcTarget.All, numOfSkipClickedPlayer);
 		selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(false);
 		selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(true);
-
+		spawnPoints[(int)mainPlayer.player.team].GetComponent<LSM_Spawner>().SliderDisable();
     }
 	[PunRPC] private void SkipNumSynch(int num) { numOfSkipClickedPlayer = num; }
 
@@ -450,7 +452,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         SettingAttack();        // 스포너의 상태를 변경.
         SettingTurnText();      // 턴 상태 UI를 변경
         selectAttackPathUI.SetActive(true);
-		selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(false);
+        selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(true);
+        selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(false);
     }
 	[PunRPC]private void StartGameReady_RPC()
 	{
