@@ -28,7 +28,8 @@ public class HSH_FireBall : MonoBehaviour
         if (c.CompareTag("PlayerMinion"))
         {
             // ^플레이어 캐릭터와 호환하는 스크립트로 교체해야 함.
-            c.GetComponent<HSH_PatternAvoider2>().Damaged(dmg);
+            //c.GetComponent<HSH_PatternAvoider2>().Damaged(dmg);
+            c.GetComponent<I_Actor>().Damaged((short)dmg, this.transform.position ,  MoonHeader.Team.Yellow, this.gameObject);
         }
 
         Transform spawntrans = this.transform;
