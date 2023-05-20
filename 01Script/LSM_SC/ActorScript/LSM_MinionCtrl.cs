@@ -222,6 +222,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         //nav_ob.enabled = false;
         nav.enabled = true;
         nav.isStopped = false;
+        anim.SetBool("Dead", false);
 
         PlayerSelect = false;
 		timer_Searching = 0;
@@ -257,8 +258,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// 체력, 공격력, 팀
 	[PunRPC]private void MS_RPC(short mh, short atk, short t, int s, MoonHeader.AttackType typeM)
     {
-		
-		this.stats.actorHealth.Atk = atk;
+        this.stats.actorHealth.Atk = atk;
 		this.stats.actorHealth.maxHealth = mh;
 		this.stats.actorHealth.health = mh;
 		this.stats.speed = s;
@@ -366,8 +366,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 						else if (hit.transform.CompareTag("Turret"))
 						{
 							CheckingTurretTeam(hit.transform.GetComponent<LSM_TurretSc>().waypoint);
-							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_TurretSc>().stats.actorHealth.team)
-								&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;
+							different_Team = (stats.actorHealth.team != hit.transform.GetComponent<LSM_TurretSc>().stats.actorHealth.team);
+								//&& hit.transform.GetComponent<LSM_TurretSc>().TurretBelong == minionBelong;
 						}   //자신과 같은 공격로의 터렛만 대상으로 지정
 						else if (hit.transform.CompareTag("PlayerMinion"))
 						{
@@ -495,11 +495,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				// 그렇기에 Obstacle과 Agent를 서로 키고 끄고를 하는 것임. 허나 비활성화한다고 바로 비활성화되지는 않은듯함.
 				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함. 간단하게 해결하기 위하여 변환되는 순간 속도를 0으로 설정.
 
-				if (dummy_cant_attack && !nav.enabled)
+				if (dummy_cant_attack && nav.isStopped)
 				{
 					navenable_IE = NavEnable(true); StartCoroutine(navenable_IE);
 				}
-				else if (!dummy_cant_attack && nav.enabled)
+				else if (!dummy_cant_attack && !nav.isStopped)
 				{
 					navenable_IE = NavEnable(false); StartCoroutine(navenable_IE); rigid.velocity = Vector3.zero;
 				} //여기 오류. 아마도 공격이 끝나고 계속 불러오는듯.
@@ -619,6 +619,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
 			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
 		}
+		else if (other.transform.CompareTag("DamageArea"))
+		{
+			other.GetComponent<LSM_W_Slash>().orner.GetComponent<I_Characters>().AddEXP((short)stats.exp);
+		}
+
 		yield return new WaitForSeconds(2f);
 		// 골드주는 오브젝트 생성.
 		GameObject dummy_item = PoolManager.Instance.Get_Item(0);
@@ -629,10 +634,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		yield return new WaitForSeconds(1f);
 		//this.gameObject.SetActive(false);
-		anim.SetBool("Dead",false);
 		photonView.RPC("DeadP",RpcTarget.All);
 	}
-	public void MinionDisable() {photonView.RPC("DeadP",RpcTarget.MasterClient); photonView.RPC("DeadP", RpcTarget.All); }
+	public void MinionDisable() { photonView.RPC("DeadP_M", RpcTarget.MasterClient); }
 
 	public void GiveExp() 
 	{
@@ -649,14 +653,10 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	[PunRPC]protected void DeadAnim()
-	{
-		
-		anim.SetTrigger("DeadAnim");
-	}
+	{ anim.SetTrigger("DeadAnim"); }
+	[PunRPC] protected void DeadP_M() {photonView.RPC("DeadP", RpcTarget.All); this.gameObject.SetActive(false); }
 	[PunRPC]protected void DeadP()
-	{
-        this.gameObject.SetActive(false);
-    }
+	{ this.gameObject.SetActive(false); }
 
 	// LSM 변경. 모든 적의 공격이 미니언의 앞에서만 오지 않을 수 있음.
 	// 그러므로 해당 미니언의 위치를 받아와 방향 벡터를 얻고, 그 방향벡터로 일정 힘의 크기로 AddForce
@@ -715,8 +715,12 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			//nav.enabled = false;
 			yield return new WaitForSeconds(0.1f);
 			//nav_ob.enabled = true;
-			nav.isStopped = true;
-			nav.velocity = Vector3.zero;
+			if (PhotonNetwork.IsMasterClient)
+			{
+				nav.enabled = true;
+				nav.isStopped = true;
+				nav.velocity = Vector3.zero;
+			}
 		}
 		else
 		{
@@ -777,8 +781,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	{
 		PlayerSelect = false;
 		//nav_ob.enabled = false;
-		nav.enabled = true;
-		nav.isStopped = false;
+		if (PhotonNetwork.IsMasterClient)
+		{
+			nav.enabled = true;
+			nav.isStopped = false;
+		}
 
 		icon.SetActive(true);
 		playerIcon.SetActive(false);

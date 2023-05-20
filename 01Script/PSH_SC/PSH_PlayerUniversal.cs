@@ -2,13 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Unity.VisualScripting;
+
 public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters, I_Playable
 {
     GameObject playerCharacter;
     Rigidbody rigid;
 
     // 이동속도, 점프 판별 함수
-    public float speed = 15.0f;
+    public float speed = 15.0f, currentSpeed;
     bool isGrounded;
 
     // 애니메이션 부분
@@ -191,7 +193,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         ESkill();
         CoolManager();
 
-        if (attackcode == 1)
+        if (attackcode == 1 || attackcode == 2 || attackcode == 3)
         {
             timer_Combo += Time.deltaTime;
             if (timer_Combo >= 3f)
@@ -225,7 +227,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         Vector3 thisVelocity = (moveX + moveY).normalized;
         //rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime * speed);       // 웬지 모르게 fps차이에 따라서 속도가 다름...
-        this.transform.position = this.transform.position + thisVelocity * speed * Time.deltaTime * (sprint?1.5f:1f);
+        this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
 
         // 점프
         isGrounded = Physics.Raycast(this.transform.position+new Vector3(0f, 0.5f, 0f), Vector3.down, 1f, 1<<LayerMask.NameToLayer("Map"));
@@ -277,8 +279,12 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // playerCamera.transform.rotation = camerapos.transform.rotation;
     }
 
-    private void AnimatorLayerReset() { anim.SetLayerWeight(1, 0f); photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false); }
-    private void AnimatorRootMotionReset() { anim.applyRootMotion = false; photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false); }
+    private void AnimatorLayerReset() { anim.SetLayerWeight(1, 0f);
+        //photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false); 
+    }
+    private void AnimatorRootMotionReset() { anim.applyRootMotion = false; 
+        //photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, false);
+    }
 
     [PunRPC] private void WeaponTriggerEnable (bool b) {
         weapon_C.enabled = b;
@@ -320,17 +326,26 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     IEnumerator basicAttackDelay()
     {
         canAttack = false;
-        
+
         //anim.SetLayerWeight(1, 1f);
         //anim.SetTrigger("basicAttack" + attackcode.ToString());
-        StartCoroutine(weaponSC.SwordEffect(attackcode));
+        if (photonView.IsMine)
+        {
+            anim.SetLayerWeight(1,1f);
+            anim.SetTrigger("basicAttack" + attackcode.ToString());
+            StartCoroutine(weaponSC.SwordEffect(attackcode));
+            Invoke("AnimatorLayerReset", 1.3f);
+        }
+
         photonView.RPC("basicAnim_RPC",RpcTarget.All, attackcode);
 
         attackcode++;
-        yield return new WaitForSeconds(0.5f);
-        photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
-        yield return new WaitForSecondsRealtime(attackcode == 2? 3f: 1f);
-        attackcode %= 2;
+        this.currentSpeed = speed / 2;
+        //photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
+        yield return new WaitForSeconds(1.5f);
+        this.currentSpeed = speed;
+        yield return new WaitForSecondsRealtime(attackcode == 4? 2f: 0.5f);
+        attackcode %= 4;
         timer_Combo = 0;
 
         //anim.SetLayerWeight(1, 0f);
@@ -339,22 +354,27 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     }
 
     [PunRPC] private void basicAnim_RPC(int attackcode) {
+        if (photonView.IsMine)
+            return;
+
         anim.SetLayerWeight(1, 1f);
         
         anim.SetTrigger("basicAttack" + attackcode.ToString());
-        Invoke("AnimatorLayerReset", 1.5f);
+        Invoke("AnimatorLayerReset", 1.3f);
     }
-    public void AttackEffect_B(Vector3 dummypos, Vector3 n, float s) 
+
+    public void AttackEffect_B(Vector3 dummypos, Vector3 n, float s, float v, Vector3 forward_) 
     {
-        photonView.RPC("AttackEB_RPC", RpcTarget.MasterClient, dummypos, n, s);
+        photonView.RPC("AttackEB_RPC", RpcTarget.MasterClient, dummypos, n, s, v, forward_);
     }
-    [PunRPC] public void AttackEB_RPC(Vector3 dummypos, Vector3 n, float s) 
+    [PunRPC] public void AttackEB_RPC(Vector3 dummypos, Vector3 n, float s, float v, Vector3 forward_) 
     {
-        GameObject effect_d = PoolManager.Instance.Get_Particles(1, dummypos);
-        effect_d.transform.position = dummypos;
-        effect_d.transform.LookAt(this.playerCamera.transform.forward + dummypos, n);
+        GameObject effect_d = PoolManager.Instance.Get_Particles(1, dummypos, 
+            Quaternion.LookRotation(forward_, n).eulerAngles);
+        effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, this.actorHealth.Atk, this.GetComponent<I_Actor>(), v + (rigid.velocity.magnitude));
+        //effect_d.transform.LookAt(forward_ + dummypos, n);
         effect_d.transform.localScale = Vector3.one * s;
-        effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, this.actorHealth.Atk, this.GetComponent<I_Actor>(), 1f);
+        effect_d.transform.position = dummypos + forward_*3f;
     }
 
     IEnumerator Qskill()
@@ -367,7 +387,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         //anim.SetTrigger("skillQ_Trigger");
         photonView.RPC("QAnim_RPC",RpcTarget.All);
         yield return new WaitForSecondsRealtime(1.3f);
-        photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient);
+        photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient, this.playerCamera.transform.forward);
         yield return new WaitForSecondsRealtime(0.7f);
         //canQ = true;
         canAttack = true;
@@ -377,20 +397,23 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     [PunRPC] private void QAnim_RPC() {
         if (photonView.IsMine)
             anim.applyRootMotion = true;
-        photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
+        //photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
         anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset",1.65f);
     }
-    [PunRPC]private void AttackEffect_Q() 
+    [PunRPC]private void AttackEffect_Q(Vector3 forward) 
     {
-        GameObject effect_d = PoolManager.Instance.Get_Particles(2, this.transform.position);
-        effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
-            effect_d.transform.LookAt(this.playerCamera.transform.forward + effect_d.transform.position, this.transform.right);
+        Vector3 dummy_position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+
+        GameObject effect_d = PoolManager.Instance.Get_Particles(2, dummy_position
+            , Quaternion.LookRotation(forward, this.transform.right).eulerAngles);
+        
+        //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
         effect_d.transform.localScale = Vector3.one * 1.7f;
         effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 5f);
     }
 
 
-    void ESkill() // 혹시 Late Upadate에?
+    void ESkill() // 혹시 Late Upadate에? // E스킬 대대적으로 업데이트 할 예정...
     {
         if (Input.GetKeyDown(KeyCode.E) && canAttack && canE)
         {
@@ -413,7 +436,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         {
             Invoke("EskillOver", 1f);
             //canE = true;
-            photonView.RPC("EAnimE_RPC",RpcTarget.All);
+            photonView.RPC("EAnimE_RPC",RpcTarget.All, this.playerCamera.transform.forward);
         }
     }
     private void EskillOver() { canMove = true; canAttack = true; }
@@ -422,18 +445,26 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         anim.SetTrigger("skillE_Trigger");
     }
     [PunRPC] private void EAnim_Pause() { anim.speed = 0f; }
-    [PunRPC] private void EAnimE_RPC()
+    [PunRPC] private void EAnimE_RPC(Vector3 forward)
     {
-        anim.speed = 1f;
-        Invoke("AnimatorLayerReset", 1.5f);
-        if (PhotonNetwork.IsMasterClient) Invoke("AttackEffect_E", 0.5f);
+        StartCoroutine(EAnimE_IE(forward));
         //AnimatorLayerReset();
     }
-    private void AttackEffect_E()
+    private IEnumerator EAnimE_IE(Vector3 forward)
     {
-        GameObject effect_d = PoolManager.Instance.Get_Particles(3, this.transform.position);
-        effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
-        effect_d.transform.LookAt(this.playerCamera.transform.forward + effect_d.transform.position, this.transform.right);
+        anim.speed = 1f;
+        yield return new WaitForSeconds(0.5f);
+        if (PhotonNetwork.IsMasterClient) AttackEffect_E(forward);
+        yield return new WaitForSeconds(1f);
+        AnimatorLayerReset();
+    }
+    private void AttackEffect_E(Vector3 forward)
+    {
+        Vector3 dummy_position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+        GameObject effect_d = PoolManager.Instance.Get_Particles(3, dummy_position
+            , Quaternion.LookRotation(forward, this.transform.right).eulerAngles);
+        //effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+        //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
         effect_d.transform.localScale = Vector3.one * 1.7f;
         effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 2f), this.GetComponent<I_Actor>(), 8f);
     }
@@ -520,6 +551,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         canQ = true;
         cameraCanMove = true;
         invertCamera = false;
+        currentSpeed = speed;
         timer_E = 0;
         timer_Q = 0;
     }
@@ -532,6 +564,10 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         this.playerName = name;
         this.actorHealth.team = (MoonHeader.Team)t;
         this.actorHealth.type = MoonHeader.AttackType.Melee;
+        foreach (LSM_PlayerCtrl sc in GameManager.Instance.players)
+        {
+            if (sc.playerName.Equals(name)) { myPlayerCtrl = sc; break; }
+        }
         //if (selected_e)
             //Unselected();
 
@@ -548,9 +584,9 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
             return;
-        if (this.actorHealth.health - dam <= 0)
-        { StartCoroutine(DeadProcessing(other)); }
-        else
+        if (this.actorHealth.health - dam <= 0 && state_p != MoonHeader.State_P_Minion.Dead)
+        {state_p = MoonHeader.State_P_Minion.Dead; StartCoroutine(DeadProcessing(other)); }
+        else if (this.actorHealth.health - dam > 0)
         {
             photonView.RPC("Dam_RPC", RpcTarget.All, dam, origin);
         }

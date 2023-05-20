@@ -358,7 +358,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		numOfSkipClickedPlayer += 1;
 		photonView.RPC("SkipNumSynch", RpcTarget.All, numOfSkipClickedPlayer);
 		selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(false);
-	}
+		selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(true);
+
+    }
 	[PunRPC] private void SkipNumSynch(int num) { numOfSkipClickedPlayer = num; }
 
 	// 게임 진행 중 모든 상황을 처리하는 함수.
@@ -448,6 +450,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         SettingAttack();        // 스포너의 상태를 변경.
         SettingTurnText();      // 턴 상태 UI를 변경
         selectAttackPathUI.SetActive(true);
+		selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(false);
     }
 	[PunRPC]private void StartGameReady_RPC()
 	{
@@ -471,6 +474,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         foreach (GameObject s in spawnPoints)       // 모든 마스터 스포너에게 현재 최대 설정 가능한 포인트 만큼 설정하였는지 확인하는 함수 실행.
         { s.GetComponent<LSM_Spawner>().CheckingSelectMon(); }
         selectAttackPathUI.SetActive(false);
+
     }
 	[PunRPC]private void GamingEnd_RPC()
 	{
@@ -640,11 +644,21 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	// 매개변수로 받는 팀은 패배 팀.
 	public void GameEndingProcess(MoonHeader.Team t)
 	{
+		photonView.RPC("GameEP_RPC", RpcTarget.AllBuffered, (int)t);
+		/*
 		ScreenFade(false);
 		gameState = MoonHeader.GameState.Ending;
 		StartCoroutine(mainPlayer.AttackPathSelectSetting());
 		Cursor.lockState = CursorLockMode.None;
 		Debug.Log("Team " +t.ToString() + " Lose");
-
+		*/
 	}
+	[PunRPC] private void GameEP_RPC(int t) 
+	{
+        ScreenFade(false);
+        gameState = MoonHeader.GameState.Ending;
+        StartCoroutine(mainPlayer.AttackPathSelectSetting());
+        Cursor.lockState = CursorLockMode.None;
+        Debug.Log("Team " + ((MoonHeader.Team)t).ToString() + " Lose");
+    }
 }

@@ -42,11 +42,12 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
         PoolManager.Instance.poolList_Particles[index].Add(this.gameObject);
     }
 
-    public void ParticleEnable(Vector3 position_)
-    {photonView.RPC("ParticleEnable_RPC", RpcTarget.All, position_);}
-    [PunRPC]private void ParticleEnable_RPC(Vector3 position_)
+    public void ParticleEnable(Vector3 position_, Vector3 rot)
+    {photonView.RPC("ParticleEnable_RPC", RpcTarget.All, position_, rot);}
+    [PunRPC]private void ParticleEnable_RPC(Vector3 position_, Vector3 rot)
     {
         this.gameObject.SetActive(true);
         this.transform.position = position_;
+        this.transform.rotation = Quaternion.Euler(rot);
     }
 }

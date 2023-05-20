@@ -15,7 +15,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	protected float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
 
     public MoonHeader.S_TurretStats stats;			// 터렛의 상태에 대한 구조체
-	protected GameObject mark;						// TopView에서 플레이어에게 보여질 아이콘
+	public GameObject mark, mark_obj;						// TopView에서 플레이어에게 보여질 아이콘
 	protected float timer, timer_attack;				// 탐색, 공격에 사용될 타이머
 	protected float searchRadius;                       // 탐색 범위
 	protected float maxAttackRadius;
@@ -26,7 +26,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	protected Renderer[] bodies;  // 색상을 변경할 렌더러.
 
 	public GameObject waypoint;
-	public int TurretBelong;                        // 터렛의 위치
+	//public int TurretBelong;                        // 터렛의 위치
 													// # 터렛의 경로에 따라서 번호를 다르게 설정. 해당 경로와 동일하게 숫자가 같도록 설정.
 													//protected PhotonView photonView;
 	public GameObject CameraPos;
@@ -58,10 +58,15 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	{
 		// 초기화
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
-		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], transform);
+		mark = GameObject.Instantiate(PrefabManager.Instance.icons[3], GameManager.Instance.mapUI.transform);
+		mark_obj = GameManager.Instantiate(PrefabManager.Instance.icons[6], transform);
+		mark.GetComponent<LSM_TurretIconUI>().Setting(this.gameObject);
 		//mark.transform.parent = GameManager.Instance.teamManagers[(int)stats.actorHealth.team].transform;
-		mark.transform.localPosition = new Vector3(5,30,-5);
+		mark_obj.transform.localPosition = new Vector3(0,30,0);
+		mark_obj.transform.rotation= Quaternion.Euler(90,0,0);
+
 		waypoint = this.transform.parent.gameObject;
+
 		// health, atk
 
 		// 디버그용으로 미리 설정.
@@ -89,38 +94,53 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	// 팀에 해당하는 색으로 변경.
-	public void ChangeTeamColor() { ChangeTeamColor(mark); }
+	public void ChangeTeamColor() {
+		Color dummy_c = ChooseColor();
+		mark.GetComponent<LSM_TurretIconUI>().currentUI.color = dummy_c;
+		mark.GetComponent<LSM_TurretIconUI>().teamUI.color= dummy_c;
+		mark_obj.GetComponent<Renderer>().material.color = dummy_c;
+	}
 	public void ChangeTeamColor(GameObject obj)
 	{
-		Color dummy_c = Color.white;
-
-		switch (stats.actorHealth.team)
-		{
-			case MoonHeader.Team.Red:
-				dummy_c = Color.red;
-				break;
-			case MoonHeader.Team.Blue:
-				dummy_c = Color.blue;
-				break;
-			default:
-				dummy_c = Color.yellow;
-				break;
-		}
+		Color dummy_c = ChooseColor();
 		obj.GetComponent<Renderer>().material.color = dummy_c;
 		//bodies[0].GetComponent<Renderer>().material.color = dummy_c;
 	}
-
-	protected void Update()
+	private Color ChooseColor() 
 	{
-		if (!PhotonNetwork.IsMasterClient)
-			return;
-		// 게임 중일때만 실행되도록 설정
-		if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
-		{
-			SearchingTarget();
-			AttackTarget();
-		}
+        Color dummy_c = Color.white;
 
+        switch (stats.actorHealth.team)
+        {
+            case MoonHeader.Team.Red:
+                dummy_c = Color.red;
+                break;
+            case MoonHeader.Team.Blue:
+                dummy_c = Color.blue;
+                break;
+            default:
+                dummy_c = Color.yellow;
+                break;
+        }
+		return dummy_c;
+    }
+
+	protected virtual void Update()
+	{
+		if (GameManager.Instance.onceStart)
+		{
+			if (GameManager.Instance.mainPlayer.MapCam.activeSelf) { mark_obj.SetActive(false); }
+			else { mark_obj.SetActive(true); }
+
+			if (!PhotonNetwork.IsMasterClient)
+				return;
+			// 게임 중일때만 실행되도록 설정
+			if (GameManager.Instance.gameState == MoonHeader.GameState.Gaming)
+			{
+				SearchingTarget();
+				AttackTarget();
+			}
+		}
 	}
 
 	// I_Actor 인터페이스에 포함되어잇는 함수.
@@ -135,7 +155,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		if (this.stats.actorHealth.health <= 0) {
 			this.stats.actorHealth.team = t;
-			this.stats.actorHealth.health = 10;
+			this.stats.actorHealth.health = (short)(this.stats.actorHealth.maxHealth/2);
 			DestroyProcessing(other);
 			photonView.RPC("DestroyProcessing_RPC", RpcTarget.All);
 		}
@@ -156,7 +176,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 
 	// 데미지를 입을 경우 색상 변경.
-    protected IEnumerator DamagedEffect()
+    protected virtual IEnumerator DamagedEffect()
     {
 		Color damagedColor = new Color32(255, 150, 150, 255);
 		Color recovered = Color.white;
@@ -266,7 +286,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 							}
 						}
 					}
-					if (!can_attack_dummy) return;
+					if (!can_attack_dummy) {target = null; return; }
 
 					// 팀에 따라 제너릭 함수를 따로 사용.
 					switch (target.tag)
@@ -319,7 +339,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         icon_ren.materials = icon_materialL.ToArray();
 		selected_e = true;
 		*/
-        this.mark.GetComponent<Renderer>().material.color = MoonHeader.SelectedColors[(int)this.stats.actorHealth.team];
+        this.mark.GetComponent<LSM_TurretIconUI>().currentUI.color = MoonHeader.SelectedColors[(int)this.stats.actorHealth.team];
     }
 
     public void Unselected()
