@@ -234,7 +234,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, Vector3.down*1f, Color.red);
         //bool canJump = !isGrounded;
 
-        //anim.SetBool("InAir", !isGrounded);
+        anim.SetBool("InAir", !isGrounded);
 
 
         //anim.SetBool("isJump", !canJump && canQ);

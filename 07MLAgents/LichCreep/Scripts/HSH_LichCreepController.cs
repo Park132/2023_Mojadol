@@ -15,22 +15,21 @@ public enum LichStat
 
 public class HSH_LichCreepController : MonoBehaviour
 {
-    public CreepInfo lichinfo; //크립 관련 정보
-    public LichStat lichstat;
+    CreepInfo lichinfo; //크립 관련 정보
+    LichStat lichstat;
 
     public bool doOnlyOnce; //coroutine을 한 번만 실행
     Transform initTrans;
-    private LSM_CreepCtrl creepCtrl;
 
     public GameObject triggerBox;
     public GameObject spellFieldGenerator, fireBallThrower;  //투사체, 장판 패턴을 담당하는 Agent들
     public List<GameObject> Player;
 
-
     Animator anim;
     Rigidbody rb;
 
-    private void Awake()    
+    // Start is called before the first frame update
+    void Start()
     {
         lichinfo = new CreepInfo();
         lichinfo.hp = 100f;
@@ -44,7 +43,6 @@ public class HSH_LichCreepController : MonoBehaviour
 
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
-        creepCtrl = this.GetComponent<LSM_CreepCtrl>();
 
         //플레이어가 없으면 모든 패턴 비활성화
         fireBallThrower.SetActive(false);
@@ -54,8 +52,7 @@ public class HSH_LichCreepController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        //AnimCtrl();
+        AnimCtrl();
         lichinfo.isHero = triggerBox.GetComponent<HSH_TriggerBox>().isTherePlayer;  //트리거 박스로부터 플레이어 존재 여부를 받아옴
 
         //크립룸 안에 플레이어가 있는가?
@@ -71,6 +68,7 @@ public class HSH_LichCreepController : MonoBehaviour
             if(!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
             {
                 doOnlyOnce = false;
+                fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.cooltime = 4.0f;
                 StartCoroutine(DelayedAttack());
             }
         }
@@ -127,13 +125,11 @@ public class HSH_LichCreepController : MonoBehaviour
 
     IEnumerator DelayedAttack() //애니메이션과 공격 패턴이 같은 타이밍에 재생되게끔 하는 함수
     {
-        doOnlyOnce = false;
         yield return new WaitForSeconds(fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.cooltime - 0.73f);
 
         if (lichinfo.isHero)
         {
             lichstat = LichStat.Attack;
-            AnimCtrl();
         }
         doOnlyOnce = true;
     }
