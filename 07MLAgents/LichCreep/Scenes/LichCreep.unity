@@ -268,6 +268,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4002660774089984722, guid: 5c6f649ca8602394f8945c9425e08df5, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 5022602860645237092, guid: 31098a7dbb7cff948bedf8f00fe82af8, type: 3}
     - target: {fileID: 6171551022069532646, guid: 5c6f649ca8602394f8945c9425e08df5, type: 3}
       propertyPath: m_Name
       value: CreepEnv
