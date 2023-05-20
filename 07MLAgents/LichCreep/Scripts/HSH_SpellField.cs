@@ -23,7 +23,8 @@ public class HSH_SpellField : MonoBehaviour
     {
         if (c.CompareTag("PlayerMinion"))
         {
-            c.GetComponent<HSH_PatternAvoider>().Damaged(dmg);
+            //c.GetComponent<HSH_PatternAvoider>().Damaged(dmg);
+            c.GetComponent<I_Actor>().Damaged((short)dmg, this.transform.position, MoonHeader.Team.Yellow, this.gameObject);
         }
     }
 }

@@ -9,16 +9,20 @@ public class HSH_TriggerBox : MonoBehaviour
     public GameObject LichCreep;
     public bool isTherePlayer;
     int playerCount;
+
     // Start is called before the first frame update
     void Start()
     {
         isTherePlayer = false;
         playerCount = 0;
+        
     }
 
     // Update is called once per frame
     void Update()
     {
+        //Debug.Log(Mathf.Sign(Vector3.Dot(this.transform.forward, (d.transform.position - this.transform.position).normalized)));
+
         if(playerCount > 0)
         {
             isTherePlayer = true;
@@ -35,13 +39,13 @@ public class HSH_TriggerBox : MonoBehaviour
         //TriggerExit할 때 플레이어의 위치가 방 안쪽인가?
         //크립 룸 각도에 따라 새로 설정해야 할 수도 있습니다.
         //if ((c.CompareTag("RedTeam") || c.CompareTag("BlueTeam")) && c.transform.position.z >this.transform.position.z)
-        if (c.CompareTag("PlayerMinion") && c.transform.position.z > this.transform.position.z)
+        if (c.CompareTag("PlayerMinion") && Mathf.Sign(Vector3.Dot(this.transform.forward,(c.transform.position - this.transform.position).normalized)) > 0)
         {
             playerCount++;
             LichCreep.GetComponent<HSH_LichCreepController>().Player.Add(c.gameObject);
         }
 
-        else if (c.CompareTag("PlayerMinion") && c.transform.position.z <= this.transform.position.z)
+        else if (c.CompareTag("PlayerMinion") && Mathf.Sign(Vector3.Dot(this.transform.forward, (c.transform.position - this.transform.position).normalized)) < 0)
         {
             playerCount--;
             LichCreep.GetComponent<HSH_LichCreepController>().Player.Remove(c.gameObject);

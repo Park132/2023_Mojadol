@@ -12,6 +12,7 @@ public class MoonHeader : MonoBehaviour
 															// Ready: 현재 해당 GameState를 진행할 수 있음, Processing: 해당 GameState를 진행 중, End: 해당 GameState를 끝마침.
 	public enum SpawnerState { None, Setting, Spawn };		// 스포너의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안함, Setting: SettingAttackPath 상태일때 스포너를 조정하는 단계, Spawn: 스포너가 동작하는 중.
+	public enum CreepStat { Idle, Idle_Combat, Attack, Death }
 	public enum State_P { None, Selected , Possession};     // 플레이어의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안하는 중. 주로 TopView 시점에서의 상태, Seleted: 미니언을 클릭한 시점, Possession: 빙의 중.
 	public enum State_P_Minion { Normal=0, Dead=1 };			// 플레이어미니언의 현재 상태를 나타내기 위해 사용.
@@ -45,6 +46,38 @@ public class MoonHeader : MonoBehaviour
 		public State_P statep;	// 현재 플레이어의 상태에 대한 변수
 		public Team team;		// 현재 플레이어의 팀
 	}
+
+	[Serializable]
+	public struct S_CreepStats
+	{
+		public CreepStat state;
+		public S_ActorState actorHealth;
+		public int exp, gold;
+
+		public void Setting(short mh, short atk, int e, int g) 
+		{ actorHealth = new S_ActorState(mh, atk, Team.Yellow, AttackType.None);
+			exp = e; gold = g;
+		}
+
+		public ulong SendDummyMaker()
+		{
+            ulong send_dummy = 0;
+            send_dummy += ((ulong)actorHealth.maxHealth & (ulong)ushort.MaxValue);
+            send_dummy += ((ulong)(actorHealth.health) & (ulong)ushort.MaxValue) << 16;
+            send_dummy += ((ulong)(actorHealth.Atk) & (ulong)ushort.MaxValue) << 32;
+            send_dummy += ((ulong)(state) & (ulong)byte.MaxValue) << 48;
+            return send_dummy;
+        }
+
+        public void ReceiveDummy(ulong receive_dummy)
+        {
+            actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+            actorHealth.health = (short)((receive_dummy >> 16) & (ulong)ushort.MaxValue);
+            actorHealth.Atk = (short)((receive_dummy >> 32) & (ulong)ushort.MaxValue);
+            state = (MoonHeader.CreepStat)((receive_dummy >> 48) & (ulong)byte.MaxValue);
+
+        }
+    }
 
 	[Serializable]
 	public struct S_MinionStats		// 미니언의 상태에 관련된 구조체.
