@@ -68,6 +68,7 @@ public class HSH_LichCreepController : MonoBehaviour
             if(!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
             {
                 doOnlyOnce = false;
+                fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.cooltime = 4.0f;
                 StartCoroutine(DelayedAttack());
             }
         }
@@ -124,7 +125,6 @@ public class HSH_LichCreepController : MonoBehaviour
 
     IEnumerator DelayedAttack() //애니메이션과 공격 패턴이 같은 타이밍에 재생되게끔 하는 함수
     {
-        doOnlyOnce = false;
         yield return new WaitForSeconds(fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.cooltime - 0.73f);
 
         if (lichinfo.isHero)
