@@ -36,6 +36,10 @@ public class PSH_LobbyCtrl : MonoBehaviour
 
     // Hero Magician Shaman
     public int selectcode = 0; // 밖으로 보낼 코드가 될거임
+    bool once = true; // 초기 선택
+
+    // UI variables
+    public bool keyEnable = false;
 
     private void Awake()
     {
@@ -52,11 +56,6 @@ public class PSH_LobbyCtrl : MonoBehaviour
         cam.transform.rotation = cameraBoom.transform.rotation;
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     // Update is called once per frame
     void Update()
@@ -64,55 +63,63 @@ public class PSH_LobbyCtrl : MonoBehaviour
         cam.transform.position = cameraBoom.transform.position;
         cam.transform.rotation = cameraBoom.transform.rotation;
         currentLerpTime += Time.deltaTime;
-        
-        if(Input.GetKeyDown(KeyCode.LeftArrow) && !isMoving)
-        {
-            if(selectcode == 0) selectcode = 2; else selectcode--;
-            PlayerPrefs.SetInt("CharacterCode", selectcode);
-            currentLerpTime = 0.0f;
-            WhichLook(selectcode);
-            tempLight = maxLightIntensity[selectcode] / lightingTime;
-            StartCoroutine(HighLightControl(lerpTime+0.1f, selectcode));
-        }
-        else if(Input.GetKeyDown(KeyCode.RightArrow) && !isMoving)
-        {
-            if (selectcode == 2) selectcode = 0; else selectcode++;
-            PlayerPrefs.SetInt("CharacterCode", selectcode);
-            currentLerpTime = 0.0f;
-            WhichLook(selectcode);
-            tempLight = maxLightIntensity[selectcode] / lightingTime;
-            StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
-        }
 
-        if(runCoroutineTimer)
+        if(keyEnable)
         {
-            coroutineTimer += Time.deltaTime;
             
+            if (Input.GetKeyDown(KeyCode.LeftArrow) && !isMoving)
+            {
+                if (selectcode == 0) selectcode = 2; else selectcode--;
+                GameObject.Find("LobbyUIManager").GetComponent<PSH_LobbyUI>().characterCode = selectcode;
+                PlayerPrefs.SetInt("CharacterCode", selectcode);
+                currentLerpTime = 0.0f;
+                WhichLook(selectcode);
+                tempLight = maxLightIntensity[selectcode] / lightingTime;
+                StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
+            }
+            else if (Input.GetKeyDown(KeyCode.RightArrow) && !isMoving)
+            {
+                if (selectcode == 2) selectcode = 0; else selectcode++;
+                GameObject.Find("LobbyUIManager").GetComponent<PSH_LobbyUI>().characterCode = selectcode;
+                PlayerPrefs.SetInt("CharacterCode", selectcode);
+                currentLerpTime = 0.0f;
+                WhichLook(selectcode);
+                tempLight = maxLightIntensity[selectcode] / lightingTime;
+                StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
+            }
+
+            if (runCoroutineTimer)
+            {
+                coroutineTimer += Time.deltaTime;
+
+            }
+
+
+            if (isLighting)
+            {
+                if (highlights[selectcode].intensity < maxLightIntensity[selectcode])
+                {
+                    highlights[selectcode].intensity += tempLight * Time.deltaTime;
+                }
+                else if (highlights[selectcode].intensity >= maxLightIntensity[selectcode])
+                {
+                    isLighting = false;
+                }
+            }
+
+            if (currentLerpTime >= lerpTime)
+                currentLerpTime = lerpTime;
+
+            float temp = currentLerpTime / lerpTime;
+            // temp = Mathf.Sin(temp * Mathf.PI * 0.5f);
+            temp = temp * temp * temp * (temp * (6f * temp - 15f) + 10f);
+
+            cameraBoom.transform.position = Vector3.Lerp(currentCamPos, camMovePos, temp);
+            cameraLookBoom.transform.position = Vector3.Lerp(currentCamLookPos, camLookPos, temp);
+            cameraBoom.transform.LookAt(cameraLookBoom.transform.position);
         }
+
         
-
-        if (isLighting)
-        {
-            if (highlights[selectcode].intensity < maxLightIntensity[selectcode])
-            {
-                highlights[selectcode].intensity += tempLight * Time.deltaTime;
-            }
-            else if(highlights[selectcode].intensity >= maxLightIntensity[selectcode])
-            {
-                isLighting = false;
-            }
-        }
-
-        if(currentLerpTime >= lerpTime)
-            currentLerpTime = lerpTime;
-
-        float temp = currentLerpTime / lerpTime;
-        // temp = Mathf.Sin(temp * Mathf.PI * 0.5f);
-        temp = temp * temp * temp * (temp * (6f * temp - 15f) + 10f);
-
-        cameraBoom.transform.position = Vector3.Lerp(currentCamPos, camMovePos, temp);
-        cameraLookBoom.transform.position = Vector3.Lerp(currentCamLookPos, camLookPos, temp);
-        cameraBoom.transform.LookAt(cameraLookBoom.transform.position);
     }
 
     void WhichLook(int code)
