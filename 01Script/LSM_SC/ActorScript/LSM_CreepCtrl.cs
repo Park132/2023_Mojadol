@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
+using Newtonsoft.Json.Bson;
 
 public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters
 {
@@ -47,7 +48,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     {
         rigid = this.GetComponent<Rigidbody>();
 
-        icon = GameObject.Instantiate(PrefabManager.Instance.icons[0], transform);
+        icon = GameObject.Instantiate(PrefabManager.Instance.icons[11], transform);
         icon.transform.localPosition = new Vector3(0, 40, 0);
         icon.GetComponent<Renderer>().material.color = Color.yellow;
         bodies = this.transform.GetComponentsInChildren<Renderer>();
@@ -57,6 +58,14 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
 
         // 디버그용 maxHealth, Atk, Exp, Gold
         stat.Setting(100, 10, 1000, 1000);
+    }
+
+    public void ResetCreep()
+    {
+        this.stat.state = MoonHeader.CreepStat.Idle;
+        stat.actorHealth.health = stat.actorHealth.maxHealth;
+        this.mainCtrl.RegenProcessing();
+        foreach (Renderer item in bodies) { item.enabled = true; }
     }
 
     // Update is called once per frame
@@ -84,6 +93,9 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         }
         return;
     }
+
+    public void Enable_Generator(bool b) { photonView.RPC("E_RPC", RpcTarget.All, b); }
+    [PunRPC] private void E_RPC(bool b) { mainCtrl.spellFieldGenerator.SetActive(false); }
 
     [PunRPC]
     protected void DamMinion_RPC()
@@ -130,10 +142,8 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
 
         yield return new WaitForSeconds(2f);
         // 골드주는 오브젝트 생성.
-        GameObject dummy_item = PoolManager.Instance.Get_Item(0);
         //dummy_item.transform.position = this.transform.position;
-        dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold, this.transform.position);
-        GiveExp();
+        
 
 
         yield return new WaitForSeconds(1f);
@@ -142,7 +152,20 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     }
     [PunRPC]
     protected void DeadAnim()
-    { this.mainCtrl.lichstat = LichStat.Death; mainCtrl.AnimCtrl(); }
+    { 
+        mainCtrl.DeadProcessing();
+        PoolManager.Instance.Get_Local_Item(1).transform.position = this.transform.position + Vector3.up * 1.5f;
+        Invoke("Dead_renderer_disable", 5f);
+    }
+    private void Dead_renderer_disable() { 
+        foreach (Renderer item in bodies) { item.enabled = false; }
+        for (int i = 0; i < 5; i++)
+        {
+            GameObject dummy_item = PoolManager.Instance.Get_Item(0);
+            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 3f);
+        }
+        GiveExp();
+    }
 
     public void GiveExp()
     {
@@ -199,9 +222,6 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     }
 
     public void Unselected()
-    {
-        
-
-    }
+    {    }
     #endregion
 }

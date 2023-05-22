@@ -21,7 +21,7 @@ public class HSH_SpellFieldGenerator : Agent
         pinfo = new PatternInfo();
         pinfo.cooltime = COOLTIME;
         pinfo.isCool = false;
-        pinfo.dmg = 2f;
+        pinfo.dmg = 20f;
         isRun = false;
         spd = 17;
 
@@ -135,16 +135,23 @@ public class HSH_SpellFieldGenerator : Agent
         rb.velocity = new Vector3(0f, 0f, 0f) * 0f;  //조준 장판 정지
         Transform spawnPos = this.transform;    //조준 장판 위치 == 데미지 필드 소환 위치
 
-        GameObject af = Instantiate(AlertField, spawnPos);  //경고!
+        GameObject af = PoolManager.Instance.Get_Particles(5, spawnPos.position);
+            //Instantiate(AlertField, spawnPos);  //경고!
 
         yield return new WaitForSeconds(0.5f);
 
-        Destroy(af);    //경고 장판 제거
-        GameObject sf = Instantiate(SpellField, spawnPos);  //공격!
+        //Destroy(af);    //경고 장판 제거
+        af.GetComponent<ParticleAutoDisable>().ParticleDisable();
+
+        GameObject sf = PoolManager.Instance.Get_Particles(6, spawnPos.position);
+            //Instantiate(SpellField, spawnPos);  //공격!
+        sf.GetComponent<HSH_SpellField>().Setting((int)pinfo.dmg);
 
         yield return new WaitForSeconds(0.5f);
 
-        Destroy(sf);    //공격 장판 제거
+        //Destroy(sf);    //공격 장판 제거
+        sf.GetComponent<ParticleAutoDisable>().ParticleDisable();
+
         pinfo.cooltime = COOLTIME;  //쿨타임 초기화
         pinfo.isCool = true;
 

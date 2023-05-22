@@ -142,4 +142,12 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
         this.PathUI_ChangeMaxValue();
 		this_teamSpawner.ChangePathNumber();
     }
+
+	public void ExpAdding(int e)
+	{
+		foreach(LSM_PlayerCtrl item in this_teamPlayers)
+		{
+			item.SetExp(e);
+		}
+	}
 }

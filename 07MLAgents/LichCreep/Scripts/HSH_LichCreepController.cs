@@ -1,3 +1,4 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -54,33 +55,56 @@ public class HSH_LichCreepController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+        for (int i = Player.Count-1; i >= 0; i--)
+        {
+            if (!Player[i].activeSelf)
+            {
+                Player.Remove(Player[i]);
+            }
+        }
 
         //AnimCtrl();
-        lichinfo.isHero = triggerBox.GetComponent<HSH_TriggerBox>().isTherePlayer;  //트리거 박스로부터 플레이어 존재 여부를 받아옴
+        //lichinfo.isHero = triggerBox.GetComponent<HSH_TriggerBox>().isTherePlayer;  //트리거 박스로부터 플레이어 존재 여부를 받아옴
+        lichinfo.isHero = Player.Count > 0;
 
         //크립룸 안에 플레이어가 있는가?
-        if (lichinfo.isHero)    //네
+        if (lichinfo.isHero && lichstat != LichStat.Death)    //네
         {
             lichstat = LichStat.Idle_Combat;
+            AnimCtrl();
             LookAtMostCloseOne();
 
             //패턴 활성화
             fireBallThrower.SetActive(true);
             spellFieldGenerator.SetActive(true);
+            if (!spellFieldGenerator.activeSelf)
+                creepCtrl.Enable_Generator(true);
 
-            if(!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
+            if (!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
             {
                 doOnlyOnce = false;
                 StartCoroutine(DelayedAttack());
             }
         }
-        else    //아니요
+        else if (lichstat != LichStat.Death)    //아니요
         {
             lichstat = LichStat.Idle;
-
+            AnimCtrl();
             //모든 패턴 비활성화
             fireBallThrower.SetActive(false);
             spellFieldGenerator.SetActive(false);
+            if (spellFieldGenerator.activeSelf)
+                creepCtrl.Enable_Generator(false);
+        }
+
+        if (lichstat == LichStat.Death)
+        {
+            fireBallThrower.SetActive(false);
+            spellFieldGenerator.SetActive(false);
+            if (spellFieldGenerator.activeSelf)
+                creepCtrl.Enable_Generator(false);
         }
 
         if(lichinfo.hp <= 0)
@@ -88,6 +112,20 @@ public class HSH_LichCreepController : MonoBehaviour
             lichstat = LichStat.Death;
         }
     }
+
+    public void DeadProcessing() 
+    {
+        lichstat = LichStat.Death;
+        anim.SetBool("Death_B", true);
+        AnimCtrl();
+    }
+    public void RegenProcessing()
+    {
+        lichstat = LichStat.Idle;
+        anim.SetBool("Death_B", false);
+        AnimCtrl();
+    }
+
 
     public void AnimCtrl()
     {
@@ -137,4 +175,5 @@ public class HSH_LichCreepController : MonoBehaviour
         }
         doOnlyOnce = true;
     }
+
 }

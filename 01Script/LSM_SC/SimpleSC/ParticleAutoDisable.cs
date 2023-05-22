@@ -7,24 +7,29 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
 {
     ParticleSystem ps;
     bool alive;
-    private void Start()
+    float timer = 0;
+
+    private void Awake()
     {
         ps = this.GetComponent<ParticleSystem>();
         if (PhotonNetwork.IsMasterClient)
             StartCoroutine(CheckAlive());
     }
+    
     private void OnEnable()
     {
         if (PhotonNetwork.IsMasterClient)
-            StartCoroutine(CheckAlive());
+        { StartCoroutine(CheckAlive()); timer = 0f; }
     }
     private IEnumerator CheckAlive()
     {
         while (alive)
         {
             yield return new WaitForSeconds(0.5f);
-            if (!ps.isPlaying)
+            timer += 0.5f;
+            if (!ps.isPlaying || timer >= 10f)
             {
+                timer = 0;
                 Debug.Log("particle disable!");
                 photonView.RPC("ParticleDisable_RPC", RpcTarget.All);
                 break;
@@ -49,5 +54,10 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
         this.gameObject.SetActive(true);
         this.transform.position = position_;
         this.transform.rotation = Quaternion.Euler(rot);
+    }
+    public void Particle_Size_Setting(float s) { photonView.RPC("PS_s", RpcTarget.All, s); }
+    [PunRPC] private void PS_s(float s)
+    {
+        ps.startSize = s;
     }
 }

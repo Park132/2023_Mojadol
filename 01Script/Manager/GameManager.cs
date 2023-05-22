@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 3000f;
+	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 100f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
@@ -45,10 +45,13 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 															// gameUI: 게임 진행 중 표시되는 UI
 	public LSM_GameUI gameUI_SC;
 
-	private Image screen;							// 페이드 IN, OUT을 할 때 사용하는 이미지.
+	public Image deadScreen;
+    private Image screen;							// 페이드 IN, OUT을 할 때 사용하는 이미지.
 	public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
-	public LSM_PlayerCtrl mainPlayer;				// 현재 접속하고있는 플레이어를 저장하는 변수
+	public LSM_PlayerCtrl mainPlayer;               // 현재 접속하고있는 플레이어를 저장하는 변수
 													// # 디버깅시 MainPlayer를 지정해줘야함. 현재 아무 플레이어를 지정.
+	public LSM_CreepCtrl[] creeps;
+
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
 
 	public List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
@@ -182,6 +185,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 		wayPoints = GameObject.FindGameObjectsWithTag("WayPoint");
 		screen = GameObject.Find("Screen").GetComponent<Image>();
+		deadScreen = GameObject.Find("DeadScreen").GetComponent<Image>();
 		screen.transform.SetAsLastSibling();    // 스크린이 다른 UI를 가리도록 가장 마지막에 배치하는 코드.
         loadingUI = GameObject.Find("Loading");
 		loadingUI.transform.SetAsLastSibling();
@@ -208,7 +212,6 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{
 			players[i] = playerdummys[i].transform.GetComponent<LSM_PlayerCtrl>();
 			players[i].isMainPlayer = false;
-			
         }
 
 		mainPlayer.isMainPlayer = true;
@@ -221,6 +224,11 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			}
 
 		}
+
+		GameObject[] creepDummys = GameObject.FindGameObjectsWithTag("Creep");
+		creeps = new LSM_CreepCtrl[creepDummys.Length];
+		for (int i = 0; i < creepDummys.Length; i++) 
+		{ creeps[i] = creepDummys[i].GetComponent<LSM_CreepCtrl>(); }
 
 		// 기존 게임매니저의 상태 초기화. Default값 Ready.
 		state = MoonHeader.ManagerState.Ready;
@@ -359,8 +367,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		isClickSkip = true;
 		numOfSkipClickedPlayer += 1;
 		photonView.RPC("SkipNumSynch", RpcTarget.All, numOfSkipClickedPlayer);
-		selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(false);
-		selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(true);
+		//selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(false);
+		selectAttackPathUI.GetComponentInChildren<Button>().interactable = false ;
+        selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(true);
 		spawnPoints[(int)mainPlayer.player.team].GetComponent<LSM_Spawner>().SliderDisable();
     }
 	[PunRPC] private void SkipNumSynch(int num) { numOfSkipClickedPlayer = num; }
@@ -383,7 +392,6 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 					timerSc.TimerStart(SELECTATTACKPATHTIME);   // 게임매니저에 설정된 공격로 설정 시간만큼 타이머 시작.
 					photonView.RPC("SettingAttackPathReady_RPC", RpcTarget.AllBuffered);
 					numOfSkipClickedPlayer = 0;
-					isClickSkip = false;
 					break;
 
 				// 공격로 지정이 모두 완료 후 게임을 시작하기 전 카운트 다운
@@ -452,8 +460,12 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         SettingAttack();        // 스포너의 상태를 변경.
         SettingTurnText();      // 턴 상태 UI를 변경
         selectAttackPathUI.SetActive(true);
-        selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(true);
+        isClickSkip = false;
+		numOfSkipClickedPlayer = 0;
+        selectAttackPathUI.GetComponentInChildren<Button>().interactable = true;
+        //selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(true);
         selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(false);
+        foreach (LSM_CreepCtrl item in creeps) { item.ResetCreep(); }
     }
 	[PunRPC]private void StartGameReady_RPC()
 	{
@@ -585,18 +597,27 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 		photonView.RPC("ChangeRound_AllRemover_RPC", RpcTarget.All);
 
+		int[] dummy_exp_sum = new int[teamManagers.Length];
+
 		for (int i = 0; i < PoolManager.Instance.minions.Length; i++) {
 			foreach (GameObject minion in PoolManager.Instance.poolList_Minion[i])
 			{
 				if (minion.activeSelf)
 				{
 					LSM_MinionCtrl dummyCtrl = minion.GetComponent<LSM_MinionCtrl>();
-					teamManagers[(int)dummyCtrl.stats.actorHealth.team].exp += dummyCtrl.stats.exp;
+					dummy_exp_sum[(int)dummyCtrl.stats.actorHealth.team] += dummyCtrl.stats.exp;
+					//teamManagers[(int)dummyCtrl.stats.actorHealth.team].exp += dummyCtrl.stats.exp;
 					//minion.SetActive(false);
 					dummyCtrl.MinionDisable();
 				}
 			}
 		}
+		for (int i = 0; i < dummy_exp_sum.Length; i++)
+		{
+			DisplayAdd(string.Format("{0} 팀이 {1} 경험치를 얻었습니다.", ((MoonHeader.Team)i).ToString(), dummy_exp_sum[i]));
+			teamManagers[i].ExpAdding(dummy_exp_sum[i]);
+		}
+
 
 		for (int i = 0; i < wayPoints.Length; i++)
 		{
@@ -607,7 +628,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			}
 		}
 	}
-	[PunRPC]private void ChangeRound_AllRemover_RPC() { playerMinions[0].Clear(); playerMinions[1].Clear(); }
+	[PunRPC]private void ChangeRound_AllRemover_RPC() { playerMinions[0].Clear(); playerMinions[1].Clear(); mainPlayer.ReChargingEnerge(); }
 
 
 	// log를 최대 5개 표시하게 관리하기 위한 함수.
@@ -619,7 +640,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			timer_log = 0;
 			GameObject dummy = PoolManager.Instance.Get_UI(0);
 			dummy.GetComponentInChildren<TextMeshProUGUI>().text = logUIs_Reservation[0];
-			dummy.GetComponent<RectTransform>().anchoredPosition = new Vector3(-205, -260, 0);
+			dummy.GetComponent<RectTransform>().anchoredPosition = new Vector3(-205, -300, 0);
 			logUIs.Add(dummy);
 			logUIs_Reservation.RemoveAt(0);
 		}

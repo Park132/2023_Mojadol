@@ -70,7 +70,7 @@ public class PoolManager : MonoBehaviour
 
 
 		ReadyToStart_SpawnNum = 50;
-		ReadyToStart_SpawnNum_Particles = 30;
+		ReadyToStart_SpawnNum_Particles = 10;
 		ReadyToStart_SpawnNum_Item = 50;
     }
 

@@ -16,6 +16,8 @@ public class LSM_GameUI : MonoBehaviour
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
     public TextMeshProUGUI playerHP_txt, playerGold_txt;
 
+    public GameObject suicide_obj;
+    public Image suicide_current_gauge;
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
     public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
@@ -24,6 +26,8 @@ public class LSM_GameUI : MonoBehaviour
     private I_Actor player_ac, target_ac;
     private I_Playable player_playable;
     private GameObject target_obj;
+    
+
 
 
 	private void OnEnable()
@@ -66,6 +70,12 @@ public class LSM_GameUI : MonoBehaviour
 
             QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
+            if (player_playable.GetF() >= 0.5f)
+            {
+                suicide_obj.SetActive(true);
+                suicide_current_gauge.fillAmount = (float)player_playable.GetF() / 3f;
+            }
+            else { suicide_obj.SetActive(false); }
         }
     }
 

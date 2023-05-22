@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using static MoonHeader;
 
 public class LSM_ItemSC : MonoBehaviourPunCallbacks
 {
@@ -9,7 +10,20 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
     public bool isCollecting;
     private Rigidbody rigid;
     private IEnumerator discard_IE;
-	private void Awake()
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(this.gameObject.activeSelf);
+        }
+        else
+        {
+            this.gameObject.SetActive((bool)stream.ReceiveNext());
+        }
+    }
+
+    private void Awake()
 	{
         rigid = GetComponent<Rigidbody>();
         size = 0;
@@ -35,12 +49,18 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
     }
     public void SpawnSetting(int s, Vector3 position)
     {
+        SpawnSetting(s, position, 1);
+    }
+
+    public void SpawnSetting(int s, Vector3 position, float power)
+    {
         photonView.RPC("ReadyCollect", RpcTarget.All, true);
-        float dummyx = Random.Range(-5f, 5f), dummyz = Random.Range(-5f, 5f);
+        float dummyx = Random.Range(-5f, 5f)*power, dummyz = Random.Range(-5f, 5f) * power;
         photonView.RPC("SettingItem", RpcTarget.All, s, position, dummyx, dummyz);
         //photonView.RPC("SpawnS_RPC", RpcTarget.All, s);
         //StartCoroutine(CollectSetting());
     }
+
     private IEnumerator CollectSetting(float x, float z)
     {
         yield return new WaitForSeconds(0.1f);

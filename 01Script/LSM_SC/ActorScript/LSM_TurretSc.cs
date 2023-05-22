@@ -86,12 +86,19 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	{
 		stats = new MoonHeader.S_TurretStats(100, 6);
 		stats.actorHealth.type = MoonHeader.AttackType.Turret;
-		ChangeTeamColor();
-		ChangeTeamColor(bodies[0].gameObject);
+		
 		timer = 0;
 		target = null;
+		if (GameManager.Instance.onceStart)
+			photonView.RPC("ResetRPC",RpcTarget.All);
 
 	}
+	[PunRPC] private void ResetRPC() {
+        stats = new MoonHeader.S_TurretStats(100, 6);
+        stats.actorHealth.type = MoonHeader.AttackType.Turret;
+        ChangeTeamColor();
+        ChangeTeamColor(bodies[0].gameObject);
+    }
 
 	// 팀에 해당하는 색으로 변경.
 	public void ChangeTeamColor() {

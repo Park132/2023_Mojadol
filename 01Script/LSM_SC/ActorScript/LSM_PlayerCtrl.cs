@@ -16,6 +16,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                                             // # 이름 설정
     public MoonHeader.S_PlayerState player;   // 플레이어 상태에 대한 구조체
     const float MapCamBaseSize = 60;        // TopView 카메라의 OrthogonalSize
+    float canMapCamSize;
 
     public GameObject mySpawner;            // 팀의 마스터 스포너
     public Camera mapCamCamera;            // TopView에 사용되는 카메라
@@ -23,6 +24,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     // TopView에서의 이동속도 초기화
     private float wheelSpeed = 15f;
     private float map_move = 90f;
+    private float timer_Death, deathPenalty;
+    private bool death;
     private bool is_zoomIn;                 // 선택한 미니언에게 확대하고 있는지
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
 
@@ -67,8 +70,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Awake()
     {
-        
-        if(mySpawner == null)
+        canMapCamSize = 30;
+        if (mySpawner == null)
         {
             mySpawner = GameObject.Find("Spawner");
         }
@@ -76,7 +79,6 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             //LSM_PlayerCtrl.LocalPlayerInstance = this.gameObject;
         }
-
     }
 
     public void Start_fuction()
@@ -117,7 +119,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 LSM_Spawner sSC = s.GetComponent<LSM_Spawner>();
                 if (sSC.team == this.player.team) { mySpawner = s; break; }
             }
-            
+            timer_Death = 0;
+            death = false;
+            deathPenalty = 10f;
         }
     }
     public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTN_RPC", RpcTarget.AllBuffered, t,n); }
@@ -131,9 +135,30 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             MapEv();
             SubMapCamMove();
             PlayerInMinion();
+            ReGeneration();
+
             debugging();
         }
     }
+
+    private void ReGeneration()
+    {
+        GameManager.Instance.deadScreen.gameObject.SetActive(death);
+        if (death)
+        {
+            timer_Death += Time.deltaTime;
+            if (timer_Death % 0.5f <= 0.1f)
+                GameManager.Instance.deadScreen.GetComponentInChildren<TextMeshProUGUI>().text = Mathf.CeilToInt(deathPenalty - timer_Death).ToString();
+
+            if (timer_Death >= deathPenalty)
+            {
+                ReChargingEnerge();
+            }
+        }
+    }
+    public void ReChargingEnerge() 
+    { death = false; timer_Death = 0; }
+
 
     private void debugging()
     {
@@ -148,9 +173,10 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             // 마우스 휠에 따라 확대, 축소
             float scroll = Input.GetAxis("Mouse ScrollWheel") * wheelSpeed;
-            float camOrthoSize = Mathf.Clamp(mapCamCamera.orthographicSize - scroll, MapCamBaseSize - 30, MapCamBaseSize + 30);
+            float camOrthoSize = Mathf.Clamp(mapCamCamera.orthographicSize - scroll, MapCamBaseSize - canMapCamSize, MapCamBaseSize + canMapCamSize);
             mapCamCamera.orthographicSize = camOrthoSize;
-
+            if (!(MapMoveInBox(0, mapCamCamera.transform.position) || MapMoveInBox(1, mapCamCamera.transform.position)) || !(MapMoveInBox(2, mapCamCamera.transform.position) || MapMoveInBox(3, mapCamCamera.transform.position)))
+            { canMapCamSize--; mapCamCamera.orthographicSize -= 2; }
 
 
             // 방향키 이동에 따라서 맵의 이동
@@ -160,11 +186,24 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             Vector3 mapcamPosition_dummy = mapcamPosition + move_f;
             float width = Screen.width, height = Screen.height;
             float size_width = camOrthoSize * (width / height), size_height = camOrthoSize;
+            Vector3 size_V = new Vector3(size_width, 0, size_height);
             float cam_left = mapcamPosition_dummy.x - size_width, cam_right = mapcamPosition_dummy.x + size_width, 
                 cam_top = mapcamPosition_dummy.z + size_height, cam_bottom = mapcamPosition_dummy.z - size_height;
 
 
-            
+            MapCam.transform.position = new Vector3(
+                mapcamPosition.x + ((MapMoveInBox(0, mapcamPosition_dummy) && MapMoveInBox(1,mapcamPosition_dummy)) ? move_f.x :
+                    (!(MapMoveInBox(0, mapcamPosition )) ? LSM_MapInfo.Instance.Left - (mapcamPosition.x - size_width) :
+                    !(MapMoveInBox(1,mapcamPosition )) ? LSM_MapInfo.Instance.Right - (mapcamPosition.x + size_width) : 0)),
+
+                mapcamPosition.y,
+
+                mapcamPosition.z + ((MapMoveInBox (2, mapcamPosition_dummy)&& MapMoveInBox(3,mapcamPosition_dummy)) ? move_f.z :
+                (!(MapMoveInBox(3, mapcamPosition)) ? LSM_MapInfo.Instance.Bottom - (mapcamPosition.z - size_height) :
+                !(MapMoveInBox(2, mapcamPosition)) ? LSM_MapInfo.Instance.Top - (mapcamPosition.z + size_height) : 0))
+                );
+
+            /*
             MapCam.transform.position = new Vector3(
                 mapcamPosition.x + ((cam_left >= LSM_MapInfo.Instance.Left && cam_right <= LSM_MapInfo.Instance.Right)? move_f.x : 
                     (((mapcamPosition.x - size_width) < LSM_MapInfo.Instance.Left)? LSM_MapInfo.Instance.Left - (mapcamPosition.x - size_width) :
@@ -174,7 +213,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 (((mapcamPosition.z - size_height) < LSM_MapInfo.Instance.Bottom) ? LSM_MapInfo.Instance.Bottom - (mapcamPosition.z - size_height) :
                     ((mapcamPosition.z + size_height) > LSM_MapInfo.Instance.Top) ? LSM_MapInfo.Instance.Top - (mapcamPosition.z + size_height)  : 0))
                 );
-
+            */
             // 만약 미니언을 클릭하여 해당 미니언의 스탯을 보고있을 때 휠 또는 키보드 버튼을 클릭한다면, 클릭했던 타겟 미니언을 null로 변경. 다시 일반 상태로 변경됨.
             if (!ReferenceEquals(mapcamSub_Target, null) && (scroll != 0 || move_f != Vector3.zero))
             {
@@ -188,6 +227,39 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 minionStatsPannel.SetActive(false);
             }
         }
+    }
+
+    private bool MapMoveInBox(int n, Vector3 camPosition)
+    {
+        Vector3 mapcamPosition = camPosition;
+
+        float camOrthoSize = mapCamCamera.orthographicSize;
+        float width = Screen.width, height = Screen.height;
+        float size_width = camOrthoSize * (width / height), size_height = camOrthoSize;
+        
+        switch (n)
+        {
+            // 왼쪽
+            case 0:
+                float cam_left = mapcamPosition.x - size_width;
+                return cam_left >= LSM_MapInfo.Instance.Left;
+            // 오른쪽
+            case 1:
+                float cam_right = mapcamPosition.x + size_width;
+                return cam_right <= LSM_MapInfo.Instance.Right;
+            // 위
+            case 2:
+                float cam_top = mapcamPosition.z + size_height;
+                return cam_top <= LSM_MapInfo.Instance.Top;
+            // 아래
+            case 3:
+                float cam_bottom = mapcamPosition.z - size_height;
+                return cam_bottom >= LSM_MapInfo.Instance.Bottom;
+                // 전방위
+            case 4:
+                return (MapMoveInBox(0, camPosition) && MapMoveInBox(1,camPosition) && MapMoveInBox(2,camPosition) && MapMoveInBox(3,camPosition));
+        }
+        return false;
     }
 
     // 플레이어가 해당 미니언에 빙의/강림 하고있다면 실행 
@@ -413,12 +485,17 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             if (ReferenceEquals(mapcamSub_Target, null))
                 break;
             Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * 95;
-            MapCam.transform.position = Vector3.MoveTowards(MapCam.transform.position,
+            Vector3 dummy_position = Vector3.MoveTowards(MapCam.transform.position,
                 targetPosition, map_move * 2 * Time.deltaTime);
-            mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > MapCamBaseSize - 25) ?
-                mapCamCamera.orthographicSize - map_move * Time.deltaTime : MapCamBaseSize - 25;
+            bool dummy_inBox = MapMoveInBox(4, dummy_position);
+            MapCam.transform.position = (dummy_inBox)? dummy_position : MapCam.transform.position ;
+
+            mapCamCamera.orthographicSize = (mapCamCamera.orthographicSize > MapCamBaseSize - (canMapCamSize-3)) ?
+                mapCamCamera.orthographicSize - map_move * Time.deltaTime : MapCamBaseSize - (canMapCamSize - 3);
+
             yield return new WaitForSeconds(Time.deltaTime);
-            if (Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 && mapCamCamera.orthographicSize <= MapCamBaseSize - 25)
+
+            if ((Vector3.Distance(MapCam.transform.position, targetPosition) <= 5 || !dummy_inBox) && mapCamCamera.orthographicSize <= MapCamBaseSize - (canMapCamSize - 3))
                 break;
         }
         is_zoomIn=false;
@@ -428,7 +505,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     // select버튼 클릭 시 
     public void SelectPlayerMinion()
     {
-        if (ReferenceEquals(mapcamSub_Target, null) || ReferenceEquals(mapcamSub_Target.GetComponent<LSM_MinionCtrl>(), null)) { return; }
+        if (ReferenceEquals(mapcamSub_Target, null) || ReferenceEquals(mapcamSub_Target.GetComponent<LSM_MinionCtrl>(), null) || death) { return; }
 
         LSM_MinionCtrl dummy_minion = mapcamSub_Target.GetComponent<LSM_MinionCtrl>();
 
@@ -504,6 +581,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     public void PlayerMinionDeadProcessing()
     {
         if (isMainPlayer) {
+            death = true;
             Cursor.lockState = CursorLockMode.None;
             GameManager.Instance.gameUI.SetActive(false);
         }

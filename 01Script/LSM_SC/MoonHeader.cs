@@ -186,4 +186,5 @@ public interface I_Playable
 	public void ParentSetting_Pool(int index);
 	public void CollectingArea();
 	public void AddCollector(int s);
+	public float GetF();
 }

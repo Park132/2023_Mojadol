@@ -7,13 +7,14 @@ public class LSM_W_Slash : MonoBehaviour
 {
     public GameObject orner;
     public I_Actor orner_ac;
+    public I_Characters orner_ch;
     public int dam;
     private float speed = 1f;
     private void Update()
     {
         this.transform.position = this.transform.position + this.transform.forward * Time.deltaTime * speed;
     }
-    public void Setting(GameObject obj, int d, I_Actor ac, float v) { orner = obj; dam = d; orner_ac = ac; speed = v; }
+    public void Setting(GameObject obj, int d, I_Actor ac, float v) { orner = obj; dam = d; orner_ac = ac; speed = v; orner_ch = obj.GetComponent<I_Characters>(); }
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("Player Slash Effect Dectected : " +other.name);

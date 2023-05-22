@@ -628,7 +628,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 골드주는 오브젝트 생성.
 		GameObject dummy_item = PoolManager.Instance.Get_Item(0);
 		//dummy_item.transform.position = this.transform.position;
-		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold, this.transform.position);
+		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold, this.transform.position + Vector3.up * 0.5f);
 		GiveExp();
 
 

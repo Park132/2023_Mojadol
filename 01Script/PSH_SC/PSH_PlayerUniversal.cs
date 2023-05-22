@@ -41,7 +41,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     // 쿨타임 관련 변수.
     private float CoolTime_Q, CoolTime_E;
-    private float timer_Q, timer_E, timer_Combo;
+    private float timer_Q, timer_E, timer_Combo, timer_E_Holding, timer_F_Holder;
+    private bool pushing_F, casting_E, input_E;
 
     private float time;
 
@@ -60,6 +61,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     private MeshRenderer icon_ren;
     private List<Material> icon_materialL;
     private bool selected_e;
+
+    private IEnumerator basic_IE;
 
     public float CollectingRadius, timer_collect;
     #endregion
@@ -139,6 +142,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         icon_materialL = new List<Material>();
         selected_e = false;
         CollectingRadius = 5f;
+        basic_IE = basicAttackDelay();
     }
 
 
@@ -158,11 +162,17 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         {
             rigid.velocity = networkVelocity;
             rigid.MovePosition(transform.position + networkVelocity * Time.deltaTime);
+            isGrounded = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, Vector3.down, 0.8f, 1 << LayerMask.NameToLayer("Map"));
+            anim.SetBool("InAir", !isGrounded);
             return;
         }
 
         if (canMove)
             Move();
+        else {
+            anim.SetFloat("Front", 0);
+            anim.SetFloat("Right", 0);
+        }
         AttackFunction();
         CollectingArea();
         // anim.SetBool("skillE_Bool", Input.GetKey(KeyCode.E));
@@ -182,12 +192,20 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         if (Input.GetMouseButtonDown(0) && canAttack)
         {
             canAttack= false;
-            StartCoroutine(basicAttackDelay());
+            StopCoroutine(basic_IE);
+            basic_IE = basicAttackDelay();
+            StartCoroutine(basic_IE);
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && canQ && canAttack)
         {
             StartCoroutine(Qskill());
+        }
+
+        if (Input.GetKeyDown(KeyCode.F) && !pushing_F)
+        {
+            pushing_F = true;
+            StartCoroutine(FSkill());
         }
 
         ESkill();
@@ -204,6 +222,44 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         }
     }
 
+    private IEnumerator FSkill()
+    {
+        GameObject dummy_Glow = PoolManager.Instance.Get_Particles(4, this.transform.position + Vector3.up *1.5f);
+        ParticleAutoDisable dummy_PAD = dummy_Glow.GetComponent<ParticleAutoDisable>();
+        short pre_Health = this.actorHealth.health;
+        timer_F_Holder = 0;
+        float timer_dummy = 0;
+        yield return new WaitForSeconds(Time.deltaTime);
+        dummy_PAD.Particle_Size_Setting(1);
+        while (true)
+        {
+            yield return new WaitForSeconds(Time.deltaTime);
+            if (timer_dummy >= 0.5f)
+            { dummy_PAD.Particle_Size_Setting(timer_F_Holder*3 + 1); timer_dummy = 0; }
+            
+            timer_dummy += Time.deltaTime;
+            timer_F_Holder += Time.deltaTime;
+
+            if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0 || pre_Health > this.actorHealth.health)
+            {
+                dummy_Glow.GetComponent<ParticleAutoDisable>().ParticleDisable();
+                timer_F_Holder = 0;
+                pushing_F= false;
+                break;
+            }
+            else if (timer_F_Holder >= 3f)
+            {
+                dummy_Glow.GetComponent<ParticleAutoDisable>().ParticleDisable();
+                break;
+            }
+        }
+        pushing_F = false;
+        dummy_PAD.Particle_Size_Setting(1);
+        if (timer_F_Holder >= 3f) { state_p = MoonHeader.State_P_Minion.Dead; StartCoroutine(DeadProcessing(this.gameObject)); }
+        
+        yield return new WaitForSeconds(1);
+    }
+    
     
 
     void Move()
@@ -227,14 +283,27 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         Vector3 thisVelocity = (moveX + moveY).normalized;
         //rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime * speed);       // 웬지 모르게 fps차이에 따라서 속도가 다름...
-        this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
+
+        // 현재 가려고하는 방향에 맵이 존재하는지 확인.
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, thisVelocity * 1f, Color.blue) ;
+        bool isborder = Physics.Raycast(this.transform.position + Vector3.up*0.5f, thisVelocity, 0.8f, 1<<LayerMask.NameToLayer("Map"));
+        // 현재 입력한 방향 중, x방향 즉 왼 오른쪽에 장애물이 있는지, 대각이동시에 사용
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, moveX * 3, Color.red);
+        bool isborder_x = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, x * Vector3.right, 1.3f, 1 << LayerMask.NameToLayer("Map"));
+        // 현재 입력한 방향 중, z방향 즉 앞 뒤에 장애물이 있는지, 대각이동시에 사용
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, moveY * 3, Color.black);
+        bool isborder_z = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, y * Vector3.forward, 1.3f, 1 << LayerMask.NameToLayer("Map"));
+
+        thisVelocity = moveX * (isborder_x ? 0.4f : 1) + moveY * (isborder_z ? 0.4f : 1);
+        if (!isborder)this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
+        //this.rigid.velocity = thisVelocity * currentSpeed * (sprint?1.5f:1f);
 
         // 점프
-        isGrounded = Physics.Raycast(this.transform.position+new Vector3(0f, 0.5f, 0f), Vector3.down, 1f, 1<<LayerMask.NameToLayer("Map"));
-        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, Vector3.down*1f, Color.red);
+        isGrounded = Physics.Raycast(this.transform.position+ Vector3.up * 0.5f, Vector3.down, 0.8f, 1<<LayerMask.NameToLayer("Map"));
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, Vector3.down*0.8f, Color.red);
         //bool canJump = !isGrounded;
 
-        //anim.SetBool("InAir", !isGrounded);
+        anim.SetBool("InAir", !isGrounded);
 
 
         //anim.SetBool("isJump", !canJump && canQ);
@@ -243,7 +312,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             if(Input.GetKeyDown(KeyCode.Space))
             {
                 photonView.RPC("Jump_RPC", RpcTarget.All);
-                rigid.AddForce(Vector3.up * 500f);
+                rigid.AddForce(Vector3.up * 20f,ForceMode.Impulse);
             }
         }
     }
@@ -329,22 +398,25 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
         //anim.SetLayerWeight(1, 1f);
         //anim.SetTrigger("basicAttack" + attackcode.ToString());
-        if (photonView.IsMine)
-        {
+        //if (photonView.IsMine)
+        //{
             anim.SetLayerWeight(1,1f);
             anim.SetTrigger("basicAttack" + attackcode.ToString());
             StartCoroutine(weaponSC.SwordEffect(attackcode));
-            Invoke("AnimatorLayerReset", 1.3f);
-        }
+            //Invoke("AnimatorLayerReset", 1.3f);
+        //}
 
         photonView.RPC("basicAnim_RPC",RpcTarget.All, attackcode);
 
         attackcode++;
         this.currentSpeed = speed / 2;
         //photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(1.3f);
+        //if (photonView.IsMine) 
+            AnimatorLayerReset();
+        yield return new WaitForSeconds(0.2f);
         this.currentSpeed = speed;
-        yield return new WaitForSecondsRealtime(attackcode == 4? 2f: 0.5f);
+        yield return new WaitForSecondsRealtime(attackcode == 4? 2f: 0f);
         attackcode %= 4;
         timer_Combo = 0;
 
@@ -424,17 +496,25 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             canAttack = false;
             canE = false;
             timer_E = 0;
+            casting_E = true;
+            input_E = true;
         }
+        if (Input.GetKeyUp(KeyCode.E)) { input_E = false; }
+
+        if (casting_E) { timer_E += Time.deltaTime; }
 
         if (anim.GetCurrentAnimatorStateInfo(1).normalizedTime >= 0.35f && anim.GetCurrentAnimatorStateInfo(1).IsName("casting1") && 
-            Input.GetKey(KeyCode.E))
+            casting_E)
         {
             photonView.RPC("EAnim_Pause", RpcTarget.All);
         }
 
-        if (Input.GetKeyUp(KeyCode.E))
+        if ((!input_E && timer_E >= 1f || timer_E >= 4f) && casting_E)
         {
-            Invoke("EskillOver", 1f);
+            input_E = false;
+            casting_E = false;
+            timer_E = 0;
+            Invoke("EskillOver", 1.8f);
             //canE = true;
             photonView.RPC("EAnimE_RPC",RpcTarget.All, this.playerCamera.transform.forward);
         }
@@ -453,7 +533,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     private IEnumerator EAnimE_IE(Vector3 forward)
     {
         anim.speed = 1f;
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
         if (PhotonNetwork.IsMasterClient) AttackEffect_E(forward);
         yield return new WaitForSeconds(1f);
         AnimatorLayerReset();
@@ -546,7 +626,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         // 초기화
         canAttack = true;
         canMove = true;
-        speed = 5.0f;
+        speed = 10.0f;
         canE = true;
         canQ = true;
         cameraCanMove = true;
@@ -613,15 +693,22 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     {
         canMove = false;
         photonView.RPC("Dead_RPC", RpcTarget.All);
+        timer_F_Holder = 0;
+        pushing_F = false;
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
         // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
-        if (other.transform.CompareTag("PlayerMinion"))
+        if (!other.Equals(this.gameObject))
         {
-            other.GetComponent<I_Characters>().AddEXP(50);
-            //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+            if (other.transform.CompareTag("PlayerMinion"))
+            {
+                other.GetComponent<I_Characters>().AddEXP(50);
+                //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+            }
+            if (other.transform.CompareTag("DamageArea"))
+            { other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(50); }
+            GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
         }
-        GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
         yield return new WaitForSeconds(0.5f);
         MinionDisable();
 
@@ -755,6 +842,9 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     }
 
     public void AddCollector(int s) { myPlayerCtrl.GetGold(s); }
-
+    public float GetF()
+    {
+        return timer_F_Holder;
+    }
     #endregion
 }
