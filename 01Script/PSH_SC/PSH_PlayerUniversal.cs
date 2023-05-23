@@ -30,7 +30,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 	#region Camera Variants
 	// 카메라 관련 변수들
 	public Camera playerCamera;
-    public GameObject camerapos; // eyes 연결
+    public GameObject camerapos, deadCamerapos; // eyes 연결
     bool cameraCanMove = false;
     bool invertCamera = false;
     float yaw = 0.0f;
@@ -639,6 +639,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     [PunRPC]
     private void SpawnSetting_RPC(short mh, short h, string name, int t)
     {
+        this.gameObject.layer = 7;
         this.actorHealth.maxHealth = mh;
         this.actorHealth.health = h;
         this.playerName = name;
@@ -662,7 +663,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 	public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
 
-        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
+        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead || !photonView.IsMine)
             return;
         if (this.actorHealth.health - dam <= 0 && state_p != MoonHeader.State_P_Minion.Dead)
         {state_p = MoonHeader.State_P_Minion.Dead; StartCoroutine(DeadProcessing(other)); }
@@ -675,15 +676,16 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     [PunRPC]
     private void Dam_RPC(short dam, Vector3 origin)
     {
+        actorHealth.health -= dam;
         if (photonView.IsMine)
         {
-            actorHealth.health -= dam;
             DamagedRotation(origin);
         }
     }
     [PunRPC]
     private void Dead_RPC()
     {
+        this.gameObject.layer = 12;
         state_p = MoonHeader.State_P_Minion.Dead;
         if (photonView.IsMine)
             myPlayerCtrl.PlayerMinionDeadProcessing();
@@ -695,6 +697,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         photonView.RPC("Dead_RPC", RpcTarget.All);
         timer_F_Holder = 0;
         pushing_F = false;
+        cameraCanMove = false;
+
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
         // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
@@ -709,12 +713,19 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             { other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(50); }
             GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
         }
-        yield return new WaitForSeconds(0.5f);
-        MinionDisable();
 
+        int d_for = Mathf.CeilToInt(1.5f / Time.deltaTime);
+        for (int i = 0; i < d_for; i++)
+        {
+            yield return new WaitForSeconds(Time.deltaTime);
+            if (Mathf.CeilToInt(d_for / 3 * 2) == i) { StartCoroutine(GameManager.Instance.ScreenFade(false)); }
+            playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, deadCamerapos.transform.position, Time.deltaTime);
+            playerCamera.transform.rotation = Quaternion.Lerp(playerCamera.transform.rotation, deadCamerapos.transform.rotation, Time.deltaTime);
+        }
+        yield return new WaitForSeconds(0.5f);
         cameraCanMove = false;
         playerCamera = null;
-
+        MinionDisable();
     }
 
     #endregion

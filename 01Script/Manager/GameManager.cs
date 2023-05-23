@@ -262,6 +262,14 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		yield return StartCoroutine(CheckingPlayerReady());
         loadingUI.SetActive(false);
 		onceStart = true;
+		for (int i = 0; i < wayPoints.Length; i++)
+		{
+			LSM_TurretSc dummy_sc = wayPoints[i].GetComponentInChildren<LSM_TurretSc>();
+			if (!ReferenceEquals(dummy_sc, null))
+			{
+				dummy_sc.ResetTurret();
+			}
+		}
 	}
 
 	// 로딩 관련 함수 모음.
@@ -552,16 +560,28 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		if ((inout && screen.color.a >= 0.9f) || (!inout && screen.color.a <= 0.1f))
 		{
 			int time = 50;
-			float origin = inout ? 1 : 0, alpha = ((float)1 / time ) * (inout ? -1 : 1);
+			float origin = inout ? 1 : 0;//, alpha = ((float)1 / time ) * (inout ? -1 : 1);
 
 			screen.color = new Color(0, 0, 0, origin);
 
+			while (true)
+			{
+				yield return new WaitForSeconds(Time.deltaTime);
+				float plustAlpha = Time.deltaTime * (inout ? -1: 1) * 2;
+				origin += plustAlpha;
+				screen.color = new Color(0, 0, 0, origin);
+				if (Mathf.Abs(origin - (inout ? 0:1)) <= 0.1f)
+					break;
+			}
+
+			/*
 			for (int i = 0; i < time; i++)
 			{
 				yield return new WaitForSeconds(0.01f);
 				origin += alpha;
 				screen.color = new Color(0, 0, 0, origin);
 			}
+			*/
 			screen.color = new Color(0, 0, 0, (inout ? 0 : 1));
 		}
 	}

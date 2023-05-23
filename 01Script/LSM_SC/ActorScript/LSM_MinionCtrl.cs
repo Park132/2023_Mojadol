@@ -50,7 +50,6 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	public bool debugging_minion; // 디버깅 확인용...
 	private Vector3 networkPosition, networkVelocity;
-
 	
 
 
@@ -66,8 +65,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			Gizmos.DrawCube(networkPosition, Vector3.one * 2);
 		}
 		*/
-		if (nav.enabled)
-			Gizmos.DrawCube(nav.destination + (Vector3.up * 12), Vector3.one * 1);
+		//if (nav.enabled)
+			//Gizmos.DrawCube(nav.destination + (Vector3.up * 12), Vector3.one * 1);
     }
 
     #region IPUnalsdfjaow
@@ -258,7 +257,8 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// 체력, 공격력, 팀
 	[PunRPC]private void MS_RPC(short mh, short atk, short t, int s, MoonHeader.AttackType typeM)
     {
-        this.stats.actorHealth.Atk = atk;
+		this.transform.gameObject.layer = 7;
+		this.stats.actorHealth.Atk = atk;
 		this.stats.actorHealth.maxHealth = mh;
 		this.stats.actorHealth.health = mh;
 		this.stats.speed = s;
@@ -628,7 +628,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 골드주는 오브젝트 생성.
 		GameObject dummy_item = PoolManager.Instance.Get_Item(0);
 		//dummy_item.transform.position = this.transform.position;
-		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold, this.transform.position + Vector3.up * 0.5f);
+		dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stats.gold, this.transform.position + Vector3.up * 1.1f);
 		GiveExp();
 
 
@@ -653,7 +653,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	[PunRPC]protected void DeadAnim()
-	{ anim.SetTrigger("DeadAnim"); }
+	{ anim.SetTrigger("DeadAnim"); this.transform.gameObject.layer = 12; }
 	[PunRPC] protected void DeadP_M() {photonView.RPC("DeadP", RpcTarget.All); this.gameObject.SetActive(false); }
 	[PunRPC]protected void DeadP()
 	{ this.gameObject.SetActive(false); }

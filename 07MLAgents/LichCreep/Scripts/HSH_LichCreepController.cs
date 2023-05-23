@@ -78,9 +78,10 @@ public class HSH_LichCreepController : MonoBehaviour
 
             //패턴 활성화
             fireBallThrower.SetActive(true);
-            spellFieldGenerator.SetActive(true);
+            
             if (!spellFieldGenerator.activeSelf)
                 creepCtrl.Enable_Generator(true);
+            spellFieldGenerator.SetActive(true);
 
             if (!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
             {
@@ -94,17 +95,19 @@ public class HSH_LichCreepController : MonoBehaviour
             AnimCtrl();
             //모든 패턴 비활성화
             fireBallThrower.SetActive(false);
-            spellFieldGenerator.SetActive(false);
+            
             if (spellFieldGenerator.activeSelf)
                 creepCtrl.Enable_Generator(false);
+            spellFieldGenerator.SetActive(false);
         }
 
         if (lichstat == LichStat.Death)
         {
             fireBallThrower.SetActive(false);
-            spellFieldGenerator.SetActive(false);
+            
             if (spellFieldGenerator.activeSelf)
                 creepCtrl.Enable_Generator(false);
+            spellFieldGenerator.SetActive(false);
         }
 
         if(lichinfo.hp <= 0)

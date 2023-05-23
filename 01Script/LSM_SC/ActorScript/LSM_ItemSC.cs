@@ -45,6 +45,7 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
         rigid.useGravity = false;
         size = s;
         this.transform.position = position;
+        Debug.Log("Gold Position" +position);
         StartCoroutine(CollectSetting(x,z));
     }
     public void SpawnSetting(int s, Vector3 position)

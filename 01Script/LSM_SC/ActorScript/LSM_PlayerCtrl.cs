@@ -528,11 +528,21 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
 
         minionStatsPannel.SetActive(false);
+        float dummy_time_in = 0;
+        while(true)
+        {
+            yield return new WaitForSeconds(Time.deltaTime);
+            dummy_time_in += Time.deltaTime;
+            mapCamCamera.orthographicSize = Mathf.Lerp(originSize, 5, dummy_time_in >= 1? 1:dummy_time_in);
+            if (dummy_time_in >= 1) break;
+        }
+        /*
         for (int i = 0; i < 100; i++)
         {
             yield return new WaitForSeconds(0.01f);
             mapCamCamera.orthographicSize = Mathf.Lerp(originSize, 5, 0.01f * i);
         }
+        */
         // 카메라 메인카메라 제외 모두 끄기.
         GameManager.Instance.mapUI.SetActive(false);
         mapCamCamera.transform.gameObject.SetActive(false);
