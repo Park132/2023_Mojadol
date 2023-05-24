@@ -358,8 +358,9 @@ public class PSH_Tormented : MonoBehaviour
         canAttack = false;
         canE = false;
 
-        yield return new WaitForSecondsRealtime(1.0f);
+        yield return new WaitForSecondsRealtime(7.0f);
 
+        anim.SetLayerWeight(1, 0f);
         canMove = true;
         canAttack = true;
         canE = true;
