@@ -183,6 +183,8 @@ public class PSH_Tormented : MonoBehaviour
             StartCoroutine(Eskill());
             ESkill_Effect();
         }
+
+        eProjectilepos.transform.localRotation = Quaternion.Euler(pitch, eProjectilepos.transform.rotation.y, eProjectilepos.transform.rotation.z);
     }
 
     private void LateUpdate()
@@ -284,7 +286,6 @@ public class PSH_Tormented : MonoBehaviour
         eProjectilepos.SetActive(true);
         eProjectilepos.GetComponent<PSH_T_E>().timer1 = 0.0f;
         
-        // e스킬에 별도의 타이머??
         /*
         GameObject e_prefab = Instantiate(eProjectile, spawnPoint.transform.position,
             Quaternion.Euler(pitch, yaw, spawnPoint.transform.rotation.z));
