@@ -1054,7 +1054,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &731485948084891531
 Transform:
   m_ObjectHideFlags: 0
@@ -1083,6 +1083,7 @@ Transform:
   - {fileID: 731485948084983247}
   - {fileID: 731485948084948607}
   - {fileID: 731485948084988083}
+  - {fileID: 8886458723236263367}
   - {fileID: 731485948084952795}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -1151,6 +1152,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 15
   currentSpeed: 5
+  basicProjectile: {fileID: 0}
+  spawnPoint: {fileID: 0}
   playerCamera: {fileID: 0}
   camerapos: {fileID: 731485948085254253}
   mouseSensitivity: 3
@@ -3990,7 +3993,7 @@ Transform:
   m_Children:
   - {fileID: 731485948084956357}
   m_Father: {fileID: 731485948084891531}
-  m_RootOrder: 16
+  m_RootOrder: 17
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &731485948085257285
 GameObject:
@@ -4832,4 +4835,35 @@ Transform:
   - {fileID: 731485948084936829}
   m_Father: {fileID: 731485948084887155}
   m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5056508051702931614
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8886458723236263367}
+  m_Layer: 0
+  m_Name: SpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8886458723236263367
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5056508051702931614}
+  m_LocalRotation: {x: -0.00000017881393, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.2999516, y: -29.011238, z: 39.984043}
+  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 731485948084891531}
+  m_RootOrder: 16
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

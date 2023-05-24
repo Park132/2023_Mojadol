@@ -43,7 +43,7 @@ public class PSH_LobbyUI : MonoBehaviour
             inputPanel.SetActive(false);
             selectPanel.SetActive(true);
             lobbyCtrl.GetComponent<PSH_LobbyCtrl>().keyEnable = true;
-            GameObject.Find("LobbyManager").GetComponent<PSH_LobbyCtrl>().selectcode = 0;
+            GameObject.Find("LobbyManager").GetComponent<PSH_LobbyCtrl>().once = true;
         }   
     }
 

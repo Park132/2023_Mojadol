@@ -35,11 +35,13 @@ public class PSH_LobbyCtrl : MonoBehaviour
     float currentLerpTime = 0.0f;
 
     // Hero Magician Shaman
-    public int selectcode = 0; // 밖으로 보낼 코드가 될거임
-    bool once = true; // 초기 선택
+    public int selectcode = 1; // 밖으로 보낼 코드가 될거임
 
     // UI variables
     public bool keyEnable = false;
+
+    // 초기화면
+    public bool once = false; // 초기 선택
 
     private void Awake()
     {
@@ -63,6 +65,16 @@ public class PSH_LobbyCtrl : MonoBehaviour
         cam.transform.position = cameraBoom.transform.position;
         cam.transform.rotation = cameraBoom.transform.rotation;
         currentLerpTime += Time.deltaTime;
+
+        if(once)
+        {
+            GameObject.Find("LobbyUIManager").GetComponent<PSH_LobbyUI>().characterCode = selectcode;
+            PlayerPrefs.SetInt("CharacterCode", selectcode);
+            currentLerpTime = 0.0f;
+            WhichLook(selectcode);
+            tempLight = maxLightIntensity[selectcode] / lightingTime;
+            StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
+        }
 
         if(keyEnable)
         {
@@ -150,6 +162,7 @@ public class PSH_LobbyCtrl : MonoBehaviour
             isMoving = false;
             runCoroutineTimer = false;
             coroutineTimer = 0.0f;
+            once = false;
             StopAllCoroutines();
         }
     }

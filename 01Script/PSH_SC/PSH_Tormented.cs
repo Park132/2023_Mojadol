@@ -28,6 +28,12 @@ public class PSH_Tormented : MonoBehaviour
     bool canQ = true;
     bool canE = true;
 
+    // 투사체
+    public GameObject spawnPoint;
+    public GameObject basicProjectile;
+    public GameObject qProjectile;
+    public GameObject eProjectilepos;
+
     #region Camera Variants
     // 카메라 관련 변수들
     public Camera playerCamera;
@@ -163,16 +169,19 @@ public class PSH_Tormented : MonoBehaviour
         {
             canAttack = false;
             StartCoroutine(basicAttackDelay());
+            Invoke("BasicTormentedProjectile", 0.75f);
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && canQ && canAttack)
         {
             StartCoroutine(Qskill());
+            Invoke("QSkill_Effect", 1f);
         }
 
         if (Input.GetKeyDown(KeyCode.E) && canE && canAttack)
         {
             StartCoroutine(Eskill());
+            ESkill_Effect();
         }
     }
 
@@ -253,6 +262,38 @@ public class PSH_Tormented : MonoBehaviour
 
         // playerCamera.transform.rotation = camerapos.transform.rotation;
     }
+
+    #region New Attack & Skills
+    void BasicTormentedProjectile()
+    {
+        GameObject bp_prefab = Instantiate(basicProjectile, spawnPoint.transform.position, 
+            Quaternion.Euler(pitch, yaw, spawnPoint.transform.rotation.z));
+        
+        bp_prefab.GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * 500f);
+    }
+
+    void QSkill_Effect()
+    {
+        GameObject q_prefab = Instantiate(qProjectile, spawnPoint.transform.position,
+            Quaternion.Euler(pitch, yaw, spawnPoint.transform.position.z));
+        q_prefab.GetComponent<Rigidbody>().AddRelativeForce(Vector3.forward * 400f);
+    }
+
+    void ESkill_Effect()
+    {
+        eProjectilepos.SetActive(true);
+        eProjectilepos.GetComponent<PSH_T_E>().timer1 = 0.0f;
+        
+        // e스킬에 별도의 타이머??
+        /*
+        GameObject e_prefab = Instantiate(eProjectile, spawnPoint.transform.position,
+            Quaternion.Euler(pitch, yaw, spawnPoint.transform.rotation.z));
+        e_prefab.transform.position = spawnPoint.transform.position;
+        e_prefab.transform.rotation = Quaternion.Euler(pitch, yaw, spawnPoint.transform.rotation.z);
+        */
+    }
+
+    #endregion
 
     IEnumerator basicAttackDelay()
     {

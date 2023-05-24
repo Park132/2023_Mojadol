@@ -92,6 +92,9 @@ MonoBehaviour:
   - ExpPlus
   - GameEP_RPC
   - LTU
+  - E_RPC
+  - PS_s
+  - ResetRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0
