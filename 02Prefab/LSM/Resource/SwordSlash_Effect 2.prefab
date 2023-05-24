@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 6925788443175795244}
   - component: {fileID: 1447448489861254107}
   - component: {fileID: 4586701091274509119}
-  - component: {fileID: 4943992873711938800}
   - component: {fileID: 4159081228967592084}
+  - component: {fileID: 1492384062173713881}
   m_Layer: 9
   m_Name: SwordSlash_Effect 2
   m_TagString: DamageArea
@@ -4940,20 +4940,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 009e2427ec88858479b3cab8cf6f8886, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &4943992873711938800
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1652400581503036}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77495ca733d1d9e49bd6a1257add19a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  orner: {fileID: 0}
-  dam: 0
 --- !u!65 &4159081228967592084
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4967,6 +4953,22 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 2.5, y: 1.4, z: 1.8}
   m_Center: {x: 0, y: 0, z: 0.45}
+--- !u!114 &1492384062173713881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652400581503036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1783d15ac8d83648a636c2fa1df1392, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  orner: {fileID: 0}
+  dam: 0
+  isDestroed_: 0
+  isPenetration: 1
 --- !u!1 &6736960293205245734
 GameObject:
   m_ObjectHideFlags: 0

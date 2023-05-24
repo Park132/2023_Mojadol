@@ -4,7 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using static MoonHeader;
 
-public class LSM_ItemSC : MonoBehaviourPunCallbacks
+public class LSM_ItemSC : MonoBehaviourPunCallbacks, IPunObservable
 {
     public int size;
     public bool isCollecting;
@@ -34,19 +34,19 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
 	{
         photonView.RPC("ReadyCollect", RpcTarget.All, true);
     }
-	private void SpawnAnim(float x, float z) 
+	private void SpawnAnim(float x, float z,float power) 
     {
         rigid.useGravity = true;
-        rigid.AddExplosionForce(500, this.transform.position + new Vector3(x,-1f,z), 8, 5);
+        rigid.AddExplosionForce(500, this.transform.position + new Vector3(x,-1f,z), 8*power, 5*power);
     }
 
-    [PunRPC] private void SettingItem(int s,Vector3 position, float x, float z)
+    [PunRPC] private void SettingItem(int s,Vector3 position, float x, float z, float power)
     {
         rigid.useGravity = false;
         size = s;
         this.transform.position = position;
-        Debug.Log("Gold Position" +position);
-        StartCoroutine(CollectSetting(x,z));
+        //Debug.Log("Gold Position" +position);
+        StartCoroutine(CollectSetting(x,z, power));
     }
     public void SpawnSetting(int s, Vector3 position)
     {
@@ -56,16 +56,16 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks
     public void SpawnSetting(int s, Vector3 position, float power)
     {
         photonView.RPC("ReadyCollect", RpcTarget.All, true);
-        float dummyx = Random.Range(-5f, 5f)*power, dummyz = Random.Range(-5f, 5f) * power;
-        photonView.RPC("SettingItem", RpcTarget.All, s, position, dummyx, dummyz);
+        float dummyx = Random.Range(-5f, 5f), dummyz = Random.Range(-5f, 5f);
+        photonView.RPC("SettingItem", RpcTarget.All, s, position, dummyx, dummyz, power);
         //photonView.RPC("SpawnS_RPC", RpcTarget.All, s);
         //StartCoroutine(CollectSetting());
     }
 
-    private IEnumerator CollectSetting(float x, float z)
+    private IEnumerator CollectSetting(float x, float z, float power)
     {
         yield return new WaitForSeconds(0.1f);
-        SpawnAnim(x,z);
+        SpawnAnim(x,z,power);
         
         yield return new WaitForSeconds(1f);
         //photonView.RPC("ReadyCollect", RpcTarget.All, false);

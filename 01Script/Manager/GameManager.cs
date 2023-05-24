@@ -27,27 +27,36 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 100f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
+	[Header("GameManager States")]
 	public MoonHeader.ManagerState state;		// 현재 게임매니저의 상태. --> 게임매니저가 현재 어떤 상태인지 ex: 준비중, 처리중, 처리완료
-	public MoonHeader.GameState gameState;		// 현재 게임의 상태 ex: 공격로 설정 시간, 게임 시작 전, 등등
+	public MoonHeader.GameState gameState;      // 현재 게임의 상태 ex: 공격로 설정 시간, 게임 시작 전, 등등
 												// # 게임 시작 전 gameState를 SettingAttackPath로 설정 -> 디버깅용
+	[Header("Involved Photon")]
+	public int numOfPlayer;
+	public int numOfSkipClickedPlayer;             // 현재 플레이어의 수.
+    public int MaxPlayerNum;
 
-	public LSM_TimerSc timerSc;			// 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
-	
-	public int numOfPlayer, numOfSkipClickedPlayer;             // 현재 플레이어의 수.
-	public bool isClickSkip;
-	public TextMeshProUGUI turnText;	// 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
-										// # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
-	public GameObject[] spawnPoints;	// 씬에 존재하는 "마스터 스포너"의 모음.
-	public GameObject[] wayPoints;		// 씬에 존재하는 모든 "웨이포인트"의 모음
-
-	public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
+    [Header("For UI Control")]
+    public TextMeshProUGUI turnText;    // 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
+                                        // # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
+    public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
 	public GameObject selectAttackPathUI, mapUI, gameUI, loadingUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
 															// gameUI: 게임 진행 중 표시되는 UI
 	public LSM_GameUI gameUI_SC;
 
 	public Image deadScreen;
-    private Image screen;							// 페이드 IN, OUT을 할 때 사용하는 이미지.
-	public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
+    private Image screen;                           // 페이드 IN, OUT을 할 때 사용하는 이미지.
+    private List<GameObject> logUIs;
+    public int LoadingGauge, ReadyToStart_Player;
+    public int ReadyToStart_LoadingGauge;
+    public Image LoadingImage;
+    public TextMeshProUGUI pingText;
+    [Header("For Games")]
+    public GameObject[] spawnPoints;    // 씬에 존재하는 "마스터 스포너"의 모음.
+    public GameObject[] wayPoints;      // 씬에 존재하는 모든 "웨이포인트"의 모음
+
+    public LSM_TimerSc timerSc;         // 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
+    public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
 	public LSM_PlayerCtrl mainPlayer;               // 현재 접속하고있는 플레이어를 저장하는 변수
 													// # 디버깅시 MainPlayer를 지정해줘야함. 현재 아무 플레이어를 지정.
 	public LSM_CreepCtrl[] creeps;
@@ -55,22 +64,17 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
 
 	public List<GameObject>[] playerMinions;        // 모든 플레이어들의 미니언을 저장. 해당 부분 또한 PoolManager에서 사용할지 고민 중..
-	private List<GameObject> logUIs;
-	private List<string> logUIs_Reservation;
+    private bool isClickSkip;
+
+    private List<string> logUIs_Reservation;
 	private float timer_log;
 
 	public bool onceStart;
 	private bool starting_;
-
-	public int ReadyToStart_LoadingGauge;
-	public int LoadingGauge, ReadyToStart_Player;
-	public int MaxPlayerNum;
-	public Image LoadingImage;
-	public TextMeshProUGUI pingText;
-
 	private float ping;
-
+	[Header("Debugging")]
 	public bool debugging_bool;
+	private int preMasterClientID;
 
 	// private 
 
@@ -157,12 +161,24 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		else
 			return;
 	}
+	// 플레이어가 나간다면 종료...
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        base.OnPlayerLeftRoom(otherPlayer);
+        Debug.Log("Client is Left!");
 
-	#endregion
+        PhotonNetwork.Disconnect();
+		onceStart = false; 
+		
+    }
+
+    #endregion
 
 
-	// 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
-	private void Awake_Function()
+
+
+    // 싱글톤으로 인해 Awake를 위로 배치하였기에 미관상 아래의 함수를 사용.
+    private void Awake_Function()
 	{
 		// 게임매니저에 존재하는 TimerSC를 받아옴.
 		timerSc = this.GetComponent<LSM_TimerSc>();
@@ -206,6 +222,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	{
 		// 모든 플레이어들을 저장하는 중. FindGameObjectsWithTag를 사용하여 오브젝트를 찾고, 해당 스크립트를 저장하게 구현.
 		// 이 부분 이전에 플레이어를 소환하는 절차가 필요!, 로컬 플레이어또한 필요.
+
+
 		GameObject[] playerdummys = GameObject.FindGameObjectsWithTag("Player");
 		players = new LSM_PlayerCtrl[playerdummys.Length];
 		for (int i = 0; i < playerdummys.Length; i++)
@@ -334,21 +352,28 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
 		{
 			
-			if (PhotonNetwork.CurrentRoom.PlayerCount == MaxPlayerNum) // 일단 1명으로
+			if (!starting_ && PhotonNetwork.CurrentRoom.PlayerCount == MaxPlayerNum)
 			{
-				if (!starting_)
-				{
-					starting_ = true;
-					StartCoroutine(StartProcessing());
-				}
 
-				if (onceStart)
-				{
-					Game();
-					DisplayEnable();
-					PingCalculator();
-				}
+				starting_ = true;
+				if (PhotonNetwork.IsMasterClient)
+					PhotonNetwork.CurrentRoom.IsOpen = false;
+                preMasterClientID = PhotonNetwork.MasterClient.ActorNumber;
+                StartCoroutine(StartProcessing());
 			}
+            if(starting_)
+            {
+                if (preMasterClientID != PhotonNetwork.MasterClient.ActorNumber)
+                    Debug.Log("MasterClient Switched!!");
+            }
+
+
+            if (onceStart)
+			{
+                Game();
+                DisplayEnable();
+                PingCalculator();
+            }
 		}
 	}
 

@@ -13,6 +13,8 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     private GameObject icon;
     private Renderer[] bodies;  // 색상을 변경할 렌더러.
     private HSH_LichCreepController mainCtrl;
+    public int inPlayerNum;
+    private bool once;
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
@@ -28,7 +30,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
             int dummy_int2 = (int)((send_dummy >> 32) & (ulong)uint.MaxValue);
             stream.SendNext(dummy_int1);
             stream.SendNext(dummy_int2);
-
+            stream.SendNext(inPlayerNum);
         }
         else
         {
@@ -39,7 +41,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
             receive_dummy += (((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue) << 32);
 
             this.stat.ReceiveDummy(receive_dummy);
-
+            inPlayerNum = (int)stream.ReceiveNext();
         }
     }
 
@@ -47,6 +49,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     void Start()
     {
         rigid = this.GetComponent<Rigidbody>();
+        once = false;
 
         icon = GameObject.Instantiate(PrefabManager.Instance.icons[11], transform);
         icon.transform.localPosition = new Vector3(0, 40, 0);
@@ -58,9 +61,14 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
 
         // 디버그용 maxHealth, Atk, Exp, Gold
         stat.Setting(100, 10, 1000, 1000);
+        inPlayerNum = 0;
     }
 
     public void ResetCreep()
+    {
+        photonView.RPC("RC_RPC",RpcTarget.All);
+    }
+    [PunRPC] private void RC_RPC() 
     {
         this.stat.state = MoonHeader.CreepStat.Idle;
         stat.actorHealth.health = stat.actorHealth.maxHealth;
@@ -71,7 +79,10 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     // Update is called once per frame
     void Update()
     {
-        
+        if (!once && GameManager.Instance.onceStart && !PhotonNetwork.IsMasterClient)
+        {
+            mainCtrl.spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = false;
+        }
     }
     public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
@@ -143,8 +154,13 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         yield return new WaitForSeconds(2f);
         // 골드주는 오브젝트 생성.
         //dummy_item.transform.position = this.transform.position;
-        
 
+        for (int i = 0; i < 5; i++)
+        {
+            GameObject dummy_item = PoolManager.Instance.Get_Item(0);
+            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 3f);
+        }
+        GiveExp();
 
         yield return new WaitForSeconds(1f);
         //this.gameObject.SetActive(false);
@@ -154,17 +170,15 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     protected void DeadAnim()
     { 
         mainCtrl.DeadProcessing();
+        stat.state = MoonHeader.CreepStat.Death;
         PoolManager.Instance.Get_Local_Item(1).transform.position = this.transform.position + Vector3.up * 1.5f;
         Invoke("Dead_renderer_disable", 5f);
     }
-    private void Dead_renderer_disable() { 
-        foreach (Renderer item in bodies) { item.enabled = false; }
-        for (int i = 0; i < 5; i++)
+    private void Dead_renderer_disable() {
+        if (stat.state == MoonHeader.CreepStat.Death)
         {
-            GameObject dummy_item = PoolManager.Instance.Get_Item(0);
-            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 3f);
+            foreach (Renderer item in bodies) { item.enabled = false; }
         }
-        GiveExp();
     }
 
     public void GiveExp()

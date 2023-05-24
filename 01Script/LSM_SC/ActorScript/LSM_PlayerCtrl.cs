@@ -19,7 +19,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     float canMapCamSize;
 
     public GameObject mySpawner;            // 팀의 마스터 스포너
-    public Camera mapCamCamera;            // TopView에 사용되는 카메라
+    
 
     // TopView에서의 이동속도 초기화
     private float wheelSpeed = 15f;
@@ -28,12 +28,12 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     private bool death;
     private bool is_zoomIn;                 // 선택한 미니언에게 확대하고 있는지
     private IEnumerator zoomIn;             // StopCorutine을 사용하기위해 미리 선언.
-
-    public GameObject MainCam, MapCam, MapSubCam, MiniMapCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
+    [HideInInspector]public Camera mapCamCamera;            // TopView에 사용되는 카메라
+    [HideInInspector]public GameObject MainCam, MapCam, MapSubCam, MiniMapCam;       // 플레이어 오브젝트 내에 존재하는 카메라들.
                                                                     
     public Vector3 mapCamBasePosition;                  // TopView카메라의 초기위치
                                                         // # Y축만 95로 설정
-    public GameObject minionStatsPannel, minionStatsPannel_SelectButton;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
+    [HideInInspector] public GameObject minionStatsPannel, minionStatsPannel_SelectButton;                // 플레이어가 선택한 미니언의 스탯을 표기해주는 UI
                                                         // # Canvas의 자식 오브젝트 중 MinionStatpanel
     private LSM_MinionCtrl subTarget_minion;            // 타겟으로 지정한 미니언의 스크립트
     private I_Actor subTarget_Actor;
@@ -45,6 +45,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
 
+
+    [SerializeField] private int PlayerType;
     [SerializeField]private int exp, gold;
 
     public float this_player_ping;
@@ -553,10 +555,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         yield return new WaitForSeconds(0.5f);
         // 기존의 미니언을 비활성화한 후 플레이어 전용 프리펩 소환.
 
-        playerMinion = PoolManager.Instance.Get_PlayerMinion(0);
+        playerMinion = PoolManager.Instance.Get_PlayerMinion(PlayerType);
         //playerMinion = GameObject.Instantiate(PrefabManager.Instance.players[0],PoolManager.Instance.transform);
-
-
 
         //playerMinionCtrl = playerMinion.GetComponent<PSH_PlayerFPSCtrl>();
 

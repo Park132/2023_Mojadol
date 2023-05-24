@@ -11,10 +11,10 @@ ModelImporter:
     second: mixamo.com
   - first:
       74: -3780516532778130023
-    second: mixamo.com (1)
+    second: Slash2
   - first:
       74: 2055468689366577538
-    second: mixamo.com (2)
+    second: Slash3
   externalObjects: {}
   materials:
     materialImportMode: 2
@@ -103,7 +103,7 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: mixamo.com (1)
+      name: Slash2
       takeName: mixamo.com
       internalID: 0
       firstFrame: 95
@@ -132,7 +132,7 @@ ModelImporter:
       maskSource: {instanceID: 0}
       additiveReferencePoseFrame: 0
     - serializedVersion: 16
-      name: mixamo.com (2)
+      name: Slash3
       takeName: mixamo.com
       internalID: 0
       firstFrame: 160

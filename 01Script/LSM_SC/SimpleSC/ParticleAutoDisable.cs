@@ -6,21 +6,31 @@ using Photon.Pun;
 public class ParticleAutoDisable : MonoBehaviourPunCallbacks
 {
     ParticleSystem ps;
-    bool alive;
-    float timer = 0;
+    //bool alive;
+    //float timer = 0;
 
     private void Awake()
     {
         ps = this.GetComponent<ParticleSystem>();
         if (PhotonNetwork.IsMasterClient)
-            StartCoroutine(CheckAlive());
+        { }//StartCoroutine(CheckAlive());
+        else
+        {
+            Rigidbody rigid = this.GetComponent<Rigidbody>();
+
+            if (rigid != null)
+            { rigid.useGravity = false; }
+
+        }
+
     }
     
     private void OnEnable()
     {
-        if (PhotonNetwork.IsMasterClient)
-        { StartCoroutine(CheckAlive()); timer = 0f; }
+        //if (PhotonNetwork.IsMasterClient)
+        //{ StartCoroutine(CheckAlive()); timer = 0f; }
     }
+    /*
     private IEnumerator CheckAlive()
     {
         while (alive)
@@ -35,7 +45,7 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks
                 break;
             }
         }
-    }
+    }*/
     public void ParticleDisable() { photonView.RPC("ParticleDisable_RPC", RpcTarget.All); }
     [PunRPC] private void ParticleDisable_RPC() { this.gameObject.SetActive(false); }
 

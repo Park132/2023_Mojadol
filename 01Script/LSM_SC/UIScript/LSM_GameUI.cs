@@ -17,7 +17,7 @@ public class LSM_GameUI : MonoBehaviour
     public TextMeshProUGUI playerHP_txt, playerGold_txt;
 
     public GameObject suicide_obj;
-    public Image suicide_current_gauge;
+    public Image suicide_current_gauge, suicide_screen;
     public GameObject targetUI, playerUI;       // # Enemy      -> targetUI
                                                 // # Player     -> playerUI
     public Image QSkillCool, ESkillCool;        // # QSkillCool -> Qcool    ESkillCool -> Ecool
@@ -72,10 +72,12 @@ public class LSM_GameUI : MonoBehaviour
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
             if (player_playable.GetF() >= 0.5f)
             {
+                suicide_screen.gameObject.SetActive(true);
                 suicide_obj.SetActive(true);
                 suicide_current_gauge.fillAmount = (float)player_playable.GetF() / 3f;
+                suicide_screen.color = new Color32(110,10,10, (byte)Mathf.CeilToInt(((float)player_playable.GetF()/3) * 200));
             }
-            else { suicide_obj.SetActive(false); }
+            else { suicide_obj.SetActive(false); suicide_screen.gameObject.SetActive(false); }
         }
     }
 

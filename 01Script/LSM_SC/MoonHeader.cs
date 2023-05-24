@@ -10,9 +10,9 @@ public class MoonHeader : MonoBehaviour
 																					// ChangeRound: 라운드 변경, SettingAttackPath: 공격로 미니언 지정, StartGame: 게임이 시작하기 전 마무리 세팅, Gaming: 게임진행 중
 	public enum ManagerState { Ready, Processing, End };	// 게임 매니저의 현재 상태를 나타내기 위해 사용. GameState 처리에 도움을 줌.
 															// Ready: 현재 해당 GameState를 진행할 수 있음, Processing: 해당 GameState를 진행 중, End: 해당 GameState를 끝마침.
-	public enum SpawnerState { None, Setting, Spawn };		// 스포너의 현재 상태를 나타내기 위해 사용.
+	public enum SpawnerState { None, Setting, Spawn };      // 스포너의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안함, Setting: SettingAttackPath 상태일때 스포너를 조정하는 단계, Spawn: 스포너가 동작하는 중.
-	public enum CreepStat { Idle, Idle_Combat, Attack, Death }
+	public enum CreepStat { Idle = 0, Idle_Combat = 1, Attack = 2, Death = 3 }
 	public enum State_P { None, Selected , Possession};     // 플레이어의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안하는 중. 주로 TopView 시점에서의 상태, Seleted: 미니언을 클릭한 시점, Possession: 빙의 중.
 	public enum State_P_Minion { Normal=0, Dead=1 };			// 플레이어미니언의 현재 상태를 나타내기 위해 사용.
@@ -156,7 +156,7 @@ public class MoonHeader : MonoBehaviour
 // 인터페이스.
 public interface I_Actor		// 모든 움직이는 객체들이 갖게 한 인터페이스.
 {
-	void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
+	public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정.
 
 	public short GetHealth();
 	public short GetMaxHealth();
@@ -175,7 +175,8 @@ public interface I_Characters
 
 public interface I_Playable 
 {
-	public bool IsCanUseE();
+    public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other, float power);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정. 플레이어블은 넉백이 가능.
+    public bool IsCanUseE();
 	public bool IsCanUseQ();
 	public GameObject CameraSetting(GameObject cam);
 	public int GetExp();

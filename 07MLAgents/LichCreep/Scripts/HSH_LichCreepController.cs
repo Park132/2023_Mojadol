@@ -8,10 +8,10 @@ using UnityEngine.UIElements;
 
 public enum LichStat
 {
-    Idle,
-    Idle_Combat,
-    Attack,
-    Death
+    Idle = 0,
+    Idle_Combat = 1,
+    Attack = 2,
+    Death = 3
 }
 
 public class HSH_LichCreepController : MonoBehaviour
@@ -56,7 +56,22 @@ public class HSH_LichCreepController : MonoBehaviour
     void Update()
     {
         if (!PhotonNetwork.IsMasterClient)
+        {
+            if (creepCtrl.inPlayerNum > 0)
+            {
+                spellFieldGenerator.SetActive(true);
+            }
+            else
+            {
+                spellFieldGenerator.SetActive(false);
+            }
+            this.lichstat = (LichStat)creepCtrl.stat.state;
+            AnimCtrl();
+
             return;
+        }
+
+        // in Master Client
         for (int i = Player.Count-1; i >= 0; i--)
         {
             if (!Player[i].activeSelf)
@@ -65,48 +80,53 @@ public class HSH_LichCreepController : MonoBehaviour
             }
         }
 
+
         //AnimCtrl();
         //lichinfo.isHero = triggerBox.GetComponent<HSH_TriggerBox>().isTherePlayer;  //트리거 박스로부터 플레이어 존재 여부를 받아옴
         lichinfo.isHero = Player.Count > 0;
-
-        //크립룸 안에 플레이어가 있는가?
-        if (lichinfo.isHero && lichstat != LichStat.Death)    //네
+        creepCtrl.inPlayerNum = Player.Count;
+        if (lichstat != LichStat.Death)
         {
-            lichstat = LichStat.Idle_Combat;
-            AnimCtrl();
-            LookAtMostCloseOne();
-
-            //패턴 활성화
-            fireBallThrower.SetActive(true);
-            
-            if (!spellFieldGenerator.activeSelf)
-                creepCtrl.Enable_Generator(true);
-            spellFieldGenerator.SetActive(true);
-
-            if (!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
+            //크립룸 안에 플레이어가 있는가?
+            if (lichinfo.isHero)    //네
             {
-                doOnlyOnce = false;
-                StartCoroutine(DelayedAttack());
+                lichstat = LichStat.Idle_Combat;
+                AnimCtrl();
+                LookAtMostCloseOne();
+
+                //패턴 활성화
+                fireBallThrower.SetActive(true);
+
+                //if (!spellFieldGenerator.activeSelf)
+                //creepCtrl.Enable_Generator(true);
+                spellFieldGenerator.SetActive(true);
+
+                if (!fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.isCool && doOnlyOnce)
+                {
+                    doOnlyOnce = false;
+                    StartCoroutine(DelayedAttack());
+                }
             }
-        }
-        else if (lichstat != LichStat.Death)    //아니요
-        {
-            lichstat = LichStat.Idle;
-            AnimCtrl();
-            //모든 패턴 비활성화
-            fireBallThrower.SetActive(false);
-            
-            if (spellFieldGenerator.activeSelf)
-                creepCtrl.Enable_Generator(false);
-            spellFieldGenerator.SetActive(false);
+            else    //아니요
+            {
+                lichstat = LichStat.Idle;
+                AnimCtrl();
+                //모든 패턴 비활성화
+                fireBallThrower.SetActive(false);
+
+                //if (spellFieldGenerator.activeSelf)
+                //creepCtrl.Enable_Generator(false);
+                spellFieldGenerator.SetActive(false);
+            }
+            creepCtrl.stat.state = (MoonHeader.CreepStat)this.lichstat;
         }
 
         if (lichstat == LichStat.Death)
         {
             fireBallThrower.SetActive(false);
             
-            if (spellFieldGenerator.activeSelf)
-                creepCtrl.Enable_Generator(false);
+            //if (spellFieldGenerator.activeSelf)
+                //creepCtrl.Enable_Generator(false);
             spellFieldGenerator.SetActive(false);
         }
 
@@ -163,7 +183,7 @@ public class HSH_LichCreepController : MonoBehaviour
             }
         }
 
-        transform.rotation = Quaternion.LookRotation(mostClose - transform.position).normalized;
+        transform.rotation = Quaternion.LookRotation(Vector3.Scale(mostClose - transform.position, Vector3.one-Vector3.up)).normalized;
     }
 
     IEnumerator DelayedAttack() //애니메이션과 공격 패턴이 같은 타이밍에 재생되게끔 하는 함수

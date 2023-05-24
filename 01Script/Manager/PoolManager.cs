@@ -70,7 +70,7 @@ public class PoolManager : MonoBehaviour
 
 
 		ReadyToStart_SpawnNum = 50;
-		ReadyToStart_SpawnNum_Particles = 10;
+		ReadyToStart_SpawnNum_Particles = 3;
 		ReadyToStart_SpawnNum_Item = 50;
     }
 
@@ -114,6 +114,10 @@ public class PoolManager : MonoBehaviour
 			}
             // 아이템 미리 소환.
             GameManager.Instance.LoadingTxtUpdate("아이템 생성 중..");
+			for (int i = 0; i < 10; i++)
+			{ yield return null; Get_Item(0); }
+			foreach (GameObject item in poolList_Items[0])
+			{ yield return null; item.GetComponent<LSM_ItemSC>().ItemDisable(); }
             for (int i = 0; i < Items.Length; i++)
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum_Item; j++)

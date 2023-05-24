@@ -55,6 +55,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public MoonHeader.State_P_Minion state_p;
 
     private Vector3 networkPosition, networkVelocity;
+    private Vector3 preCamera;
 
     private LSM_WeaponSC weaponSC;
     private MeshCollider weapon_C;
@@ -235,7 +236,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         {
             yield return new WaitForSeconds(Time.deltaTime);
             if (timer_dummy >= 0.5f)
-            { dummy_PAD.Particle_Size_Setting(timer_F_Holder*3 + 1); timer_dummy = 0; }
+            { dummy_PAD.Particle_Size_Setting(timer_F_Holder*6 + 1); timer_dummy = 0; }
             
             timer_dummy += Time.deltaTime;
             timer_F_Holder += Time.deltaTime;
@@ -255,11 +256,20 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         }
         pushing_F = false;
         dummy_PAD.Particle_Size_Setting(1);
-        if (timer_F_Holder >= 3f) { state_p = MoonHeader.State_P_Minion.Dead; StartCoroutine(DeadProcessing(this.gameObject)); }
+        if (timer_F_Holder >= 3f) { 
+            state_p = MoonHeader.State_P_Minion.Dead;
+            photonView.RPC("Explosion_s",RpcTarget.MasterClient);
+            DeadProcessing(this.gameObject); 
+        }
         
         yield return new WaitForSeconds(1);
     }
-    
+    [PunRPC]private void Explosion_s()
+    {
+        GameObject dummy_Explosion = PoolManager.Instance.Get_Particles(7, this.transform.position + Vector3.up * 1.5f);
+        dummy_Explosion.GetComponent<LSM_W_Slash>().Setting(this.gameObject, 20, this.GetComponent<I_Actor>(), 0);
+        dummy_Explosion.GetComponent<LSM_W_Slash>().Setting_Trigger_Exist_T(0.1f, 50f);
+    }
     
 
     void Move()
@@ -285,7 +295,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         //rigid.MovePosition(transform.position + thisVelocity * Time.deltaTime * speed);       // 웬지 모르게 fps차이에 따라서 속도가 다름...
 
         // 현재 가려고하는 방향에 맵이 존재하는지 확인.
-        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, thisVelocity * 1f, Color.blue) ;
+        Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, thisVelocity * 1.5f, Color.blue) ;
         bool isborder = Physics.Raycast(this.transform.position + Vector3.up*0.5f, thisVelocity, 0.8f, 1<<LayerMask.NameToLayer("Map"));
         // 현재 입력한 방향 중, x방향 즉 왼 오른쪽에 장애물이 있는지, 대각이동시에 사용
         Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, moveX * 3, Color.red);
@@ -294,8 +304,10 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, moveY * 3, Color.black);
         bool isborder_z = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, y * Vector3.forward, 1.3f, 1 << LayerMask.NameToLayer("Map"));
 
-        thisVelocity = moveX * (isborder_x ? 0.4f : 1) + moveY * (isborder_z ? 0.4f : 1);
-        if (!isborder)this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
+
+        thisVelocity = new Vector3(thisVelocity.x * (isborder_x ? 0.4f : 1), 0, thisVelocity.z * (isborder_z ? 0.4f : 1));
+        //if (!isborder)this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
+        if (!isborder) rigid.MovePosition(rigid.position + thisVelocity*currentSpeed * Time.deltaTime * (sprint?1.5f:1f));
         //this.rigid.velocity = thisVelocity * currentSpeed * (sprint?1.5f:1f);
 
         // 점프
@@ -342,7 +354,13 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             // camerapos.transform.localEulerAngles = new Vector3(pitch, 0, 0);
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
-            playerCamera.transform.position = camerapos.transform.position + this.transform.forward * 0.2f;
+
+            // 잔흔들림 방지용
+            if (Vector3.Distance(camerapos.transform.position + this.transform.forward * 0.2f, preCamera) >= 0.1f)
+            {
+                playerCamera.transform.position = camerapos.transform.position + this.transform.forward * 0.2f;
+                preCamera = playerCamera.transform.position;
+            }
         }
         
         // playerCamera.transform.rotation = camerapos.transform.rotation;
@@ -444,6 +462,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         GameObject effect_d = PoolManager.Instance.Get_Particles(1, dummypos, 
             Quaternion.LookRotation(forward_, n).eulerAngles);
         effect_d.GetComponent<LSM_W_Slash>().Setting(this.gameObject, this.actorHealth.Atk, this.GetComponent<I_Actor>(), v + (rigid.velocity.magnitude));
+        effect_d.GetComponent<LSM_W_Slash>().Setting_Trigger_Exist_T(0.7f,5f);
         //effect_d.transform.LookAt(forward_ + dummypos, n);
         effect_d.transform.localScale = Vector3.one * s;
         effect_d.transform.position = dummypos + forward_*3f;
@@ -552,6 +571,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     IEnumerator Eskill()
     {
+        
         anim.SetLayerWeight(1, 1f);
         anim.SetTrigger("skillE_Trigger");
         canMove = false;
@@ -639,6 +659,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     [PunRPC]
     private void SpawnSetting_RPC(short mh, short h, string name, int t)
     {
+        rigid.useGravity = true;
         this.gameObject.layer = 7;
         this.actorHealth.maxHealth = mh;
         this.actorHealth.health = h;
@@ -663,22 +684,34 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 	public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
     {
 
-        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead || !photonView.IsMine)
+        Damaged(dam, origin, t, other, 0f);
+    }
+    public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other, float power)
+    {
+        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead || !PhotonNetwork.IsMasterClient)
             return;
+
         if (this.actorHealth.health - dam <= 0 && state_p != MoonHeader.State_P_Minion.Dead)
-        {state_p = MoonHeader.State_P_Minion.Dead; StartCoroutine(DeadProcessing(other)); }
+        { state_p = MoonHeader.State_P_Minion.Dead;
+            //StartCoroutine(DeadProcessing(other)); 
+            DeadProcessing(other);
+        }
+
         else if (this.actorHealth.health - dam > 0)
         {
-            photonView.RPC("Dam_RPC", RpcTarget.All, dam, origin);
+            photonView.RPC("Dam_RPC", RpcTarget.All, dam, origin, power);
         }
         return;
     }
+
+
     [PunRPC]
-    private void Dam_RPC(short dam, Vector3 origin)
+    private void Dam_RPC(short dam, Vector3 origin, float power)
     {
         actorHealth.health -= dam;
         if (photonView.IsMine)
         {
+            rigid.AddForce((this.transform.position - origin).normalized *power, ForceMode.Impulse);
             DamagedRotation(origin);
         }
     }
@@ -688,10 +721,13 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         this.gameObject.layer = 12;
         state_p = MoonHeader.State_P_Minion.Dead;
         if (photonView.IsMine)
+        {
+            StartCoroutine(DeadInOrner());
             myPlayerCtrl.PlayerMinionDeadProcessing();
+        }
     }
     // LSM DeadProcessing
-    public IEnumerator DeadProcessing(GameObject other)
+    public void DeadProcessing(GameObject other)
     {
         canMove = false;
         photonView.RPC("Dead_RPC", RpcTarget.All);
@@ -713,20 +749,32 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
             { other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(50); }
             GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
         }
+        
+    }
+    private IEnumerator DeadInOrner()
+    {
+        canMove= false;
+        timer_F_Holder = 0;
+        pushing_F = false;
+        cameraCanMove = false;
+        rigid.useGravity = false;
 
         int d_for = Mathf.CeilToInt(1.5f / Time.deltaTime);
+        Debug.Log("for : " + d_for);
         for (int i = 0; i < d_for; i++)
         {
+            Debug.Log("In Animation!");
             yield return new WaitForSeconds(Time.deltaTime);
             if (Mathf.CeilToInt(d_for / 3 * 2) == i) { StartCoroutine(GameManager.Instance.ScreenFade(false)); }
-            playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, deadCamerapos.transform.position, Time.deltaTime);
-            playerCamera.transform.rotation = Quaternion.Lerp(playerCamera.transform.rotation, deadCamerapos.transform.rotation, Time.deltaTime);
+            playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, deadCamerapos.transform.position, Time.deltaTime * 2);
+            playerCamera.transform.rotation = Quaternion.Lerp(playerCamera.transform.rotation, deadCamerapos.transform.rotation, Time.deltaTime * 5);
         }
         yield return new WaitForSeconds(0.5f);
         cameraCanMove = false;
         playerCamera = null;
         MinionDisable();
     }
+
 
     #endregion
 

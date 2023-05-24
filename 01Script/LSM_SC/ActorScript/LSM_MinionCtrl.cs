@@ -615,9 +615,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		if (other.transform.CompareTag("PlayerMinion"))
 		{
 			other.GetComponent<I_Characters>().AddEXP((short)stats.exp);		// 잡은 미니언이 플레이어 미니언이라면 경험치를 한번 더 줌.
-			//other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
-																			   // 디버깅용 플레이어가 미니언을 처치하였다면..
-			GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
+			//GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
 		}
 		else if (other.transform.CompareTag("DamageArea"))
 		{

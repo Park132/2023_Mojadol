@@ -6,14 +6,14 @@ using Photon.Pun;
 
 public class LSM_WeaponSC : MonoBehaviourPunCallbacks
 {
-    PSH_PlayerUniversal myParent;
+    LSM_Player_Knight myParent;
     public Transform weaponPos;
     
 
     // Start is called before the first frame update
     void Start()
     {
-        myParent = GetComponentInParent<PSH_PlayerUniversal>();
+        myParent = GetComponentInParent<LSM_Player_Knight>();
     }
 
     private void OnTriggerEnter(Collider other)

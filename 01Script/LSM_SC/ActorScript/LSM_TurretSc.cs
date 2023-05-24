@@ -164,7 +164,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			this.stats.actorHealth.team = t;
 			this.stats.actorHealth.health = (short)(this.stats.actorHealth.maxHealth/2);
 			DestroyProcessing(other);
-			photonView.RPC("DestroyProcessing_RPC", RpcTarget.All);
+			photonView.RPC("DestroyProcessing_RPC", RpcTarget.All, (int)t);
 		}
 		return;
 		
@@ -176,7 +176,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         StartCoroutine(DamagedEffect());
 	}
 
-	[PunRPC] protected void DestroyProcessing_RPC() {
+	[PunRPC] protected void DestroyProcessing_RPC(int t) {
+		this.stats.actorHealth.team = (MoonHeader.Team)t;
 		ChangeTeamColor();
 		ChangeTeamColor(bodies[0].gameObject);
 	}
@@ -195,7 +196,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 		foreach (Renderer item in bodies)
 			item.material.color = recovered;
+		ChangeTeamColor();
 		ChangeTeamColor(bodies[0].gameObject);
+		
 	}
 
 	protected virtual void DestroyProcessing(GameObject other)
@@ -304,8 +307,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 						case "PlayerMinion":
 							Debug.Log("PlayerMinion Attack!");
 							//Attack_Actor<PSH_PlayerFPSCtrl>(target);
+							I_Playable dummy_Playable = target.GetComponent<I_Playable>();
 							I_Actor dummy_Actor = target.GetComponent<I_Actor>();
-							dummy_Actor.Damaged(this.stats.actorHealth.Atk, transform.position, this.stats.actorHealth.team, this.gameObject);
+							dummy_Playable.Damaged(this.stats.actorHealth.Atk, transform.position, this.stats.actorHealth.team, this.gameObject, 10f);
 							if (dummy_Actor.GetHealth() <= 0)
 								target = null;
 							break;
