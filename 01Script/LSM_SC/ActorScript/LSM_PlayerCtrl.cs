@@ -552,7 +552,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         MainCam.SetActive(true);
         MiniMapCam.SetActive(true);
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
         // 기존의 미니언을 비활성화한 후 플레이어 전용 프리펩 소환.
 
         playerMinion = PoolManager.Instance.Get_PlayerMinion(PlayerType);
@@ -584,7 +584,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         Cursor.lockState = CursorLockMode.Locked;
 
         yield return new WaitForSeconds(3f);
-
+        StartCoroutine(GameManager.Instance.ScreenFade(true));
         //subTarget_minion.stats.state = MoonHeader.State.Normal;
     }
 

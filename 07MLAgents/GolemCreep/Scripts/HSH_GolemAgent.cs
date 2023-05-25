@@ -9,17 +9,18 @@ using System.Security.AccessControl;
 using Unity.MLAgents.Policies;
 using System.Diagnostics.Tracing;
 using Unity.Barracuda;
+using Photon.Pun;
 
 public enum GolemStat
 {
-    Idle,
-    Walk,
-    Charge,
-    Groggy,
-    Death
+    Idle=0,
+    Walk=1,
+    Charge=2,
+    Groggy=4,
+    Death = 3
 }
 
-public class HSH_GolemAgent : Agent
+public class HSH_GolemAgent : Agent, I_Creep
 {
     float spd;
     bool doOnlyOnce; bool doOnlyOnce2; //bool doOnlyOnce3;
@@ -29,12 +30,16 @@ public class HSH_GolemAgent : Agent
     const float HP = 4;
     GolemStat stat;
     public CreepInfo creepinfo;
+    public GameObject groggySensor;
+    private LSM_CreepCtrl creepCtrl;
     PatternInfo patternInfo;
 
     Vector3 InitPos;
 
     public Rigidbody rb;
     public Animator anim;
+
+    NNModel golemonnx;
 
     public override void Initialize()
     {
@@ -57,75 +62,106 @@ public class HSH_GolemAgent : Agent
 
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
+        groggySensor.SetActive(false);
+
+        creepCtrl = this.GetComponent<LSM_CreepCtrl>();
+        //golemonnx = this.GetComponent<BehaviorParameters>().Model;
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            this.stat = (GolemStat)creepCtrl.stat.state;
+            StatCtrl();
+            spd = 0;
+            return;
+        }
         PatCoolCtrl();
-        StatCtrl();
+
+        
 
         rb.inertiaTensor = Vector3.zero;
         rb.inertiaTensorRotation = Quaternion.Euler(Vector3.zero);
 
-        if(creepinfo.hp <= 0)
+
+        // 트리거 박스 안에 플레이어가 존재하지 않을 경우.
+        // 다시 원래 자리로 돌아가기 위한 함수.
+        if (stat != GolemStat.Death)
         {
-            spd = 0;
-        }
-
-        if(!creepinfo.isHero)
-        {          
-            doOnlyOnce4 = true;
-            creepinfo.hp = HP;
-
-            if(!(((transform.position.x > InitPos.x - 0.1) && (transform.position.x < InitPos.x + 0.1)) && ((transform.position.z > InitPos.z - 0.1) && (transform.position.z < InitPos.z + 0.1))))
+            if (!creepinfo.isHero)
             {
-                Debug.Log("1");
-                stat = GolemStat.Walk; patternInfo.cooltime = WALKCOOL;
-                transform.rotation = Quaternion.LookRotation(InitPos - transform.position).normalized;
-                transform.position = Vector3.MoveTowards(transform.position, InitPos, spd*Time.fixedDeltaTime);
+                doOnlyOnce4 = true;
+                creepinfo.hp = HP;
+                if (Mathf.Abs(transform.position.x - InitPos.x) > 0.1f &&
+                    Mathf.Abs(transform.position.z - InitPos.z) > 0.1f)
+                {
+                    //Debug.Log("1");
+                    stat = GolemStat.Walk; patternInfo.cooltime = WALKCOOL;
+                    transform.rotation = Quaternion.LookRotation(InitPos - transform.position).normalized;
+                    transform.position = Vector3.MoveTowards(transform.position, InitPos, spd * Time.fixedDeltaTime);
+                    StatCtrl();
+                }
+
+                else
+                {
+                    //Debug.Log("2");
+                    stat = GolemStat.Idle;
+                    StatCtrl();
+                }
             }
 
             else
             {
-                Debug.Log("2");
-                stat = GolemStat.Idle;
+                //doOnlyOnce3 = true;
+
+                if (doOnlyOnce4)
+                {
+                    Debug.Log("3");
+                    doOnlyOnce4 = false;
+                    stat = GolemStat.Walk;
+                    patternInfo.cooltime = WALKCOOL;
+                    StatCtrl();
+                }
             }
+            creepCtrl.stat.state = (MoonHeader.CreepStat)this.stat;
         }
-
-        else
-        {
-            //doOnlyOnce3 = true;
-
-            if (doOnlyOnce4)
-            {
-                Debug.Log("3");
-                doOnlyOnce4 = false;
-                stat = GolemStat.Walk;
-                patternInfo.cooltime = WALKCOOL;
-            }
-        }
-
+        else { spd = 0; rb.velocity = Vector3.zero; }
 
     }
 
     private void OnCollisionEnter(Collision c)
     {
+        if (stat == GolemStat.Death || !PhotonNetwork.IsMasterClient)
+            return;
         if (c.transform.CompareTag("PlayerMinion"))
         {
             AddReward(0.1f);
-            c.transform.GetComponent<HSH_PatternAvoider_Golem>().Damaged(patternInfo.dmg);
+
+            if (GolemStat.Walk == this.stat)
+            {
+                c.transform.GetComponent<I_Playable>().Damaged((short)Mathf.CeilToInt(patternInfo.dmg/3), this.transform.position, MoonHeader.Team.Yellow, this.gameObject, 10);
+            }
+            else if (this.stat == GolemStat.Charge)
+            {
+                c.transform.GetComponent<I_Playable>().Damaged((short)Mathf.CeilToInt(patternInfo.dmg), this.transform.position, MoonHeader.Team.Yellow, this.gameObject, 20f);
+            }
+
+            //c.transform.GetComponent<HSH_PatternAvoider_Golem>().Damaged(patternInfo.dmg);
 
             /*원래 이 부분에 피격 대상을 넉백시키는 코드를 넣었었는데 플레이어랑 어떻게 호환될지 몰라서 주석처리 했습니다.
              
              c.gameObject.GetComponent<Rigidbody>().AddForce(this.transform.position - c.transform.position * 50f, ForceMode.Impulse);
              */
+
         }
 
         if (c.transform.CompareTag("iWall") && doOnlyOnce && stat == GolemStat.Charge)
         {
-            doOnlyOnce = false;
-            StartCoroutine(Groggy(c));
+            //groggySensor.SetActive(false);
+            //doOnlyOnce = false;
+            StartCoroutine(Groggy());
         }
     }
 
@@ -156,14 +192,16 @@ public class HSH_GolemAgent : Agent
             discreteActionsOut[0] = 1;
         }
     }
-
+    /*
     public override void OnEpisodeBegin()
     {
         stat = GolemStat.Walk; patternInfo.cooltime = WALKCOOL;
-    }
+    }*/
 
     void PatCoolCtrl()
     {
+        if (stat == GolemStat.Death)
+            return;
         if (stat != GolemStat.Groggy && stat != GolemStat.Idle && creepinfo.hp > 0f)
         {
             patternInfo.cooltime -= Time.fixedDeltaTime;
@@ -171,14 +209,19 @@ public class HSH_GolemAgent : Agent
             if (stat == GolemStat.Walk && patternInfo.cooltime < 0.5f)
             {
                 stat = GolemStat.Charge; patternInfo.cooltime = CHARGECOOL;
+                groggySensor.SetActive(true);
+                StatCtrl();
             }
 
             else if (stat == GolemStat.Charge && patternInfo.cooltime < 0.5f)
             {
                 stat = GolemStat.Walk; patternInfo.cooltime = WALKCOOL;
+                groggySensor.SetActive(false);
+                StatCtrl();
             }
         }
 
+        /*
         else if (creepinfo.hp <= 0)
         {           
 
@@ -189,6 +232,7 @@ public class HSH_GolemAgent : Agent
                 StartCoroutine(Death());
             }
         }
+        */
     }
 
     void StatCtrl()
@@ -240,6 +284,8 @@ public class HSH_GolemAgent : Agent
 
     void WalkAndCharge(ActionSegment<int> act)
     {
+        if (!PhotonNetwork.IsMasterClient || stat == GolemStat.Death) return;
+
         var rotateDir = Vector3.zero;
 
         switch (act[0])
@@ -254,24 +300,35 @@ public class HSH_GolemAgent : Agent
                 break;
         }
 
-        if (stat != GolemStat.Groggy && creepinfo.isHero)
+        if (stat != GolemStat.Groggy && creepinfo.isHero && stat != GolemStat.Death)
         {
             transform.Rotate(rotateDir, Time.fixedDeltaTime * 100f);
         }
         rb.velocity = transform.forward * spd * 50f * Time.fixedDeltaTime;
     }
 
-    IEnumerator Groggy(Collision c)
+    public IEnumerator Groggy()
     {
-        stat = GolemStat.Groggy;
+        if (doOnlyOnce)
+        {
 
-        yield return new WaitForSeconds(4f);
+            groggySensor.SetActive(false);
+            doOnlyOnce = false;
+            stat = GolemStat.Groggy;
+            StatCtrl();
 
-        patternInfo.cooltime = WALKCOOL;
-        stat = GolemStat.Walk;
-        doOnlyOnce = true;
+            yield return new WaitForSeconds(4f);
 
-        transform.rotation = Quaternion.LookRotation(InitPos - transform.position);
+            if (stat != GolemStat.Death)
+            {
+                patternInfo.cooltime = WALKCOOL;
+                stat = GolemStat.Walk;
+                StatCtrl();
+            }
+            doOnlyOnce = true;
+
+            transform.rotation = Quaternion.LookRotation(InitPos - transform.position);
+        }
     }
 
     IEnumerator Death()
@@ -282,4 +339,27 @@ public class HSH_GolemAgent : Agent
 
         Destroy(this.gameObject);
     }
+
+    public void RegenProcessing() 
+    {
+        stat = GolemStat.Idle;
+        anim.SetBool("Death_B", false);
+        patternInfo.cooltime = WALKCOOL;
+        stat = GolemStat.Walk;
+        doOnlyOnce = true;
+        groggySensor.SetActive(false);
+        StatCtrl();
+    }
+    public void AttackEffectEnable(bool b) { }
+    public void StatSetting(int i) { stat = (GolemStat)i; }
+    public void DeadProcessing() 
+    {
+        stat = GolemStat.Death;
+        StatCtrl();
+        spd = 0f;
+        anim.SetBool("Death_B", true);
+        //this.GetComponent<BehaviorParameters>().Model = null;
+
+    }
+    public void Setting() { }
 }

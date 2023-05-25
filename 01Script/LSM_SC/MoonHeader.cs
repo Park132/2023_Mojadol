@@ -12,7 +12,7 @@ public class MoonHeader : MonoBehaviour
 															// Ready: 현재 해당 GameState를 진행할 수 있음, Processing: 해당 GameState를 진행 중, End: 해당 GameState를 끝마침.
 	public enum SpawnerState { None, Setting, Spawn };      // 스포너의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안함, Setting: SettingAttackPath 상태일때 스포너를 조정하는 단계, Spawn: 스포너가 동작하는 중.
-	public enum CreepStat { Idle = 0, Idle_Combat = 1, Attack = 2, Death = 3 }
+	public enum CreepStat { Idle = 0, Idle_Combat = 1, Attack = 2, Death = 3, Groggy = 4 }
 	public enum State_P { None, Selected , Possession};     // 플레이어의 현재 상태를 나타내기 위해 사용.
 															// None: 아무것도 안하는 중. 주로 TopView 시점에서의 상태, Seleted: 미니언을 클릭한 시점, Possession: 빙의 중.
 	public enum State_P_Minion { Normal=0, Dead=1 };			// 플레이어미니언의 현재 상태를 나타내기 위해 사용.
@@ -188,4 +188,13 @@ public interface I_Playable
 	public void CollectingArea();
 	public void AddCollector(int s);
 	public float GetF();
+}
+
+public interface I_Creep
+{
+	public void RegenProcessing();
+	public void AttackEffectEnable(bool b);
+	public void StatSetting(int i);
+	public void DeadProcessing();
+	public void Setting();
 }

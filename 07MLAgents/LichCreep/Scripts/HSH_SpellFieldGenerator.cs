@@ -4,11 +4,12 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using Photon.Pun;
 
 //장판을 소환하는 패턴을 담당하는 Agent
 public class HSH_SpellFieldGenerator : Agent
 {
-    PatternInfo pinfo;  //쿨타임, 데미지 관련
+    public PatternInfo pinfo;  //쿨타임, 데미지 관련
     public bool isRun;  //Coroutine이 연속으로 호출되는 것을 방지하기 위한 변수
     public float spd;
 

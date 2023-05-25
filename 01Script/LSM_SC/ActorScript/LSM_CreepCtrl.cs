@@ -12,7 +12,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     private Rigidbody rigid;
     private GameObject icon;
     private Renderer[] bodies;  // 색상을 변경할 렌더러.
-    private HSH_LichCreepController mainCtrl;
+    private I_Creep mainCtrl;
     public int inPlayerNum;
     private bool once;
 
@@ -56,7 +56,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         icon.GetComponent<Renderer>().material.color = Color.yellow;
         bodies = this.transform.GetComponentsInChildren<Renderer>();
 
-        mainCtrl = this.GetComponent<HSH_LichCreepController>();
+        mainCtrl = this.GetComponent<I_Creep>();
         stat = new MoonHeader.S_CreepStats();
 
         // 디버그용 maxHealth, Atk, Exp, Gold
@@ -81,7 +81,8 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     {
         if (!once && GameManager.Instance.onceStart && !PhotonNetwork.IsMasterClient)
         {
-            mainCtrl.spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = false;
+            mainCtrl.Setting();
+            //mainCtrl.spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = false;
         }
     }
     public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
@@ -106,7 +107,10 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     }
 
     public void Enable_Generator(bool b) { photonView.RPC("E_RPC", RpcTarget.All, b); }
-    [PunRPC] private void E_RPC(bool b) { mainCtrl.spellFieldGenerator.SetActive(false); }
+    [PunRPC] private void E_RPC(bool b) {
+        //mainCtrl.spellFieldGenerator.SetActive(false); 
+        mainCtrl.AttackEffectEnable(false);
+    }
 
     [PunRPC]
     protected void DamMinion_RPC()
@@ -134,7 +138,8 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         //nav_ob.enabled = false;
 
         //anim.SetBool("Dead", true);
-        this.mainCtrl.lichstat = LichStat.Death;
+        //this.mainCtrl.lichstat = LichStat.Death;
+        mainCtrl.StatSetting(3);
         photonView.RPC("DeadAnim", RpcTarget.All);
 
 

@@ -42,7 +42,8 @@ public class HSH_TriggerBox : MonoBehaviour
         if (c.CompareTag("PlayerMinion") && Mathf.Sign(Vector3.Dot(this.transform.forward,(c.transform.position - this.transform.position).normalized)) > 0)
         {
             playerCount++;
-            LichCreep.GetComponent<HSH_LichCreepController>().Player.Add(c.gameObject);
+            //LichCreep.GetComponent<HSH_LichCreepController>().Player.Add(c.gameObject);
+            LichCreep.GetComponent<HSH_LichCreepController>().PlayerAdding(c.gameObject);
         }
 
         else if (c.CompareTag("PlayerMinion") && Mathf.Sign(Vector3.Dot(this.transform.forward, (c.transform.position - this.transform.position).normalized)) < 0)

@@ -14,7 +14,7 @@ public enum LichStat
     Death = 3
 }
 
-public class HSH_LichCreepController : MonoBehaviour
+public class HSH_LichCreepController : MonoBehaviour, I_Creep
 {
     public CreepInfo lichinfo; //크립 관련 정보
     public LichStat lichstat;
@@ -146,6 +146,8 @@ public class HSH_LichCreepController : MonoBehaviour
     {
         lichstat = LichStat.Idle;
         anim.SetBool("Death_B", false);
+        spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>()
+            .pinfo.dmg = creepCtrl.stat.actorHealth.Atk;
         AnimCtrl();
     }
 
@@ -199,4 +201,26 @@ public class HSH_LichCreepController : MonoBehaviour
         doOnlyOnce = true;
     }
 
+    public void PlayerAdding(GameObject obj)
+    {
+        bool isExist = false;
+        foreach (GameObject item in Player)
+        {
+            if (item.Equals(obj))
+            {
+                isExist = true;
+                break;
+            }
+        }
+        if (!isExist)
+            Player.Add(obj);
+    }
+    public void AttackEffectEnable(bool b)
+    { spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = b; }
+    public void StatSetting(int i)
+    { lichstat = (LichStat)i; }
+    public void Setting()
+    {
+        spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = false;
+    }
 }

@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 100f;
+	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 160f;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	[Header("GameManager States")]
@@ -216,7 +216,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		MaxPlayerNum = 2;
 		numOfSkipClickedPlayer = 0;
 		isClickSkip = false;
-    }
+
+		Connect(); if (debugging_bool) { Debugging_Setting(); }
+	}
 
 	private void Start_function()
 	{
@@ -346,8 +348,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
     private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.O) && !onceStart)
-		{ Connect(); if (debugging_bool) { Debugging_Setting(); } }
+		//if (Input.GetKeyDown(KeyCode.O) && !onceStart)
+		//{ Connect(); if (debugging_bool) { Debugging_Setting(); } }
 
 		if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
 		{
@@ -588,7 +590,14 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			float origin = inout ? 1 : 0;//, alpha = ((float)1 / time ) * (inout ? -1 : 1);
 
 			screen.color = new Color(0, 0, 0, origin);
-
+			for (int i = 0; i < ((float)time / 100) / Time.deltaTime; i++)
+			{
+				yield return new WaitForSeconds(Time.deltaTime);
+				float plustAlpha = Time.deltaTime * (inout ? -1 : 1) * 2;
+				origin += plustAlpha;
+				screen.color = new Color(0, 0, 0, origin);
+			}
+			/*
 			while (true)
 			{
 				yield return new WaitForSeconds(Time.deltaTime);
@@ -597,7 +606,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 				screen.color = new Color(0, 0, 0, origin);
 				if (Mathf.Abs(origin - (inout ? 0:1)) <= 0.1f)
 					break;
-			}
+			}*/
 
 			/*
 			for (int i = 0; i < time; i++)
