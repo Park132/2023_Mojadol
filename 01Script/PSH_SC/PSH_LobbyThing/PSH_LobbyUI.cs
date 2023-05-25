@@ -44,11 +44,17 @@ public class PSH_LobbyUI : MonoBehaviour
             selectPanel.SetActive(true);
             lobbyCtrl.GetComponent<PSH_LobbyCtrl>().keyEnable = true;
             GameObject.Find("LobbyManager").GetComponent<PSH_LobbyCtrl>().once = true;
-        }   
+        }
+        else 
+        {
+            inputName.text = "";
+        }
     }
 
     public void GameSceneStart()
     {
-        // SceneManager.LoadScene("GameScene");
+        Debug.Log("start button");
+        PlayerPrefs.SetInt("PlayerSelectType", characterCode);
+        SceneManager.LoadScene(1);
     }
 }

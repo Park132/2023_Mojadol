@@ -181,6 +181,7 @@ public interface I_Playable
 	public GameObject CameraSetting(GameObject cam);
 	public int GetExp();
 	public int GetGold();
+	public byte GetLV();
 	public void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl);
 	public void MinionDisable();
 	public void MinionEnable();

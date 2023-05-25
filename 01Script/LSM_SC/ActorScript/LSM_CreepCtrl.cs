@@ -163,7 +163,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         for (int i = 0; i < 5; i++)
         {
             GameObject dummy_item = PoolManager.Instance.Get_Item(0);
-            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 3f);
+            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 5f);
         }
         GiveExp();
 

@@ -46,8 +46,9 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
 
 
-    [SerializeField] private int PlayerType;
+    [SerializeField]public int PlayerType;
     [SerializeField]private int exp, gold;
+    [SerializeField] private byte level;
 
     public float this_player_ping;
 
@@ -126,8 +127,22 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             deathPenalty = 10f;
         }
     }
-    public void SettingTeamAndName(int t, string n) { photonView.RPC("SettingTN_RPC", RpcTarget.AllBuffered, t,n); }
-    [PunRPC] protected void SettingTN_RPC(int t, string n) { this.player.team = (MoonHeader.Team)t; this.playerName = n; }
+    public void SettingTeamAndName(int t) { 
+        photonView.RPC("SettingTN_RPC", RpcTarget.AllBuffered, t);
+    }
+    [PunRPC] protected void SettingTN_RPC(int t) 
+    {
+        this.player.team = (MoonHeader.Team)t;
+        if (photonView.IsMine)
+        { photonView.RPC("SN_RPC", RpcTarget.AllBuffered, this.playerName, this.PlayerType); }
+    }
+    [PunRPC] protected void SN_RPC(string n, int t) {
+        if (photonView.IsMine)
+            return;
+        this.playerName = n; this.PlayerType = t; }
+
+
+    public void SettingPlayer_(string n, int t) { playerName = n; PlayerType = t; }
 
 	void Update()
     {
@@ -140,7 +155,14 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             ReGeneration();
 
             debugging();
+            PlayerInput_M();
         }
+    }
+    private void PlayerInput_M()
+    {
+        
+        GameManager.Instance.tabUI.SetActive(Input.GetKey(KeyCode.Tab));
+        
     }
 
     private void ReGeneration()
@@ -604,4 +626,5 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     public int GetExp() { return exp; }
     public int GetGold() { return gold; }
     public void GetGold(int gold_dummy) { gold += gold_dummy; }
+    public byte GetLevel() { return level; }
 }

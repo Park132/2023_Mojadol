@@ -76,7 +76,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &-9133297064490105416
 CapsuleCollider:
@@ -201,8 +201,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d465088e15240f459cdd2a6163535ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 15
-  currentSpeed: 0
   playerCamera: {fileID: 0}
   camerapos: {fileID: 4341382743657664967}
   deadCamerapos: {fileID: 7152344736704999244}
@@ -218,7 +216,6 @@ MonoBehaviour:
   myPlayerCtrl: {fileID: 0}
   state_p: 0
   CollectingRadius: 0
-  timer_collect: 0
   spawnPosition: {fileID: 3800937156700966342}
 --- !u!1 &6547195982650697275
 GameObject:

@@ -52,7 +52,8 @@ public class PSH_LobbyCtrl : MonoBehaviour
         }
         cam = Camera.main;
         cameraBoom.transform.position = firstOrigin.transform.position;
-        cameraLookBoom.transform.position = firstOrigin.transform.position + Vector3.down;
+        //cameraLookBoom.transform.position = firstOrigin.transform.position + Vector3.down;
+        cameraLookBoom.transform.position = firstOrigin.transform.position + Vector3.forward;
         cameraBoom.transform.LookAt(cameraLookBoom.transform.position);
         cam.transform.position = cameraBoom.transform.position;
         cam.transform.rotation = cameraBoom.transform.rotation;
@@ -73,7 +74,7 @@ public class PSH_LobbyCtrl : MonoBehaviour
             currentLerpTime = 0.0f;
             WhichLook(selectcode);
             tempLight = maxLightIntensity[selectcode] / lightingTime;
-            StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
+            StartCoroutine(HighLightControl(0.1f, selectcode));
         }
 
         if(keyEnable)

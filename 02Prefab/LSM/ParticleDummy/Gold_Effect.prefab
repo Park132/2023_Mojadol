@@ -4580,6 +4580,8 @@ MonoBehaviour:
   target: {fileID: 0}
   speed: 0
   timer_accelation: 0
+  canMove: 0
+  size: 0
 --- !u!1 &7862375945449806637
 GameObject:
   m_ObjectHideFlags: 0
@@ -4629,7 +4631,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7862375945449806637}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

@@ -14,7 +14,9 @@ public class LSM_GameUI : MonoBehaviour
     public Image playerExp;
 
     public TextMeshProUGUI targetName;          // # Enemy의 자식 오브젝트 중 TargetName
-    public TextMeshProUGUI playerHP_txt, playerGold_txt;
+    public TextMeshProUGUI playerHP_txt, playerGold_txt, playerLevel_txt;
+
+    public GameObject[] playerIcons;
 
     public GameObject suicide_obj;
     public Image suicide_current_gauge, suicide_screen;
@@ -26,6 +28,7 @@ public class LSM_GameUI : MonoBehaviour
     private I_Actor player_ac, target_ac;
     private I_Playable player_playable;
     private GameObject target_obj;
+    private int type_;
     
 
 
@@ -47,7 +50,14 @@ public class LSM_GameUI : MonoBehaviour
         target_obj = obj;
         target_ac = obj.GetComponent<I_Actor>();
     }
-    public void playerHealth(GameObject ctrl) { playerUI.SetActive(true);  player_ac = ctrl.GetComponent<I_Actor>(); player_playable = ctrl.GetComponent<I_Playable>(); }
+    public void playerHealth(GameObject ctrl)
+    { 
+        playerUI.SetActive(true);  
+        player_ac = ctrl.GetComponent<I_Actor>(); 
+        player_playable = ctrl.GetComponent<I_Playable>();
+        type_ = ctrl.GetComponent<LSM_PlayerBase>().myPlayerCtrl.PlayerType;
+        for (int i = 0; i < playerIcons.Length; i++) { playerIcons[i].SetActive(i == type_); }
+    }
     // 모든 캐릭터들이 갖고있는 공통적인 것. I_Actor를 받아와 구문을 최소화.
 
 
@@ -66,10 +76,12 @@ public class LSM_GameUI : MonoBehaviour
             playerHP.fillAmount = Mathf.Round((float)player_ac.GetHealth() / player_ac.GetMaxHealth() * 100) / 100;
             playerHP_txt.text = player_ac.GetHealth() + " / " + player_ac.GetMaxHealth();
             playerGold_txt.text = player_playable.GetGold() + " G";
+            playerLevel_txt.text = player_playable.GetLV().ToString() + "LV";
             playerExp.fillAmount = (Mathf.Round(((float)player_playable.GetExp() / 200) * 100) / 100) * ((float)45/100) + 0.55f;
 
             QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
             ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
+
             if (player_playable.GetF() >= 0.5f)
             {
                 suicide_screen.gameObject.SetActive(true);

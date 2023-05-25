@@ -40,7 +40,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     public TextMeshProUGUI turnText;    // 현재 턴의 종류에 대하여 사용자에게 보여주는 UI. 후에 바꿀 예정.
                                         // # 해당 변수는 인스턴스에서 직접 연결해줘야함. Canvas 내에 있는 Turn Object를 연결.
     public GameObject canvas;						// 씬에 존재하는 캔버스. 하나만 있다고 가정하여 Awake에서 찾아 저장.
-	public GameObject selectAttackPathUI, mapUI, gameUI, loadingUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
+	public GameObject selectAttackPathUI, mapUI, gameUI, loadingUI, tabUI;    // selectAttackPathUI: 공격로 설정 때 사용자에게 보여주는 UI들이 저장된 오브젝트.  mapUI: TopView 상태일 때 사용자에게 보여주는 UI들이 저장된 오브젝트.
 															// gameUI: 게임 진행 중 표시되는 UI
 	public LSM_GameUI gameUI_SC;
 
@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     public int ReadyToStart_LoadingGauge;
     public Image LoadingImage;
     public TextMeshProUGUI pingText;
+
     [Header("For Games")]
     public GameObject[] spawnPoints;    // 씬에 존재하는 "마스터 스포너"의 모음.
     public GameObject[] wayPoints;      // 씬에 존재하는 모든 "웨이포인트"의 모음
@@ -58,7 +59,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     public LSM_TimerSc timerSc;         // 타이머 스크립트. 게임 진행 중 타이머가 필요한(ex: 게임 공격로 설정시간, 게임 진행시간) 경우 사용하는 스크립트.
     public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
 	public LSM_PlayerCtrl mainPlayer;               // 현재 접속하고있는 플레이어를 저장하는 변수
-													// # 디버깅시 MainPlayer를 지정해줘야함. 현재 아무 플레이어를 지정.
+	public String mainPlayerName;
+	public int mainPlayerSelectNum;
+
 	public LSM_CreepCtrl[] creeps;
 
 	public TeamManager[] teamManagers;				// 모든 팀의 팀매니저
@@ -141,10 +144,12 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public override void OnJoinedRoom()
 	{
 		base.OnJoinedRoom();
-		loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Connected!!";
+		loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "연결 완료!!";
 		//if(!PhotonNetwork.IsMasterClient)
         //{
-		mainPlayer=PhotonNetwork.Instantiate("Playerobj", this.transform.position, this.transform.rotation).GetComponent<LSM_PlayerCtrl>();		// LSM -> 마스터 클라이언트 또한 들어올때 플레이어 오브젝트 소환.
+		mainPlayer=PhotonNetwork.Instantiate("Playerobj", this.transform.position, this.transform.rotation).GetComponent<LSM_PlayerCtrl>();     // LSM -> 마스터 클라이언트 또한 들어올때 플레이어 오브젝트 소환.
+		mainPlayer.SettingPlayer_(mainPlayerName, mainPlayerSelectNum);
+		
 		//}
 	}
 
@@ -187,6 +192,10 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		logUIs_Reservation = new List<string>();        // 다섯개이상 부터는 예약 리스트를 생성하여 그 리스트 안에 저장.
 		timer_log = 0;
 
+		mainPlayerName = (PlayerPrefs.HasKey("PlayerLocalName") ? PlayerPrefs.GetString("PlayerLocalName") : "UnknownPlayer");
+		mainPlayerSelectNum = (PlayerPrefs.HasKey("PlayerSelectType") ? PlayerPrefs.GetInt("PlayerSelectType") : 0);
+
+
 		// 해당 변수에 맞는 게임 오브젝트들을 저장.
 		spawnPoints = GameObject.FindGameObjectsWithTag("Spawner");
 		canvas = GameObject.Find("Canvas");
@@ -196,6 +205,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		selectAttackPathUI.SetActive(false);
 		mapUI = GameObject.Find("MapUIs");
 		gameUI = GameObject.Find("GameUI");
+		tabUI = GameObject.Find("TabUI");
 		gameUI_SC = gameUI.GetComponent<LSM_GameUI>();
 		gameUI.SetActive(false);
 
@@ -212,13 +222,16 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		{ teamManagers[(int)t.GetComponent<TeamManager>().team] = t.GetComponent<TeamManager>(); }
 		starting_ = false;
 
-        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Press O to Connect...";
+        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "방을 찾는 중...";
 		MaxPlayerNum = 2;
 		numOfSkipClickedPlayer = 0;
 		isClickSkip = false;
 
-		Connect(); if (debugging_bool) { Debugging_Setting(); }
+		Invoke("Connecting_", 2f);
 	}
+
+	private void Connecting_() 
+	{ Connect(); if (debugging_bool) { Debugging_Setting(); } }
 
 	private void Start_function()
 	{
@@ -240,7 +253,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			players[i].Start_fuction();
 			if (PhotonNetwork.IsMasterClient)
 			{
-				players[i].SettingTeamAndName(i % 2, "Test " + i);              // 팀 나누기.
+				players[i].SettingTeamAndName(i % 2);              // 팀 나누기.
 			}
 
 		}
@@ -262,12 +275,21 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		numOfPlayer = players.Length ;
 
 		gameState = MoonHeader.GameState.SettingAttackPath;
-	}
+
+		for (int i = 0; i < players.Length; i++)
+		{
+			GameObject dummy_UI = PoolManager.Instance.Get_UI(1);
+			dummy_UI.transform.parent = tabUI.transform;
+			dummy_UI.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 50 - 50*i , 0);
+			dummy_UI.GetComponent<LSM_TabUI>().Setting(players[i].PlayerType, players[i].playerName, players[i].gameObject);
+		}
+		tabUI.SetActive(false);
+    }
 
 
 	// 시작하기 전 약간의 로딩시간.
 	protected IEnumerator StartProcessing() {
-        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "Loading...";
+        loadingUI.GetComponentInChildren<TextMeshProUGUI>().text = "로딩 중...";
         yield return new WaitForSeconds(1f);
         Start_function();
         ReadyToStart_LoadingGauge = PoolManager.Instance.minions.Length * PoolManager.Instance.ReadyToStart_SpawnNum
@@ -306,10 +328,10 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 			timer_Loading_Dummy+= Time.deltaTime;
 
 			if (timer_Loading_Dummy >= 4) timer_Loading_Dummy = 0;
-			else if (timer_Loading_Dummy >= 3) dummy_for_loading_Message = "Waiting For Other Player...";
-			else if (timer_Loading_Dummy >= 2) dummy_for_loading_Message = "Waiting For Other Player..";
-			else if (timer_Loading_Dummy >= 1) dummy_for_loading_Message = "Waiting For Other Player.";
-			else dummy_for_loading_Message = "Waiting For Other Player";
+			else if (timer_Loading_Dummy >= 3) dummy_for_loading_Message = "다른 플레이어를 기다리는 중...";
+			else if (timer_Loading_Dummy >= 2) dummy_for_loading_Message = "다른 플레이어를 기다리는 중..";
+			else if (timer_Loading_Dummy >= 1) dummy_for_loading_Message = "다른 플레이어를 기다리는 중.";
+			else dummy_for_loading_Message = "다른 플레이어를 기다리는 중";
 
 			LoadingUI_Text.text = dummy_for_loading_Message;
 
@@ -568,13 +590,13 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		switch (gameState)
 		{
 			case MoonHeader.GameState.SettingAttackPath:
-				turnText.text = "Setting Attack";
+				turnText.text = "전략 설정";
 				break;
 			case MoonHeader.GameState.StartGame:
-				turnText.text = "Ready";
+				turnText.text = "준비..";
 				break;
 			case MoonHeader.GameState.Gaming:
-				turnText.text = "Game";
+				turnText.text = "게임 중";
 				break;
 		}
 	}

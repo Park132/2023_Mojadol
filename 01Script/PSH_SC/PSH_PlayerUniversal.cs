@@ -905,5 +905,6 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     {
         return timer_F_Holder;
     }
+    public byte GetLV() { return 0; }
     #endregion
 }

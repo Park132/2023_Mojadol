@@ -311,9 +311,9 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             playerCamera.transform.localEulerAngles = new Vector3(pitch, yaw, 0);
 
             // ÀÜÈçµé¸² ¹æÁö¿ë
-            if (Vector3.Distance(camerapos.transform.position + this.transform.forward * 0.2f, preCamera) >= 0.1f)
+            if (Vector3.Distance(camerapos.transform.position + this.transform.forward * 0.2f, preCamera) >= 0.05f)
             {
-                playerCamera.transform.position = camerapos.transform.position + this.transform.forward * 0.2f;
+                playerCamera.transform.position = camerapos.transform.position + this.transform.forward * 0.3f;
                 preCamera = playerCamera.transform.position;
             }
         }
@@ -596,7 +596,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         return myPlayerCtrl.GetExp();
     }
     public int GetGold() { return myPlayerCtrl.GetGold(); }
-
+    public byte GetLV() { return myPlayerCtrl.GetLevel(); }
     public void CollectingArea()
     {
         timer_collect += Time.deltaTime;
