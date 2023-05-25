@@ -144,7 +144,8 @@ public class LSM_Player_Knight : LSM_PlayerBase
         //anim.SetTrigger("skillQ_Trigger");
         photonView.RPC("QAnim_RPC", RpcTarget.All);
         yield return new WaitForSecondsRealtime(1.3f);
-        photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient, this.playerCamera.transform.forward);
+        //photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient, this.playerCamera.transform.forward);
+        photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient);
         yield return new WaitForSecondsRealtime(0.7f);
         //canQ = true;
         canAttack = true;
@@ -160,16 +161,18 @@ public class LSM_Player_Knight : LSM_PlayerBase
         anim.SetTrigger("skillQ_Trigger"); Invoke("AnimatorRootMotionReset", 1.65f);
     }
     [PunRPC]
-    private void AttackEffect_Q(Vector3 forward)
+    private void AttackEffect_Q()
     {
-        Vector3 dummy_position = this.transform.position + this.transform.forward * 1 + Vector3.up;
+        Vector3 dummy_position = this.transform.position + Vector3.up*0.3f + this.transform.forward * 1.8f;
 
-        GameObject effect_d = PoolManager.Instance.Get_Particles(2, dummy_position
-            , Quaternion.LookRotation(forward, this.transform.right).eulerAngles);
+        GameObject effect_d = PoolManager.Instance.Get_Particles(2, dummy_position);
+            //, Quaternion.LookRotation(forward, this.transform.right).eulerAngles);
 
         //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
-        effect_d.transform.localScale = Vector3.one * 1.7f;
-        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 5f);
+        effect_d.transform.localScale = Vector3.one * 2.3f;
+        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 0f);
+        effect_d.GetComponent<LSM_BasicProjectile>().Setting_Trigger_Exist_T(0.1f, 10f);
+
     }
     #endregion
 

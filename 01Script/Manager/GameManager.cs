@@ -276,16 +276,20 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 		gameState = MoonHeader.GameState.SettingAttackPath;
 
-		for (int i = 0; i < players.Length; i++)
-		{
-			GameObject dummy_UI = PoolManager.Instance.Get_UI(1);
-			dummy_UI.transform.parent = tabUI.transform;
-			dummy_UI.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 50 - 50*i , 0);
-			dummy_UI.GetComponent<LSM_TabUI>().Setting(players[i].PlayerType, players[i].playerName, players[i].gameObject);
-		}
-		tabUI.SetActive(false);
+		Invoke("TabPlayerGenerator", 3f);
     }
 
+	private void TabPlayerGenerator() 
+	{
+        for (int i = 0; i < players.Length; i++)
+        {
+            GameObject dummy_UI = PoolManager.Instance.Get_UI(1);
+            dummy_UI.transform.parent = tabUI.transform;
+            dummy_UI.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 50 - 100 * i, 0);
+            dummy_UI.GetComponent<LSM_TabUI>().Setting(players[i].PlayerType, players[i].playerName, players[i].gameObject);
+        }
+        tabUI.SetActive(false);
+    }
 
 	// 시작하기 전 약간의 로딩시간.
 	protected IEnumerator StartProcessing() {

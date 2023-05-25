@@ -226,7 +226,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     protected void Explosion_s()
     {
         GameObject dummy_Explosion = PoolManager.Instance.Get_Particles(7, this.transform.position + Vector3.up * 1.5f);
-        dummy_Explosion.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, 20, this.GetComponent<I_Actor>(), 0);
+        dummy_Explosion.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt(this.actorHealth.health *0.2f), this.GetComponent<I_Actor>(), 0);
         dummy_Explosion.GetComponent<LSM_BasicProjectile>().Setting_Trigger_Exist_T(0.1f, 50f);
     }
     #endregion

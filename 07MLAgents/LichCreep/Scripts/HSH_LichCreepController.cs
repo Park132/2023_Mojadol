@@ -146,8 +146,9 @@ public class HSH_LichCreepController : MonoBehaviour, I_Creep
     {
         lichstat = LichStat.Idle;
         anim.SetBool("Death_B", false);
-        spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>()
-            .pinfo.dmg = creepCtrl.stat.actorHealth.Atk;
+        spellFieldGenerator.SetActive(true);
+        //spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().Setting(creepCtrl.stat.actorHealth.Atk);
+        spellFieldGenerator.SetActive(false);
         AnimCtrl();
     }
 
