@@ -95,6 +95,10 @@ MonoBehaviour:
   - E_RPC
   - PS_s
   - ResetRPC
+  - BasicE
+  - Explosion_s
+  - QE
+  - RC_RPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0

@@ -317,6 +317,7 @@ public class PSH_Shaman : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(1.0f);
 
+        anim.SetLayerWeight(1, 0f);
         canMove = true;
         canAttack = true;
         canE = true;
