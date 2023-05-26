@@ -194,7 +194,7 @@ public class HSH_LichCreepController : MonoBehaviour, I_Creep
         doOnlyOnce = false;
         yield return new WaitForSeconds(fireBallThrower.GetComponent<HSH_FireBallThrower>().pinfo.cooltime - 0.73f);
 
-        if (lichinfo.isHero)
+        if (lichinfo.isHero && lichstat != LichStat.Death)
         {
             lichstat = LichStat.Attack;
             AnimCtrl();

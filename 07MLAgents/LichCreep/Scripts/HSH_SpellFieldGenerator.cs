@@ -12,7 +12,7 @@ public class HSH_SpellFieldGenerator : Agent
     public PatternInfo pinfo;  //쿨타임, 데미지 관련
     public bool isRun;  //Coroutine이 연속으로 호출되는 것을 방지하기 위한 변수
     public float spd;
-    private LSM_CreepCtrl creepCtrl;
+    public LSM_CreepCtrl creepCtrl;
 
     Rigidbody rb;
     public GameObject AlertField, SpellField;  //본 패턴 사용 시 스폰할 장판들, 적 캐릭터
@@ -20,10 +20,11 @@ public class HSH_SpellFieldGenerator : Agent
 
     private void Awake()
     {
-        creepCtrl= this.GetComponentInParent<LSM_CreepCtrl>();
+        
     }
     public override void Initialize()   //필드 초기화
     {
+        
         pinfo = new PatternInfo();
         pinfo.cooltime = COOLTIME;
         pinfo.isCool = false;
@@ -46,6 +47,7 @@ public class HSH_SpellFieldGenerator : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         AddReward(-0.0005f);
+        if (!PhotonNetwork.IsMasterClient) return;
 
         if (pinfo.isCool)   //패턴이 쿨타임일 시
         {
@@ -150,8 +152,11 @@ public class HSH_SpellFieldGenerator : Agent
         af.GetComponent<ParticleAutoDisable>().ParticleDisable();
 
         GameObject sf = PoolManager.Instance.Get_Particles(6, spawnPos.position);
-            //Instantiate(SpellField, spawnPos);  //공격!
-        sf.GetComponent<HSH_SpellField>().Setting((int)creepCtrl.stat.actorHealth.Atk);
+        //Instantiate(SpellField, spawnPos);  //공격!
+        
+        
+        
+        sf.GetComponent<HSH_SpellField>().Setting((int)creepCtrl.stat.actorHealth.Atk + 100);
 
         yield return new WaitForSeconds(0.5f);
 

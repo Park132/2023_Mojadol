@@ -18,6 +18,7 @@ public class PSH_T_E : MonoBehaviour
         timer2 = 0;
         myCtrl = this.GetComponentInParent<LSM_PlayerBase>();
         thisObj = myCtrl.gameObject;
+        fireRate = Time.deltaTime;
     }
     private void Start()
     {
@@ -45,7 +46,7 @@ public class PSH_T_E : MonoBehaviour
             {
                 timer2 = 0;
                 Debug.DrawRay(this.transform.position, this.transform.forward * 35f, Color.blue, 1f);
-                RaycastHit[] hits = Physics.RaycastAll(this.transform.position, this.transform.forward,50f,
+                RaycastHit[] hits = Physics.RaycastAll(this.transform.position, this.transform.forward,35f,
                     1<< LayerMask.NameToLayer("Minion") | 1 << LayerMask.NameToLayer("Turret"));
                 foreach(RaycastHit hit in hits)
                 {
@@ -54,7 +55,10 @@ public class PSH_T_E : MonoBehaviour
                     {
                         PoolManager.Instance.Get_Local_Item(2).transform.position = hit.point;
                         if (PhotonNetwork.IsMasterClient)
-                            dummy_ac.Damaged(myCtrl.actorHealth.Atk, this.transform.position, myCtrl.actorHealth.team, thisObj);
+                        {
+                            short dam_ = (short)Mathf.RoundToInt(myCtrl.actorHealth.Atk * 3 * Time.deltaTime);
+                            dummy_ac.Damaged(dam_, this.transform.position, myCtrl.actorHealth.team, thisObj);
+                        }
                     }
 
                 }

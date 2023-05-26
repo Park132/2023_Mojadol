@@ -10,7 +10,7 @@ public class LSM_ItemCollectAnim : MonoBehaviour
     [SerializeField] private int size;
 	private void Awake()
 	{
-        speed = 3f;
+        speed = 9f;
         canMove = false;
         timer_accelation = 0f;
     }

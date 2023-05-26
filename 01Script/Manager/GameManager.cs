@@ -60,7 +60,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     public LSM_PlayerCtrl[] players;				// 모든 플레이어들을 저장하는 배열
 	public LSM_PlayerCtrl mainPlayer;               // 현재 접속하고있는 플레이어를 저장하는 변수
 	public String mainPlayerName;
-	public int mainPlayerSelectNum;
+	public byte mainPlayerSelectNum;
+	public float timer_AllRunning, timer_inGameTurn;
 
 	public LSM_CreepCtrl[] creeps;
 
@@ -193,7 +194,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		timer_log = 0;
 
 		mainPlayerName = (PlayerPrefs.HasKey("PlayerLocalName") ? PlayerPrefs.GetString("PlayerLocalName") : "UnknownPlayer");
-		mainPlayerSelectNum = (PlayerPrefs.HasKey("PlayerSelectType") ? PlayerPrefs.GetInt("PlayerSelectType") : 0);
+		mainPlayerSelectNum = (byte)(PlayerPrefs.HasKey("PlayerSelectType") ? PlayerPrefs.GetInt("PlayerSelectType") : 0);
 
 
 		// 해당 변수에 맞는 게임 오브젝트들을 저장.
@@ -226,6 +227,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		MaxPlayerNum = 2;
 		numOfSkipClickedPlayer = 0;
 		isClickSkip = false;
+		timer_AllRunning = 0;
+		timer_inGameTurn= 0;
 
 		Invoke("Connecting_", 2f);
 	}
@@ -285,7 +288,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         {
             GameObject dummy_UI = PoolManager.Instance.Get_UI(1);
             dummy_UI.transform.parent = tabUI.transform;
-            dummy_UI.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 50 - 100 * i, 0);
+            dummy_UI.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 80 - 130 * i, 0);
             dummy_UI.GetComponent<LSM_TabUI>().Setting(players[i].PlayerType, players[i].playerName, players[i].gameObject);
         }
         tabUI.SetActive(false);
@@ -398,6 +401,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
             if (onceStart)
 			{
+				if (gameState != MoonHeader.GameState.Ending)
+					timer_AllRunning += Time.deltaTime;
                 Game();
                 DisplayEnable();
                 PingCalculator();
@@ -482,6 +487,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 					{
 						timerSc.TimerOut();
 					}
+					break;
+				case MoonHeader.GameState.Gaming:
+					timer_inGameTurn += Time.deltaTime;
 					break;
 			}
 		}
@@ -677,7 +685,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 
 		photonView.RPC("ChangeRound_AllRemover_RPC", RpcTarget.All);
 
-		int[] dummy_exp_sum = new int[teamManagers.Length];
+		short[] dummy_exp_sum = new short[teamManagers.Length];
 
 		for (int i = 0; i < PoolManager.Instance.minions.Length; i++) {
 			foreach (GameObject minion in PoolManager.Instance.poolList_Minion[i])
@@ -715,7 +723,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	private void DisplayEnable()
 	{
 		timer_log += Time.deltaTime;
-		if (logUIs.Count <= 3 && logUIs_Reservation.Count > 0 && timer_log >= 1f)
+		if (logUIs.Count < 3 && logUIs_Reservation.Count > 0 && timer_log >= 1f)
 		{
 			timer_log = 0;
 			GameObject dummy = PoolManager.Instance.Get_UI(0);

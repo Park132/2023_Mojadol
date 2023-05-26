@@ -22,13 +22,22 @@ public class LSM_NexusSC : LSM_TurretSc
         mark_obj.transform.localPosition = new Vector3(5, 30, -5);
 		mark_obj.transform.rotation = Quaternion.Euler(90, 0, 0);
 
-        stats = new MoonHeader.S_TurretStats(300, 10, parentSpawner.team);
+        stats = new MoonHeader.S_TurretStats(3000, 0, parentSpawner.team);
 		base.ChangeTeamColor();
 		ATTACKDELAY = 1.5f;
 		stats.actorHealth.type = MoonHeader.AttackType.Turret;
+		ac_type = MoonHeader.ActorType.Turret_Nexus;
 	}
+    protected override void Update()
+    {
+        if (GameManager.Instance.onceStart)
+		{
+            if (GameManager.Instance.mainPlayer.MapCam.activeSelf) { mark_obj.SetActive(false); }
+            else { mark_obj.SetActive(true); }
+        }
+    }
 
-	public override void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
+    public override void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
 	{
 		if (t == this.stats.actorHealth.team || !PhotonNetwork.IsMasterClient)
 			return;

@@ -14,6 +14,7 @@ public class LSM_BaseTurretSC : LSM_TurretSc
     {
         parentSpawner = this.GetComponentInParent<LSM_Spawner>();
         base.Start();
+        this.ac_type = MoonHeader.ActorType.Turret_Base;
 
         GameObject.Destroy(mark);
         GameObject.Destroy(mark_obj);
@@ -24,13 +25,16 @@ public class LSM_BaseTurretSC : LSM_TurretSc
         mark_obj.transform.localPosition = new Vector3(0, 30, 0);
         mark_obj.transform.rotation = Quaternion.Euler(90, 0, 0);
 
-        stats = new MoonHeader.S_TurretStats(100, 10, parentSpawner.team);
+        object[] lv_d = LSM_SettingStatus.Instance.lvStatus[(int)ac_type].getStatus_LV(level);
+
+        stats = new MoonHeader.S_TurretStats((short)lv_d[0], (short)lv_d[1], parentSpawner.team);
         base.ChangeTeamColor();
         base.ChangeTeamColor(bodies[0].gameObject);
         ATTACKDELAY = 1.5f;
         stats.actorHealth.type = MoonHeader.AttackType.Turret;
         timer_regen = 0;
         isDie = false;
+        
     }
 
     protected override void Update()
@@ -49,6 +53,7 @@ public class LSM_BaseTurretSC : LSM_TurretSc
                 {
                     SearchingTarget();
                     AttackTarget();
+                    LevelUp((int)ac_type);
                 }
                 else
                 {

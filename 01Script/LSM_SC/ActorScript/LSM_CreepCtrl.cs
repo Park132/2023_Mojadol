@@ -4,6 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using Newtonsoft.Json.Bson;
+using Unity.Burst.CompilerServices;
 
 public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters
 {
@@ -15,6 +16,11 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     private I_Creep mainCtrl;
     public int inPlayerNum;
     private bool once;
+
+    public byte level;
+    public MoonHeader.ActorType ac_type;
+
+    public short[] add_Hp_Atk;
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
@@ -59,8 +65,10 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         mainCtrl = this.GetComponent<I_Creep>();
         stat = new MoonHeader.S_CreepStats();
 
+        object[] lv_d = LSM_SettingStatus.Instance.lvStatus[(int)ac_type].getStatus_LV(level);
+
         // 디버그용 maxHealth, Atk, Exp, Gold
-        stat.Setting(100, 10, 1000, 1000);
+        stat.Setting((short)lv_d[0], (short)lv_d[1], 600 + 25*level, 300);
         inPlayerNum = 0;
     }
 
@@ -83,6 +91,10 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         {
             mainCtrl.Setting();
             //mainCtrl.spellFieldGenerator.GetComponentInChildren<HSH_SpellFieldGenerator>().enabled = false;
+        }
+        if (PhotonNetwork.IsMasterClient && stat.state != MoonHeader.CreepStat.Death)
+        {
+            LevelUp((int)ac_type);
         }
     }
     public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other)
@@ -146,14 +158,19 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         if (other.transform.CompareTag("PlayerMinion"))
         {
             other.GetComponent<I_Characters>().AddEXP((short)stat.exp);        // 잡은 미니언이 플레이어 미니언이라면 경험치를 한번 더 줌.
-                                                                                //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
-                                                                                // 디버깅용 플레이어가 미니언을 처치하였다면..
-            GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
+                                                                               //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+                                                                               // 디버깅용 플레이어가 미니언을 처치하였다면..
+            GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 처치하였습니다.", other.name, this.name));
+            GameManager.Instance.teamManagers[((int)other.GetComponent<I_Actor>().GetTeam())].AddingAtkHp(add_Hp_Atk[0], add_Hp_Atk[1]);
+            other.GetComponent<LSM_PlayerBase>().SettingUpdate();
         }
 
         else if (other.transform.CompareTag("DamageArea"))
         {
-            other.GetComponent<LSM_W_Slash>().orner.GetComponent<I_Characters>().AddEXP((short)stat.exp);
+            other.GetComponent<LSM_BasicProjectile>().orner.GetComponent<I_Characters>().AddEXP((short)stat.exp);
+            GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 처치하였습니다.", other.GetComponent<LSM_BasicProjectile>().orner.name, this.name));
+            GameManager.Instance.teamManagers[((int)other.GetComponent<I_Actor>().GetTeam())].AddingAtkHp(add_Hp_Atk[0], add_Hp_Atk[1]);
+            other.GetComponent<LSM_PlayerBase>().SettingUpdate();
         }
 
         yield return new WaitForSeconds(2f);
@@ -163,9 +180,10 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         for (int i = 0; i < 5; i++)
         {
             GameObject dummy_item = PoolManager.Instance.Get_Item(0);
-            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 5f);
+            dummy_item.GetComponent<LSM_ItemSC>().SpawnSetting(this.stat.gold / 5, this.transform.position, 2.3f);
         }
-        GiveExp();
+        //hit.transform.GetComponent<I_Characters>().AddEXP((short)stat.exp);
+        //GiveExp();
 
         yield return new WaitForSeconds(1f);
         //this.gameObject.SetActive(false);
@@ -196,6 +214,25 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
             if (hit.transform.CompareTag("PlayerMinion"))
             {
                 hit.transform.GetComponent<I_Characters>().AddEXP((short)stat.exp);
+            }
+        }
+    }
+
+    protected void LevelUp(int type)
+    {
+        if (type != (int)MoonHeader.ActorType.Turret_Nexus)
+        {
+            if (LSM_SettingStatus.Instance.lvStatus[type].canLevelUp((byte)(level+1), (short)Mathf.CeilToInt(GameManager.Instance.timer_inGameTurn)))
+            {
+                Debug.Log("Level Up!");
+                level++;
+                object[] lv_d = LSM_SettingStatus.Instance.lvStatus[type].getStatus_LV(level);
+                short lvup_heal = (short)((short)lv_d[0] - this.stat.actorHealth.maxHealth);
+
+                this.stat.actorHealth.maxHealth = (short)lv_d[0];
+                this.stat.actorHealth.Atk = (short)lv_d[1];
+                this.stat.actorHealth.health = (short)Mathf.Min(this.stat.actorHealth.maxHealth, this.stat.actorHealth.health + lvup_heal);
+                this.stat.exp = 600 + 25*level;
             }
         }
     }

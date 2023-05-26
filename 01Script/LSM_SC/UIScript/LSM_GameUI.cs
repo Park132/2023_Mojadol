@@ -65,7 +65,9 @@ public class LSM_GameUI : MonoBehaviour
 	{
         if (targetUI.activeSelf)
         {
-            targetName.text = string.Format("{0} Team {1}", target_ac.GetTeam().ToString(), target_obj.name);
+            targetName.text = (target_ac.GetTeam() != MoonHeader.Team.Yellow ? target_ac.GetTeam().ToString() + " Team " : "")
+                + target_obj.name;
+            //targetName.text = string.Format("{0} Team {1}", target_ac.GetTeam().ToString(), target_obj.name);
             targetHP.fillAmount = Mathf.Round((float)target_ac.GetHealth() / target_ac.GetMaxHealth() * 100) / 100;
             if (target_ac.GetHealth() <= 0)
                 enableTargetUI(false);

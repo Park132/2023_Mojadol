@@ -18,10 +18,9 @@ public class LSM_Player_Knight : LSM_PlayerBase
     protected override void Awake()
     {
         base.Awake();
-        CoolTime_E = 5f;
-        CoolTime_Q = 3f;
-        basic_IE = basicAttack();
 
+        basic_IE = basicAttack();
+        
         weaponSC = this.transform.GetComponentInChildren<LSM_WeaponSC>();
         weapon_C = weaponSC.transform.GetComponent<MeshCollider>();
         weapon_C.enabled = false;
@@ -170,7 +169,7 @@ public class LSM_Player_Knight : LSM_PlayerBase
 
         //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
         effect_d.transform.localScale = Vector3.one * 2.3f;
-        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 0f);
+        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 0.6f), this.GetComponent<I_Actor>(), 0f);
         effect_d.GetComponent<LSM_BasicProjectile>().Setting_Trigger_Exist_T(0.1f, 10f);
 
     }
@@ -239,7 +238,7 @@ public class LSM_Player_Knight : LSM_PlayerBase
         //effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
         //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
         effect_d.transform.localScale = Vector3.one * 1.7f;
-        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 2f), this.GetComponent<I_Actor>(), 8f);
+        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 8f);
     }
     #endregion
 
@@ -266,7 +265,17 @@ public class LSM_Player_Knight : LSM_PlayerBase
     public override void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         base.SpawnSetting(t, monHealth, pname, pctrl);
+        CoolTime_E = 5f;
+        CoolTime_Q = 3f;
+        speed = 11;
         timer_E = 0;
         timer_Q = 0;
+        object[] dummy_o = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Knight].getStatus_LV(GetLV());
+        short[] add = GameManager.Instance.teamManagers[(int)t].GetAtkHp();
+
+        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1]);
+        
+
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)dummy_o[0] + add[0], (short)dummy_o[0] +add[0], pname, (int)t);
     }
 }

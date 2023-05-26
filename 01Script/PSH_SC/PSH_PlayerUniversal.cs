@@ -900,11 +900,15 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
         
     }
 
-    public void AddCollector(int s) { myPlayerCtrl.GetGold(s); }
+    public void AddCollector(int s) { myPlayerCtrl.GetGold((short)s); }
     public float GetF()
     {
         return timer_F_Holder;
     }
+    public void AddKill()
+    { myPlayerCtrl.AddingKD(0); }
+    public void AddDeath()
+    { myPlayerCtrl.AddingKD(1); }
     public byte GetLV() { return 0; }
     #endregion
 }

@@ -20,8 +20,10 @@ public class MoonHeader : MonoBehaviour
 	
 	public enum State { Normal = 0, Dead = 1, Attack = 2, Invincibility = 3 , Thinking = 4};	// 미니언의 현재 상태를 나타내기 위해 사용.
 																// Normal: 현재 생존, Dead: 죽음, Attack: 공격하는 중, Invincibility: 무적 상태.
-	public enum MonType { Melee, Range };   // 몬스터 타입
+	public enum MonType { Melee = 0, Range = 1};   // 몬스터 타입
 											// Melee: 근접, Range: 원거리
+	public enum ActorType
+	{ Knight, Magicion, Shaman,  Minion_Melee, Minion_Range, Turret, Turret_Base, Creep_Golem, Creep_Magition, Turret_Nexus};
 	public enum AttackType { None = 0, Melee = 1, Range = 2, Turret = 3 };
 
 	//선택될 경우 사용하는 아이콘 색상. 이후에 변경 가능.
@@ -90,7 +92,7 @@ public class MoonHeader : MonoBehaviour
 		//public int Atk;				// 공격력
 		//public MonType type;        // 타입 -> 근접, 원거리 구현
 		public S_ActorState actorHealth;
-		public int exp, gold;
+		public short exp, gold;
 		public GameObject[] destination;	// 미니언의 이동 경로. 배열로 받아옴.
 
 		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t)	// 아래 함수의 오버로드. MonType 관련 매개변수를 받지 않음.
@@ -101,7 +103,7 @@ public class MoonHeader : MonoBehaviour
 		// 미니언이 소환될 때의 기초 설정을 위한 함수. 
 		// mh: 최대 체력, sp: 스피드, atk: 공격력, des: 스포너로부터 받아올 이동경로, t: 미니언의 팀, type_d: 미니언의 타입,
 		// e: 죽었을때, 혹은 게임이 종료되었을 때 얻는 경험치
-		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d, int e, int g)
+		public void Setting(short mh, float sp, short atk, GameObject[] des, Team t, AttackType type_d, short e, short g)
 		{ speed = sp; destination = des; state = State.Normal; actorHealth = new S_ActorState(mh, atk, t,type_d); exp = e; gold = g; }
 
 		public ulong SendDummyMaker()
@@ -150,6 +152,34 @@ public class MoonHeader : MonoBehaviour
 		public S_TurretStats(short h, short a, Team t) { actorHealth = new S_ActorState(h, a, t); }
 
 	}
+
+	[Serializable]
+	public struct S_ActorStatus_LV
+	{
+		public ActorType pT;
+		public short[] needExp;
+		public short[] hp;
+		public short[] atk;
+
+		public S_ActorStatus_LV(ActorType t, int maxLv) { pT = t; hp = new short[maxLv]; atk = new short[maxLv]; needExp = new short[maxLv]; }
+
+		public void setStatus_LV(int lv,short exp, short health, short attack) {
+			if (lv >= hp.Length || lv < 0) return;
+			needExp[lv] = exp;
+			hp[lv] = health; atk[lv] = attack; 
+		}
+		public object[] getStatus_LV(int lv)
+		{
+			if (hp.Length < lv)
+				return new object[] { hp[hp.Length-1], atk[atk.Length-1] };
+			return new object[] { hp[lv], atk[lv] };
+		}
+		public bool canLevelUp(byte lv,short exp) {
+			if (lv >= needExp.Length)
+				return false;
+			return needExp[lv] <= exp; 
+		}
+	}
 }
 
 
@@ -189,6 +219,8 @@ public interface I_Playable
 	public void CollectingArea();
 	public void AddCollector(int s);
 	public float GetF();
+	public void AddKill();
+	public void AddDeath();
 }
 
 public interface I_Creep

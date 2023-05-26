@@ -37,7 +37,7 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks, IPunObservable
 	private void SpawnAnim(float x, float z,float power) 
     {
         rigid.useGravity = true;
-        rigid.AddExplosionForce(500, this.transform.position + new Vector3(x,-1f,z), 8*power, 5*power);
+        rigid.AddExplosionForce(500*power, this.transform.position + new Vector3(x,-1f,z), 8, 5);
     }
 
     [PunRPC] private void SettingItem(int s,Vector3 position, float x, float z, float power)
@@ -80,7 +80,7 @@ public class LSM_ItemSC : MonoBehaviourPunCallbacks, IPunObservable
 
     private IEnumerator Discard()
     {
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(10f);
         if (!isCollecting)
             ItemDisable();
     }

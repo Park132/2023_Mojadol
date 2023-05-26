@@ -14,7 +14,7 @@ public class HSH_FireBallThrower : Agent
     float force;
 
     private float gravity = Physics.gravity.magnitude;
-
+    public LSM_CreepCtrl creepCtrl;
 
     public GameObject FireBall, CoordinateGetter, AimBox;
     const float COOLTIME = 4.0f;    //쿨타임 초기화 시 사용
@@ -64,7 +64,7 @@ public class HSH_FireBallThrower : Agent
         if (!pinfo.isCool) {
             GameObject fb = Instantiate(FireBall, this.transform.position, FireBallRot);
 
-            fb.GetComponent<HSH_FireBall>().dmg = pinfo.dmg;
+            fb.GetComponent<HSH_FireBall>().dmg = 100 + Mathf.RoundToInt((float)creepCtrl.stat.actorHealth.Atk/2);
             fb.GetComponent<Rigidbody>().AddForce(fb.transform.forward * force * Time.fixedDeltaTime, ForceMode.Impulse);
             pinfo.cooltime = COOLTIME;
         }

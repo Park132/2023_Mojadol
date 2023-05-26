@@ -19,7 +19,7 @@ public class LSM_Player_Tormented : LSM_PlayerBase
     protected override void Awake()
     {
         base.Awake();
-        CoolTime_E = 5f;
+        CoolTime_E = 6f;
         CoolTime_Q = 3f;
         basic_IE = basicAttack();
         E_SkillSC = this.GetComponentInChildren<PSH_T_E>();
@@ -141,7 +141,7 @@ public class LSM_Player_Tormented : LSM_PlayerBase
         GameObject effect_d = PoolManager.Instance.Get_Particles
             (9, spawnPosition.position, Quaternion.LookRotation(forward_cam).eulerAngles);
         effect_d.GetComponent<LSM_BasicProjectile>().Setting
-            (this.gameObject, this.actorHealth.Atk, this.GetComponent<I_Actor>(), 10f);
+            (this.gameObject, (short)Mathf.CeilToInt(this.actorHealth.Atk * 1f), this.GetComponent<I_Actor>(), 10f);
         effect_d.GetComponent<LSM_BasicProjectile>().Setting_Trigger_Exist_T(2f, 5f);
     }
 
@@ -201,7 +201,17 @@ public class LSM_Player_Tormented : LSM_PlayerBase
     public override void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         base.SpawnSetting(t, monHealth, pname, pctrl);
+        CoolTime_E = 6f;
+        CoolTime_Q = 3f;
+        speed = 11;
         timer_E = 0;
         timer_Q = 0;
+
+        object[] dummy_o = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Magicion].getStatus_LV(GetLV());
+        short[] add = GameManager.Instance.teamManagers[(int)t].GetAtkHp();
+
+        this.actorHealth.Atk =(short)((short)dummy_o[1] + add[1]);
+
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)dummy_o[0] + add[0], (short)dummy_o[0] + add[0], pname, (int)t);
     }
 }

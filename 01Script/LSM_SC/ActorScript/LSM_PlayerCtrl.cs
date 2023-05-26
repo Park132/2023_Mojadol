@@ -6,6 +6,7 @@ using TMPro;
 using System;
 using Photon.Pun;
 using static MoonHeader;
+using UnityEngine.EventSystems;
 
 // 플레이어 스크립트
 // TopView에서의 플레이어 컨트롤
@@ -46,10 +47,10 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     private GameObject mapcamSub_Target, mapsubcam_target;  // TopView카메라의 타겟 저장과 메인카메라의 타겟 저장
 
 
-    [SerializeField]public int PlayerType;
-    [SerializeField]private int exp, gold;
+    [SerializeField]public byte PlayerType;
+    [SerializeField]private short exp, gold, total_exp, total_gold;
     [SerializeField] private byte level;
-
+    public ushort[] kd;
     public float this_player_ping;
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
@@ -57,19 +58,58 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         if (stream.IsWriting)
         {
             stream.SendNext(playerName);
-            stream.SendNext(player.team);
+            //stream.SendNext(player.team);
             //stream.SendNext(player.statep);
-            stream.SendNext(exp);
+            //stream.SendNext(exp);
+            ulong send_dummy = SendDummyMaker();
+            int dummy_i1 = (int)(send_dummy & (ulong)uint.MaxValue);
+            int dummy_i2 = (int)(send_dummy >> 32 & (ulong)uint.MaxValue);
+            stream.SendNext(dummy_i1);
+            stream.SendNext(dummy_i2);
+
+            uint dummy_i3 = ((uint)kd[0] & (uint)ushort.MaxValue);
+            dummy_i3 += ((uint)kd[1] & (uint)ushort.MaxValue) << 16;
+            stream.SendNext((int)dummy_i3);
+
         }
         else
         {
             this.playerName = (string)stream.ReceiveNext();
-            this.player.team = (MoonHeader.Team)stream.ReceiveNext();
+            //this.player.team = (MoonHeader.Team)stream.ReceiveNext();
             //this.player.statep = (MoonHeader.State_P)stream.ReceiveNext();
-            this.exp = (int)stream.ReceiveNext();
+            //this.exp = (short)stream.ReceiveNext();
+            ulong receive_d = ((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue);
+            receive_d += (((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue) << 32);
+            ReceiveDummy(receive_d);
+
+            int dummy_r = (int)stream.ReceiveNext();
+            kd[0] = (ushort)(dummy_r & (ushort)ushort.MaxValue);
+            kd[1] = (ushort)(dummy_r >> 16 & (ushort)ushort.MaxValue);
+
             this_player_ping = (float)(PhotonNetwork.Time - info.SentServerTime);
         }
     }
+
+    public ulong SendDummyMaker()
+    {
+        ulong send_dummy = 0;
+        send_dummy += ((ulong)exp & (ulong)ushort.MaxValue);
+        send_dummy += ((ulong)gold & (ulong)ushort.MaxValue) << 16;
+        send_dummy += ((ulong)PlayerType & (ulong)byte.MaxValue) << 32;
+        send_dummy += ((ulong)level & (ulong)byte.MaxValue) << 40;
+        send_dummy += ((ulong)player.team & (ulong)byte.MaxValue) << 48;
+
+        return send_dummy;
+    }
+    public void ReceiveDummy(ulong receive_dummy)
+    {
+        exp = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        gold = (short)(receive_dummy >> 16 & (ulong)ushort.MaxValue);
+        PlayerType = (byte)(receive_dummy >> 32 & (ulong)byte.MaxValue);
+        level = (byte)(receive_dummy >> 40 & (ulong)byte.MaxValue);
+        player.team = (MoonHeader.Team)(receive_dummy >> 48 & (ulong)byte.MaxValue);
+    }
+
 
     private void Awake()
     {
@@ -82,6 +122,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             //LSM_PlayerCtrl.LocalPlayerInstance = this.gameObject;
         }
+        kd = new ushort[2];
     }
 
     public void Start_fuction()
@@ -136,13 +177,13 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         if (photonView.IsMine)
         { photonView.RPC("SN_RPC", RpcTarget.AllBuffered, this.playerName, this.PlayerType); }
     }
-    [PunRPC] protected void SN_RPC(string n, int t) {
+    [PunRPC] protected void SN_RPC(string n, byte t) {
         if (photonView.IsMine)
             return;
         this.playerName = n; this.PlayerType = t; }
 
 
-    public void SettingPlayer_(string n, int t) { playerName = n; PlayerType = t; }
+    public void SettingPlayer_(string n, byte t) { playerName = n; PlayerType = t; }
 
 	void Update()
     {
@@ -376,6 +417,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         // 미니언을 처음 클릭할 경우
         if (Input.GetMouseButtonDown(0) && player.statep == MoonHeader.State_P.None)
         {
+            if (EventSystem.current.IsPointerOverGameObject()) { return; }
             Ray ray = mapCamCamera.ScreenPointToRay(Input.mousePosition);
             Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
             RaycastHit hit;
@@ -619,12 +661,24 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    public void SetExp(int exp_dummy)
+    public void SetExp(short exp_dummy)
     { photonView.RPC("ExpPlus", RpcTarget.All, exp_dummy); }
-    [PunRPC] private void ExpPlus(int d) { exp += d; }
-
-    public int GetExp() { return exp; }
-    public int GetGold() { return gold; }
-    public void GetGold(int gold_dummy) { gold += gold_dummy; }
+    [PunRPC] private void ExpPlus(short d) {
+        if (photonView.IsMine)
+        {
+            exp += d;
+            total_exp+= d;
+            if (level < LSM_SettingStatus.Instance.maxLV-1 &&
+                LSM_SettingStatus.Instance.lvStatus[PlayerType].canLevelUp(level, exp))
+            {
+                level += 1;
+                exp = 0;
+            }
+        }
+    }
+    public void AddingKD(byte i) { kd[i] += 1; }
+    public short GetExp() { return exp; }
+    public short GetGold() { return gold; }
+    public void GetGold(short gold_dummy) { gold += gold_dummy; total_gold += gold_dummy; }
     public byte GetLevel() { return level; }
 }

@@ -35,26 +35,52 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     List<Material> icon_materialL;
 	bool selected_e;
 
+	protected byte level;
+	protected MoonHeader.ActorType ac_type;
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
 		if(stream.IsWriting)
         {
-			stream.SendNext(stats.actorHealth.maxHealth);
-			stream.SendNext(stats.actorHealth.health);
-			stream.SendNext(stats.actorHealth.team);
-			stream.SendNext(stats.actorHealth.Atk);
+            ulong send_dummy = SendDummyMaker();
+            //stream.SendNext(send_dummy);
 
-		}
+            int dummy_int1 = (int)(send_dummy & (ulong)uint.MaxValue);
+            int dummy_int2 = (int)((send_dummy >> 32) & (ulong)uint.MaxValue);
+            stream.SendNext(dummy_int1);
+            stream.SendNext(dummy_int2);
+
+        }
 		else
         {
-			this.stats.actorHealth.maxHealth = (short)stream.ReceiveNext();
-			this.stats.actorHealth.health = (short)stream.ReceiveNext();
-			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-			this.stats.actorHealth.Atk = (short)stream.ReceiveNext();
-		}
+            ulong receive_dummy = ((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue);
+            receive_dummy += (((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue) << 32);
+
+            this.ReceiveDummy(receive_dummy);
+        }
     }
 
-	protected virtual void Start()
+    public ulong SendDummyMaker()
+    {
+        ulong send_dummy = 0;
+        send_dummy += ((ulong)stats.actorHealth.maxHealth & (ulong)ushort.MaxValue);
+        send_dummy += ((ulong)(stats.actorHealth.health) & (ulong)ushort.MaxValue) << 16;
+        send_dummy += ((ulong)(stats.actorHealth.Atk) & (ulong)ushort.MaxValue) << 32;
+        send_dummy += ((ulong)(stats.actorHealth.team) & (ulong)byte.MaxValue) << 48;
+        return send_dummy;
+    }
+
+    public void ReceiveDummy(ulong receive_dummy)
+    {
+        stats.actorHealth.maxHealth = (short)(receive_dummy & (ulong)ushort.MaxValue);
+        stats.actorHealth.health = (short)((receive_dummy >> 16) & (ulong)ushort.MaxValue);
+        stats.actorHealth.Atk = (short)((receive_dummy >> 32) & (ulong)ushort.MaxValue);
+        stats.actorHealth.team = (MoonHeader.Team)((receive_dummy >> 48) & (ulong)byte.MaxValue);
+
+    }
+
+
+    protected virtual void Start()
 	{
 		// 초기화
 		bodies = this.transform.GetComponentsInChildren<Renderer>();
@@ -79,23 +105,27 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 선택시 하이라이트 주기 위한 변수였음. 하지만 실패 후 더미로 남김.
         icon_materialL = new List<Material>();
 		selected_e = false;
+		ac_type = MoonHeader.ActorType.Turret;
     }
 
 	// 포탑 초기화
 	public void ResetTurret() 
 	{
-		stats = new MoonHeader.S_TurretStats(100, 6);
+		object[] lv_d = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Turret].getStatus_LV(level);
+		stats = new MoonHeader.S_TurretStats((short)lv_d[0], (short)lv_d[1]);
 		stats.actorHealth.type = MoonHeader.AttackType.Turret;
 		
 		timer = 0;
 		target = null;
 		if (GameManager.Instance.onceStart)
-			photonView.RPC("ResetRPC",RpcTarget.All);
+			photonView.RPC("ResetRPC",RpcTarget.All, (int)level);
 
 	}
-	[PunRPC] private void ResetRPC() {
-        stats = new MoonHeader.S_TurretStats(100, 6);
+	[PunRPC] private void ResetRPC(int l) {
+        object[] lv_d = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Turret].getStatus_LV(l);
+        stats = new MoonHeader.S_TurretStats((short)lv_d[0], (short)lv_d[1]);
         stats.actorHealth.type = MoonHeader.AttackType.Turret;
+
         ChangeTeamColor();
         ChangeTeamColor(bodies[0].gameObject);
     }
@@ -146,6 +176,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			{
 				SearchingTarget();
 				AttackTarget();
+				LevelUp((int)ac_type);
 			}
 		}
 	}
@@ -364,4 +395,21 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         icon_ren.materials = icon_materialL.ToArray();
 		selected_e = false;
     }
+
+	protected void LevelUp(int type)
+	{
+		if (type != (int)MoonHeader.ActorType.Turret_Nexus)
+		{
+			if (LSM_SettingStatus.Instance.lvStatus[type].canLevelUp((byte)(level+1), (short)Mathf.CeilToInt(GameManager.Instance.timer_inGameTurn)))
+			{
+				level++;
+				object[] lv_d = LSM_SettingStatus.Instance.lvStatus[type].getStatus_LV(level);
+				short lvup_heal = (short)((short)lv_d[0] - this.stats.actorHealth.maxHealth);
+
+				this.stats.actorHealth.maxHealth = (short)lv_d[0];
+				this.stats.actorHealth.Atk = (short)lv_d[1];
+				this.stats.actorHealth.health = (short)Mathf.Min(this.stats.actorHealth.maxHealth, this.stats.actorHealth.health + lvup_heal);
+			}
+		}
+	}
 }

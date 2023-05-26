@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using System;
 
 public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor, I_Characters, I_Playable
 {
@@ -63,6 +64,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
 
     public float CollectingRadius;
     private float timer_collect;
+    private byte settingLevel;
     #endregion
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
@@ -159,6 +161,11 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         }
         AttackFunction();
         CollectingArea();
+        if (settingLevel != GetLV())
+        { 
+            settingLevel= GetLV();
+            SettingUpdate();
+        }
         // anim.SetBool("skillE_Bool", Input.GetKey(KeyCode.E));
 
     }
@@ -168,6 +175,15 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         if (!photonView.IsMine)
             return;
         LookAround(); // 척추 움직임에 따른 시야 움직임이 적용될려면 이 함수가 LateUpdate()에서 호출 되어야함
+    }
+
+    public void SettingUpdate()
+    {
+        object[] dummy_o = LSM_SettingStatus.Instance.lvStatus[myPlayerCtrl.PlayerType].getStatus_LV(settingLevel);
+        short[] add = GameManager.Instance.teamManagers[(int)actorHealth.team].GetAtkHp();
+
+        this.actorHealth.maxHealth = (short)((short)dummy_o[0] + add[0]);
+        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1]);
     }
 
     protected virtual void AttackFunction() 
@@ -356,13 +372,14 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         //Health = monHealth * 10;
         // 디버그용. 현재 강령하는 미니언의 체력의 10배율로 강령, 공격력을 10으로 디폴트. 이후 플레이어 공격력으로 변경할 예정
         this.photonView.RequestOwnership();
-        actorHealth = new MoonHeader.S_ActorState(100, 10, t);
-        actorHealth.health = (short)(monHealth * 10);
+        //actorHealth = new MoonHeader.S_ActorState(100, 10, t);
+        //actorHealth.health = (short)(monHealth * 10);
         playerName = pname;
         myPlayerCtrl = pctrl;
         state_p = MoonHeader.State_P_Minion.Normal;
+        this.settingLevel = this.GetLV();
 
-        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)100, (short)(monHealth * 10), pname, (int)t);
+        //photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)100, (short)(monHealth * 10), pname, (int)t);
 
         // 초기화
         canAttack = true;
@@ -373,6 +390,8 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         cameraCanMove = true;
         invertCamera = false;
         currentSpeed = speed;
+        timer_F_Holder = 0;
+        pushing_F = false;
     }
 
     [PunRPC]
@@ -463,13 +482,14 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             if (other.transform.CompareTag("PlayerMinion"))
             {
                 other.GetComponent<I_Characters>().AddEXP(50);
+                other.GetComponent<I_Playable>().AddKill();
                 //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
             }
             if (other.transform.CompareTag("DamageArea"))
             { other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(50); }
             GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
         }
-
+        AddDeath();
     }
     private IEnumerator DeadInOrner()
     {
@@ -619,8 +639,12 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         }
 
     }
+    public void AddKill()
+    {myPlayerCtrl.AddingKD(0);}
+    public void AddDeath() 
+    { myPlayerCtrl.AddingKD(1); }
 
-    public void AddCollector(int s) { myPlayerCtrl.GetGold(s); }
+    public void AddCollector(int s) { myPlayerCtrl.GetGold((short)s); }
     public float GetF()
     {
         return timer_F_Holder;

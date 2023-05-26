@@ -231,7 +231,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		is_attackFinish_Act = false;
 		// maxhealth, speed, atk, paths, team
 		// 현재 개발중이므로 미리 설정해둠.
-		stats.Setting(10, 4f, 3, point.Ways, t, typeM);
+		object[] ob_d = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Minion_Melee + (int)typeM-1]
+			.getStatus_LV(Mathf.FloorToInt(GameManager.Instance.timer_inGameTurn / 3 * 60));
+		stats.Setting((short)ob_d[0], 4f, (short)ob_d[1], point.Ways, t, typeM,
+			(short)(typeM == MoonHeader.AttackType.Melee ? 60:30), (short)(typeM == MoonHeader.AttackType.Melee ? 20: 15)) ;
+
 		photonView.RPC("MS_RPC", RpcTarget.All, (short)stats.actorHealth.maxHealth, (short)stats.actorHealth.Atk, (short)t, (int)stats.speed, typeM);
 		nav.speed = stats.speed;
 		//stats = new MoonHeader.MinionStats(10, 50f, 10, way, t);
