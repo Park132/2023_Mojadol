@@ -58,7 +58,8 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         once = false;
 
         icon = GameObject.Instantiate(PrefabManager.Instance.icons[11], transform);
-        icon.transform.localPosition = new Vector3(0, 40, 0);
+        icon.transform.localPosition = new Vector3(0, 80 / this.transform.localScale.y, 0);
+        icon.transform.localScale = icon.transform.localScale / this.transform.localScale.x * 1.5f;
         icon.GetComponent<Renderer>().material.color = Color.yellow;
         bodies = this.transform.GetComponentsInChildren<Renderer>();
 

@@ -489,6 +489,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                         I_Actor dummy = hit.transform.GetComponentInParent<I_Actor>();
 
                         if (ReferenceEquals(dummy, null)) { return; }
+                        if (dummy.GetTeam() != this.player.team) { return; }
 
                         // 현재 미니언이 클릭되어 있으나, 다른 미니언을 클릭하였다면, 전에 클릭했던 미니언의 아이콘을 원래 상태로 복구
                         if (!ReferenceEquals(mapcamSub_Target, null) && !ReferenceEquals(mapcamSub_Target, hit.transform.gameObject))
