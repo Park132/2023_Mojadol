@@ -276,7 +276,7 @@ public class PSH_Shaman : MonoBehaviour
         attackcode++;
         this.currentSpeed = speed / 2;
         // photonView.RPC("WeaponTriggerEnable", RpcTarget.MasterClient, true);
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(2.0f);
         anim.SetLayerWeight(1, 0f);
         this.currentSpeed = speed;
         // yield return new WaitForSecondsRealtime(attackcode == 4 ? 2f : 0.5f);
@@ -315,7 +315,7 @@ public class PSH_Shaman : MonoBehaviour
         canAttack = false;
         canE = false;
 
-        yield return new WaitForSecondsRealtime(1.0f);
+        yield return new WaitForSecondsRealtime(3.0f);
 
         anim.SetLayerWeight(1, 0f);
         canMove = true;
