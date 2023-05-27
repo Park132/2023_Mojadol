@@ -99,6 +99,7 @@ MonoBehaviour:
   - Explosion_s
   - QE
   - RC_RPC
+  - SN_RPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0
