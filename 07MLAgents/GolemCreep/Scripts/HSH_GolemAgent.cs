@@ -28,7 +28,9 @@ public class HSH_GolemAgent : Agent, I_Creep
     const float WALKSPEED = 3f; const float CHARGESPEED = 20f;
     const float WALKCOOL = 4.5f; const float CHARGECOOL = 2.5f;
     const float HP = 4;
-    GolemStat stat;
+
+    private float timer_groggy;
+    public GolemStat stat;
     public CreepInfo creepinfo;
     public GameObject groggySensor;
     private LSM_CreepCtrl creepCtrl;
@@ -65,6 +67,7 @@ public class HSH_GolemAgent : Agent, I_Creep
         groggySensor.SetActive(false);
 
         creepCtrl = this.GetComponent<LSM_CreepCtrl>();
+        timer_groggy = 0;
         //golemonnx = this.GetComponent<BehaviorParameters>().Model;
     }
 
@@ -126,6 +129,21 @@ public class HSH_GolemAgent : Agent, I_Creep
                 }
             }
             creepCtrl.stat.state = (MoonHeader.CreepStat)this.stat;
+
+            if (stat == GolemStat.Groggy)
+            {
+                timer_groggy += Time.deltaTime;
+                if (timer_groggy >= 4f)
+                {
+                    patternInfo.cooltime = WALKCOOL;
+                    stat = GolemStat.Walk;
+                    creepCtrl.stat.state = (MoonHeader.CreepStat)this.stat;
+                    StatCtrl();
+                    timer_groggy = 0;
+                    transform.rotation = Quaternion.LookRotation(InitPos - transform.position);
+                    doOnlyOnce = true;
+                }
+            }
         }
         else { spd = 0; rb.velocity = Vector3.zero; }
 
@@ -209,14 +227,14 @@ public class HSH_GolemAgent : Agent, I_Creep
             if (stat == GolemStat.Walk && patternInfo.cooltime < 0.5f)
             {
                 stat = GolemStat.Charge; patternInfo.cooltime = CHARGECOOL;
-                groggySensor.SetActive(true);
+                //groggySensor.SetActive(true);
                 StatCtrl();
             }
 
             else if (stat == GolemStat.Charge && patternInfo.cooltime < 0.5f)
             {
                 stat = GolemStat.Walk; patternInfo.cooltime = WALKCOOL;
-                groggySensor.SetActive(false);
+                //groggySensor.SetActive(false);
                 StatCtrl();
             }
         }
@@ -317,15 +335,17 @@ public class HSH_GolemAgent : Agent, I_Creep
             stat = GolemStat.Groggy;
             StatCtrl();
 
-            yield return new WaitForSeconds(4f);
-
+            yield return new WaitForSeconds(5f);
+            /*
             if (stat != GolemStat.Death)
             {
                 patternInfo.cooltime = WALKCOOL;
                 stat = GolemStat.Walk;
+                creepCtrl.stat.state = (MoonHeader.CreepStat)this.stat;
                 StatCtrl();
-            }
-            doOnlyOnce = true;
+            }*/
+
+            //doOnlyOnce = true;
 
             transform.rotation = Quaternion.LookRotation(InitPos - transform.position);
         }

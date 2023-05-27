@@ -402,6 +402,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             MapCam.SetActive(true);
             MapCam.transform.position = mapCamBasePosition;
             mapCamCamera.orthographicSize = MapCamBaseSize;
+            yield return null;
             MapSubCam.SetActive(true);
             is_zoomIn = false;
             //subTarget_minion = null;

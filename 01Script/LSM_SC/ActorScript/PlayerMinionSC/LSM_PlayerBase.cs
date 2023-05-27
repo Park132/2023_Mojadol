@@ -159,8 +159,11 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             anim.SetFloat("Front", 0);
             anim.SetFloat("Right", 0);
         }
-        AttackFunction();
-        CollectingArea();
+        if (state_p != MoonHeader.State_P_Minion.Dead)
+        {
+            AttackFunction();
+            CollectingArea();
+        }
         if (settingLevel != GetLV())
         { 
             settingLevel= GetLV();
@@ -500,10 +503,10 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         rigid.useGravity = false;
 
         int d_for = Mathf.CeilToInt(1.5f / Time.deltaTime);
-        Debug.Log("for : " + d_for);
+ 
         for (int i = 0; i < d_for; i++)
         {
-            Debug.Log("In Animation!");
+
             yield return new WaitForSeconds(Time.deltaTime);
             if (Mathf.CeilToInt(d_for / 3 * 2) == i) { StartCoroutine(GameManager.Instance.ScreenFade(false)); }
             playerCamera.transform.position = Vector3.Lerp(playerCamera.transform.position, deadCamerapos.transform.position, Time.deltaTime * 2);

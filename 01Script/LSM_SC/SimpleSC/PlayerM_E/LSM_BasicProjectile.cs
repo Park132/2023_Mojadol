@@ -43,7 +43,7 @@ public class LSM_BasicProjectile : MonoBehaviour
         }
     }
     // player obj, damage, I_Actor, Speed
-    public void Setting(GameObject obj, int d, I_Actor ac, float v)
+    public virtual void Setting(GameObject obj, int d, I_Actor ac, float v)
     { orner = obj; dam = d; orner_ac = ac; speed = v;
         orner_ch = obj.GetComponent<I_Characters>(); c.enabled = true; 
         Rigidbody rigid = this.GetComponent<Rigidbody>();

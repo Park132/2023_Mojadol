@@ -212,6 +212,6 @@ public class LSM_Player_Tormented : LSM_PlayerBase
 
         this.actorHealth.Atk =(short)((short)dummy_o[1] + add[1]);
 
-        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)dummy_o[0] + add[0], (short)dummy_o[0] + add[0], pname, (int)t);
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)((short)dummy_o[0] + add[0]), (short)((short)dummy_o[0] + add[0]), pname, (int)t);
     }
 }

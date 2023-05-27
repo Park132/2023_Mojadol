@@ -201,8 +201,8 @@ public class LSM_Player_Knight : LSM_PlayerBase
         {
             input_E = false;
             casting_E= false;
+            photonView.RPC("EAnimE_RPC", RpcTarget.All, this.playerCamera.transform.forward, timer_E);
             timer_E = 0;
-            photonView.RPC("EAnimE_RPC", RpcTarget.All, this.playerCamera.transform.forward);
             yield return new WaitForSeconds(1.8f);
             EskillOver();
         }
@@ -217,28 +217,31 @@ public class LSM_Player_Knight : LSM_PlayerBase
     }
     [PunRPC] private void EAnim_Pause() { anim.speed = 0f; }
     [PunRPC]
-    private void EAnimE_RPC(Vector3 forward)
+    private void EAnimE_RPC(Vector3 forward, float timer)
     {
-        StartCoroutine(EAnimE_IE(forward));
+        StartCoroutine(EAnimE_IE(forward, timer));
         //AnimatorLayerReset();
     }
-    private IEnumerator EAnimE_IE(Vector3 forward)
+    private IEnumerator EAnimE_IE(Vector3 forward, float timer)
     {
         anim.speed = 1f;
         yield return new WaitForSeconds(1f);
-        if (PhotonNetwork.IsMasterClient) AttackEffect_E(forward);
+        if (PhotonNetwork.IsMasterClient) AttackEffect_E(forward, timer);
         yield return new WaitForSeconds(1f);
         AnimatorLayerReset();
     }
-    private void AttackEffect_E(Vector3 forward)
+    private void AttackEffect_E(Vector3 forward, float timer)
     {
         Vector3 dummy_position = this.transform.position + this.transform.forward * 1 + Vector3.up;
         GameObject effect_d = PoolManager.Instance.Get_Particles(3, dummy_position
             , Quaternion.LookRotation(forward, this.transform.right).eulerAngles);
         //effect_d.transform.position = this.transform.position + this.transform.forward * 1 + Vector3.up;
         //effect_d.transform.LookAt(forward + effect_d.transform.position, this.transform.right);
-        effect_d.transform.localScale = Vector3.one * 1.7f;
-        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * 1.5f), this.GetComponent<I_Actor>(), 8f);
+        effect_d.transform.localScale = Vector3.one * (1f + 1f * (timer / 4f));
+
+
+        effect_d.GetComponent<LSM_BasicProjectile>().Setting(this.gameObject, Mathf.CeilToInt((float)this.actorHealth.Atk * (1.2f + 0.5f*(timer/4f)))
+            , this.GetComponent<I_Actor>(), 4f + (timer / 4f) * 4f);
     }
     #endregion
 
@@ -276,6 +279,6 @@ public class LSM_Player_Knight : LSM_PlayerBase
         this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1]);
         
 
-        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)dummy_o[0] + add[0], (short)dummy_o[0] +add[0], pname, (int)t);
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)((short)dummy_o[0] + add[0]), (short)((short)dummy_o[0] +add[0]), pname, (int)t);
     }
 }
