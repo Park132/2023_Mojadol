@@ -80,7 +80,7 @@ public class PSH_LobbyCtrl : MonoBehaviour
         if(keyEnable)
         {
             
-            if (Input.GetKeyDown(KeyCode.LeftArrow) && !isMoving)
+            if ((Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) && !isMoving)
             {
                 if (selectcode == 0) selectcode = 2; else selectcode--;
                 GameObject.Find("LobbyUIManager").GetComponent<PSH_LobbyUI>().characterCode = selectcode;
@@ -90,7 +90,7 @@ public class PSH_LobbyCtrl : MonoBehaviour
                 tempLight = maxLightIntensity[selectcode] / lightingTime;
                 StartCoroutine(HighLightControl(lerpTime + 0.1f, selectcode));
             }
-            else if (Input.GetKeyDown(KeyCode.RightArrow) && !isMoving)
+            else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D) && !isMoving)
             {
                 if (selectcode == 2) selectcode = 0; else selectcode++;
                 GameObject.Find("LobbyUIManager").GetComponent<PSH_LobbyUI>().characterCode = selectcode;

@@ -40,6 +40,7 @@ public class MoonHeader : MonoBehaviour
 
 		public S_ActorState(short hp, short at, Team t) { team = t; maxHealth = hp; health = maxHealth; Atk = at; type = AttackType.None; }
 		public S_ActorState(short hp, short at, Team t, AttackType ty) { team = t; maxHealth = hp; health = maxHealth; Atk = at; type = ty; }
+
 	}
 
 	[Serializable]
@@ -180,6 +181,49 @@ public class MoonHeader : MonoBehaviour
 			return needExp[lv] <= exp; 
 		}
 	}
+
+	[Serializable]
+	public struct S_Status
+	{
+        public float plusQCool;
+        public float plusECool;
+        public float plusSpeed;
+        public short plusHP;
+        public short plusATk;
+    }
+
+	[Serializable]
+	public struct S_ShopItems
+	{
+        private LSM_ItemData[] item_num;
+        private byte[] num_has;
+
+		private S_Status alphaStat;
+
+		public S_ShopItems(LSM_ItemData[] i) { item_num = i; num_has = new byte[item_num.Length];
+            alphaStat = new S_Status();
+        }
+		public S_Status GetPlusStatus() // Q쿨, E쿨, 스피드, HP, Atk
+		{
+			alphaStat = new S_Status();
+
+			for (int i = 0; i < item_num.Length; i++) 
+			{
+				S_Status ob = item_num[i].GetEffect();
+				alphaStat.plusQCool += ob.plusQCool * num_has[i];
+                alphaStat.plusECool += ob.plusECool * num_has[i];
+                alphaStat.plusSpeed += ob.plusSpeed * num_has[i];
+                alphaStat.plusHP += (short)(ob.plusHP * num_has[i]);
+                alphaStat.plusATk += (short)(ob.plusATk * num_has[i]);
+            }
+			return alphaStat;
+		}
+
+		public byte NumOfItem(int code) { return num_has[code]; }
+		public byte[] GetHasItems() { return num_has; }
+		public void AddItem(int code) { num_has[code]++; }
+		public void SetItem(int code, byte num) { num_has[code] = num; }
+    }
 }
 
 
@@ -206,8 +250,9 @@ public interface I_Characters
 public interface I_Playable 
 {
     public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other, float power);    // 모든 캐릭터는 데미지를 받기에 추상함수로 설정. 플레이어블은 넉백이 가능.
-    public bool IsCanUseE();
-	public bool IsCanUseQ();
+    public float IsCanUseE();
+	public float IsCanUseQ();
+	public bool IsCanHit();
 	public GameObject CameraSetting(GameObject cam);
 	public int GetExp();
 	public int GetGold();
@@ -221,6 +266,8 @@ public interface I_Playable
 	public float GetF();
 	public void AddKill();
 	public void AddDeath();
+	public void AddCS();
+	public void AddTD();
 }
 
 public interface I_Creep

@@ -29,11 +29,15 @@ public class LSM_GameUI : MonoBehaviour
     private I_Playable player_playable;
     private GameObject target_obj;
     private int type_;
-    
 
 
+    private void Awake()
+    {
+        QSkillCool.color = new Color32(0, 0, 0, 150);
+        ESkillCool.color = new Color32(0, 0, 0, 150);
+    }
 
-	private void OnEnable()
+    private void OnEnable()
 	{
 		playerUI.SetActive(false);
         targetUI.SetActive(false);
@@ -81,8 +85,10 @@ public class LSM_GameUI : MonoBehaviour
             playerLevel_txt.text = player_playable.GetLV().ToString() + "LV";
             playerExp.fillAmount = (Mathf.Round(((float)player_playable.GetExp() / 200) * 100) / 100) * ((float)45/100) + 0.55f;
 
-            QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() ? 0 : 150));
-            ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() ? 0 : 150));
+            //QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() || !player_playable.IsCanHit() ? 0 : 150));
+            //ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() || !player_playable.IsCanHit() ? 0 : 150));
+            QSkillCool.fillAmount =(player_playable.IsCanHit())? player_playable.IsCanUseQ() : 1f;
+            ESkillCool.fillAmount = (player_playable.IsCanHit()) ? player_playable.IsCanUseE() : 1f;
 
             if (player_playable.GetF() >= 0.5f)
             {

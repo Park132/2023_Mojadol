@@ -9,6 +9,8 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     protected GameObject playerCharacter;
     protected Rigidbody rigid;
 
+    const float LAST_ATTACK_DELAY = 10f;
+
     // 이동속도, 점프 판별 함수
     protected float speed = 15.0f, currentSpeed;
     protected bool isGrounded;
@@ -34,15 +36,21 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     public GameObject camerapos, deadCamerapos; // eyes 연결
     bool cameraCanMove = false;
     bool invertCamera = false;
-    float yaw = 0.0f;
-    float pitch = 0.0f;
+    protected float yaw = 0.0f;
+    protected float pitch = 0.0f;
     public float mouseSensitivity = 3f; // 마우스 감도
     public float maxLookAngle = 50f; // 상하 시야각
     #endregion
 
+    protected float CoolTime_Q, CoolTime_E;
+    protected float timer_Q, timer_E;
+
     // 자폭 관련 변수
     protected float timer_F_Holder;
     protected bool pushing_F;
+
+    protected GameObject last_Attack_Player;
+    protected float timer_lastAttack;
 
     #region LSM Variable
     [Header("Player Info")]
@@ -79,6 +87,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             stream.SendNext(dummy_int1);
             stream.SendNext(dummy_int2);
             stream.SendNext(rigid.velocity);
+            //stream.SendNext(Mathf.RoundToInt(pitch / 3));
         }
         else
         {
@@ -92,6 +101,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             ReceiveDummyUnZip(receive_dummy);
             networkVelocity = (Vector3)stream.ReceiveNext();
             rigid.velocity = networkVelocity;
+            //pitch = (int)stream.ReceiveNext();
         }
     }
 
@@ -137,18 +147,29 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         icon_materialL = new List<Material>();
         selected_e = false;
         CollectingRadius = 5f;
-        
+        last_Attack_Player = null;
     }
 
     protected void Update()
     {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            if (!ReferenceEquals(last_Attack_Player, null))
+            {
+                timer_lastAttack += Time.deltaTime;
+                if (timer_lastAttack >= LAST_ATTACK_DELAY)
+                { timer_lastAttack = 0; last_Attack_Player = null; }
+            }
+        }
+
         // 지연보상에대한 내용.
         if (!photonView.IsMine)
         {
             rigid.velocity = networkVelocity;
-            rigid.MovePosition(transform.position + networkVelocity * Time.deltaTime);
+            rigid.MovePosition(rigid.position + networkVelocity * Time.deltaTime);
             isGrounded = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, Vector3.down, 0.8f, 1 << LayerMask.NameToLayer("Map"));
             anim.SetBool("InAir", !isGrounded);
+            myspine.transform.localEulerAngles = new Vector3(-180, 0, pitch); // 척추 움직에 따른 시야 변경
             return;
         }
 
@@ -184,9 +205,10 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     {
         object[] dummy_o = LSM_SettingStatus.Instance.lvStatus[myPlayerCtrl.PlayerType].getStatus_LV(settingLevel);
         short[] add = GameManager.Instance.teamManagers[(int)actorHealth.team].GetAtkHp();
+        MoonHeader.S_Status alpha = myPlayerCtrl.hasItems.GetPlusStatus();
 
-        this.actorHealth.maxHealth = (short)((short)dummy_o[0] + add[0]);
-        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1]);
+        this.actorHealth.maxHealth = (short)((short)dummy_o[0] + add[0] + alpha.plusHP);
+        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1] + alpha.plusATk);
     }
 
     protected virtual void AttackFunction() 
@@ -432,15 +454,22 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead || !PhotonNetwork.IsMasterClient)
             return;
 
+        if (other.CompareTag("PlayerMinion"))
+        { last_Attack_Player = other; timer_lastAttack = 0; }
+        else if (other.CompareTag("DamageArea"))
+        {last_Attack_Player = other.GetComponent<LSM_BasicProjectile>().orner; timer_lastAttack = 0; }
+
+        // 죽음 처리
         if (this.actorHealth.health - dam <= 0 && state_p != MoonHeader.State_P_Minion.Dead)
         {
             state_p = MoonHeader.State_P_Minion.Dead;
             //StartCoroutine(DeadProcessing(other)); 
             DeadProcessing(other);
         }
-
+        // 죽지 않을 경우.
         else if (this.actorHealth.health - dam > 0)
         {
+
             photonView.RPC("Dam_RPC", RpcTarget.All, dam, origin, power);
         }
         return;
@@ -479,18 +508,29 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
 
         Debug.Log("PlayerMinion Dead");
         GameManager.Instance.PlayerMinionRemover(actorHealth.team, playerName);
+
         // 마지막 타격이 플레이어라면, 경험치 및 로그창 띄우기.
         if (!other.Equals(this.gameObject))
         {
-            if (other.transform.CompareTag("PlayerMinion"))
-            {
-                other.GetComponent<I_Characters>().AddEXP(50);
-                other.GetComponent<I_Playable>().AddKill();
+            //if (other.transform.CompareTag("PlayerMinion"))
+            //{
+            //    other.GetComponent<I_Characters>().AddEXP(100);
+                //other.GetComponent<I_Playable>().AddKill();
                 //other.GetComponent<PSH_PlayerFPSCtrl>().myPlayerCtrl.GetExp(50);   // 디버깅용으로 현재 경험치를 50으로 고정 지급.
+            //}
+            //if (other.transform.CompareTag("DamageArea"))
+            //{ other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(100); }
+
+            if (!ReferenceEquals(last_Attack_Player, null))
+            {
+                last_Attack_Player.GetComponent<I_Playable>().AddKill();
+                last_Attack_Player.GetComponent<I_Characters>().AddEXP(150);
+                GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 처치했습니다.", last_Attack_Player.name, this.name));
             }
-            if (other.transform.CompareTag("DamageArea"))
-            { other.GetComponent<LSM_W_Slash>().orner_ch.AddEXP(50); }
-            GameManager.Instance.DisplayAdd(string.Format("{0} Killed {1}", other.gameObject.name, this.name));
+            else 
+            {
+                GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 처형하였습니다.", other.gameObject.name, this.name));
+            }
         }
         AddDeath();
     }
@@ -607,8 +647,10 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     public int GetState() { return (int)state_p; }
 
     #region I_Playable
-    public bool IsCanUseE() { return canE; }
-    public bool IsCanUseQ() { return canQ; }
+    public float IsCanUseE() { return canE? 0 : 1-(timer_E / CoolTime_E); }
+    public float IsCanUseQ() { return canQ ? 0 : 1 - (timer_Q / CoolTime_Q); }
+    public bool IsCanHit() { return canAttack; }
+
     public GameObject CameraSetting(GameObject cam)
     {
         playerCamera = cam.GetComponent<Camera>();
@@ -643,9 +685,19 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
 
     }
     public void AddKill()
-    {myPlayerCtrl.AddingKD(0);}
+    { photonView.RPC("AddK_RPC", RpcTarget.AllBuffered); }
+    [PunRPC] protected void AddK_RPC() {if (photonView.IsMine) myPlayerCtrl.AddingKD(0); }
+
     public void AddDeath() 
-    { myPlayerCtrl.AddingKD(1); }
+    { photonView.RPC("AddD_RPC", RpcTarget.AllBuffered); }
+    [PunRPC] protected void AddD_RPC() { if (photonView.IsMine) myPlayerCtrl.AddingKD(1); }
+
+    public void AddCS()
+    { photonView.RPC("AddCS_RPC", RpcTarget.AllBuffered); }
+    [PunRPC] protected void AddCS_RPC() { if (photonView.IsMine) myPlayerCtrl.AddingCS(); }
+    public void AddTD()
+    { photonView.RPC("AddTD_RPC", RpcTarget.AllBuffered); }
+    [PunRPC] protected void AddTD_RPC() { if (photonView.IsMine) myPlayerCtrl.AddingTD(); }
 
     public void AddCollector(int s) { myPlayerCtrl.GetGold((short)s); }
     public float GetF()

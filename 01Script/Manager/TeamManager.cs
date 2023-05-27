@@ -24,7 +24,7 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 	public int selectedNumber;          // 현재 플레이어가 설정한 공격로의 조직 수. 이를 이용하여 슬라이더의 최대 값을 조정.
 	private bool once;
 
-	private short addAtk, addHp;
+	[SerializeField]private short addAtk, addHp;
 
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
@@ -32,12 +32,19 @@ public class TeamManager : MonoBehaviourPunCallbacks, IPunObservable
 		{
 			stream.SendNext(MaximumSpawnNum);
 			stream.SendNext(AttackPathNumber);
+
+			int dummy = (int)addAtk & (int)ushort.MaxValue;
+			dummy += ((int)addHp & (int)ushort.MaxValue) << 16;
+			stream.SendNext(dummy);
 		}
 		else
 		{
 			MaximumSpawnNum = (int)stream.ReceiveNext();
 			AttackPathNumber = (int[])stream.ReceiveNext();
 
+			int dummy_r = (int)stream.ReceiveNext();
+			addAtk = (short)(dummy_r & (int)ushort.MaxValue);
+			addHp = (short)((dummy_r >> 16) & (int)ushort.MaxValue);
 		}
 	}
 

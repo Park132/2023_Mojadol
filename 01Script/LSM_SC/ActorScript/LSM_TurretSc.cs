@@ -13,6 +13,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 {
 	// 포탑의 탐색, 공격에 대한 딜레이 상수화 혹시 모를 변경에 대비하여 const는 생략
 	protected float ATTACKDELAY = 3f, SEARCHINGDELAY = 0.5f;
+	const float LAST_ATTACK_DELAY = 10f;
 
     public MoonHeader.S_TurretStats stats;			// 터렛의 상태에 대한 구조체
 	public GameObject mark, mark_obj;						// TopView에서 플레이어에게 보여질 아이콘
@@ -37,6 +38,9 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	protected byte level;
 	protected MoonHeader.ActorType ac_type;
+
+    protected GameObject last_Attack_Player;
+    protected float timer_lastAttack;
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
@@ -177,6 +181,13 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				SearchingTarget();
 				AttackTarget();
 				LevelUp((int)ac_type);
+
+				if (!ReferenceEquals(last_Attack_Player, null))
+				{
+					timer_lastAttack += Time.deltaTime;
+					if (timer_lastAttack >= LAST_ATTACK_DELAY)
+					{ timer_lastAttack = 0; last_Attack_Player = null; }
+				}
 			}
 		}
 	}
@@ -191,7 +202,13 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.stats.actorHealth.health -= dam;
 		photonView.RPC("Damaged_RPC_Turret", RpcTarget.All);
 
-		if (this.stats.actorHealth.health <= 0) {
+        if (other.CompareTag("PlayerMinion"))
+        { last_Attack_Player = other; timer_lastAttack = 0; }
+        else if (other.CompareTag("DamageArea"))
+        { last_Attack_Player = other.GetComponent<LSM_BasicProjectile>().orner; timer_lastAttack = 0; }
+
+
+        if (this.stats.actorHealth.health <= 0) {
 			this.stats.actorHealth.team = t;
 			this.stats.actorHealth.health = (short)(this.stats.actorHealth.maxHealth/2);
 			DestroyProcessing(other);
@@ -234,7 +251,14 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	protected virtual void DestroyProcessing(GameObject other)
 	{
-		GameManager.Instance.DisplayAdd(string.Format("{0} Destroyed {1}", other.name, this.name));
+
+
+		if (!ReferenceEquals(last_Attack_Player, null))
+		{
+			last_Attack_Player.GetComponent<I_Playable>().AddTD();
+            GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 파괴하였습니다.", last_Attack_Player.name, this.name));
+        }
+		else { GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 파괴하였습니다.", other.name, this.name)); }
 	}
 
     // 일정 범위 내에 적이 있는지를 확인하는 코드.

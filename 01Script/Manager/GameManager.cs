@@ -62,6 +62,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public String mainPlayerName;
 	public byte mainPlayerSelectNum;
 	public float timer_AllRunning, timer_inGameTurn;
+	public GameObject shopUI, endingUI;
 
 	public LSM_CreepCtrl[] creeps;
 
@@ -207,6 +208,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		mapUI = GameObject.Find("MapUIs");
 		gameUI = GameObject.Find("GameUI");
 		tabUI = GameObject.Find("TabUI");
+		shopUI = GameObject.Find("ShopPannel");
+		endingUI = GameObject.Find("ResultPannel");
 		gameUI_SC = gameUI.GetComponent<LSM_GameUI>();
 		gameUI.SetActive(false);
 
@@ -528,6 +531,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         StartCoroutine(ScreenFade(true));
         SettingAttack();        // 스포너의 상태를 변경.
         SettingTurnText();      // 턴 상태 UI를 변경
+		shopUI.transform.SetAsLastSibling();
         selectAttackPathUI.SetActive(true);
         isClickSkip = false;
 		numOfSkipClickedPlayer = 0;
@@ -770,6 +774,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         ScreenFade(false);
         gameState = MoonHeader.GameState.Ending;
         StartCoroutine(mainPlayer.AttackPathSelectSetting());
+		endingUI.GetComponent<LSM_UI_Result>().Setting((MoonHeader.Team)t != mainPlayer.player.team);
         Cursor.lockState = CursorLockMode.None;
         Debug.Log("Team " + ((MoonHeader.Team)t).ToString() + " Lose");
     }

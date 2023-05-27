@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LSM_BasicProjectile : MonoBehaviour
+public class LSM_BasicProjectile : MonoBehaviourPunCallbacks
 {
     public GameObject orner;
     public I_Actor orner_ac;

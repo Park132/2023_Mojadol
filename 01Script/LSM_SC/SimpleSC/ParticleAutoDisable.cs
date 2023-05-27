@@ -2,12 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 
-public class ParticleAutoDisable : MonoBehaviourPunCallbacks
+public class ParticleAutoDisable : MonoBehaviourPunCallbacks, IPunObservable
 {
     ParticleSystem ps;
     //bool alive;
     //float timer = 0;
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(this.gameObject.activeSelf);
+        }
+        else
+        {
+            bool isActive_ = (bool)stream.ReceiveNext();
+            this.gameObject.SetActive(isActive_);
+        }
+    }
+
 
     private void Awake()
     {

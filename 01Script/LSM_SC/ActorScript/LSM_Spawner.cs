@@ -8,8 +8,8 @@ using UnityEngine.Rendering;
 public class LSM_Spawner : MonoBehaviour
 {
 	// 소환에 대한 상수 설정.
-	float BASEDELAY = 1.5f;
-	float BASEWAVEDELAY = 20f;
+	float BASEDELAY = 2f;
+	float BASEWAVEDELAY = 35f;
 	int BASEMINIONMULTIPLER = 3;
 	int BASEMAXIMUMMELEE = 2;
 

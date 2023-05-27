@@ -4801,7 +4801,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   orner: {fileID: 0}
   dam: 0
-  isDestroed_: 0
+  isDestroed_: 1
   isPenetration: 1
 --- !u!114 &2931637056386803369
 MonoBehaviour:

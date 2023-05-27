@@ -55,6 +55,6 @@ public class PSH_LobbyUI : MonoBehaviour
     {
         Debug.Log("start button");
         PlayerPrefs.SetInt("PlayerSelectType", characterCode);
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(2);
     }
 }

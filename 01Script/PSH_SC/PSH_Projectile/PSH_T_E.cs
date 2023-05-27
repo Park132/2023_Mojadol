@@ -11,6 +11,7 @@ public class PSH_T_E : MonoBehaviour
     float fireRate = 0.5f;
     LSM_PlayerBase myCtrl;
     GameObject thisObj;
+    GameObject playerCam;
 
     private void Awake()
     {
@@ -19,6 +20,7 @@ public class PSH_T_E : MonoBehaviour
         myCtrl = this.GetComponentInParent<LSM_PlayerBase>();
         thisObj = myCtrl.gameObject;
         fireRate = Time.deltaTime;
+        playerCam = GameObject.FindGameObjectWithTag("MainCamera");
     }
     private void Start()
     {
@@ -27,20 +29,24 @@ public class PSH_T_E : MonoBehaviour
 
     void Update()
     {
+
+
         timer1 += Time.deltaTime;
         timer2 += Time.deltaTime;
 
         //Debug.DrawRay(this.transform.position, this.transform.forward * 50f, Color.red);
-
+        //this.transform.localRotation = Quaternion.Euler(playerCam.transform.rotation.eulerAngles.x, transform.rotation.y, transform.rotation.z);
+        //eProjectilepos.transform.localRotation = Quaternion.Euler(pitch, eProjectilepos.transform.rotation.y, eProjectilepos.transform.rotation.z);
         if (timer1 >= 8.0f)
         {
             this.gameObject.SetActive(false);
         }
-
+        if (!PhotonNetwork.IsMasterClient)
+            return;
         //if (!PhotonNetwork.IsMasterClient)
             //return;
 
-        if(timer1 >= 5.0f) // 5초 후 부터 초당 2발의 연사속도로 블럭을 발사
+        if(timer1 >= 5.0f && timer1 <= 8f) // 5초 후 부터 초당 2발의 연사속도로 블럭을 발사
         {
             if (timer2 > fireRate)
             {

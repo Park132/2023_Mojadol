@@ -206,7 +206,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         if (!photonView.IsMine)
         {
 			//rigid.velocity = networkVelocity;
-			rigid.MovePosition(transform.position + networkVelocity * Time.deltaTime);
+			rigid.MovePosition(rigid.position + networkVelocity * Time.deltaTime);
             //transform.position = transform.position + (networkVelocity * Time.deltaTime);
             //transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
             //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime);
@@ -618,12 +618,14 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		{ nav.velocity = Vector3.zero; nav.isStopped = true; }
 		if (other.transform.CompareTag("PlayerMinion"))
 		{
-			other.GetComponent<I_Characters>().AddEXP((short)stats.exp);		// 잡은 미니언이 플레이어 미니언이라면 경험치를 한번 더 줌.
+			other.GetComponent<I_Characters>().AddEXP((short)stats.exp);        // 잡은 미니언이 플레이어 미니언이라면 경험치를 한번 더 줌.
+			other.GetComponent<I_Playable>().AddCS();
 			//GameManager.Instance.DisplayAdd(string.Format("{0} killed {1}", other.name, this.name));
 		}
 		else if (other.transform.CompareTag("DamageArea"))
 		{
-			other.GetComponent<LSM_W_Slash>().orner.GetComponent<I_Characters>().AddEXP((short)stats.exp);
+			other.GetComponent<LSM_BasicProjectile>().orner.GetComponent<I_Characters>().AddEXP((short)stats.exp);
+			other.GetComponent<LSM_BasicProjectile>().orner.GetComponent<I_Playable>().AddCS();
 		}
 
 		yield return new WaitForSeconds(2f);

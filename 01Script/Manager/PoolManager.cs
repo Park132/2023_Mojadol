@@ -84,7 +84,7 @@ public class PoolManager : MonoBehaviour
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum; j++)
 				{
-					yield return new WaitForSeconds(Time.deltaTime);
+					yield return new WaitForSeconds(Time.deltaTime*2);
 					Get_Minion(i);
 					GameManager.Instance.LoadingUpdate();
 				}
@@ -101,7 +101,7 @@ public class PoolManager : MonoBehaviour
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum_Particles; j++)
 				{
-					yield return new WaitForSeconds(Time.deltaTime);
+					yield return new WaitForSeconds(Time.deltaTime*2);
 					Get_Particles(i, Vector3.zero);
 					GameManager.Instance.LoadingUpdate();
 				}
@@ -122,7 +122,7 @@ public class PoolManager : MonoBehaviour
 			{
 				for (int j = 0; j < ReadyToStart_SpawnNum_Item; j++)
 				{
-					yield return new WaitForSeconds(Time.deltaTime);
+					yield return new WaitForSeconds(Time.deltaTime*2);
 					Get_Item(i);
 					GameManager.Instance.LoadingUpdate();
 				}

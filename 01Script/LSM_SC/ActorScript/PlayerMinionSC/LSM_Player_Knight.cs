@@ -6,8 +6,8 @@ using UnityEngine;
 public class LSM_Player_Knight : LSM_PlayerBase
 {
     // 쿨타임 관련 변수.
-    private float CoolTime_Q, CoolTime_E;
-    private float timer_Q, timer_E, timer_Combo, timer_E_Holding;
+
+    private float  timer_Combo, timer_E_Holding;
     private bool casting_E, input_E;
 
     protected LSM_WeaponSC weaponSC;
@@ -50,7 +50,7 @@ public class LSM_Player_Knight : LSM_PlayerBase
         if (attackcode == 1 || attackcode == 2 || attackcode == 3)
         {
             timer_Combo += Time.deltaTime;
-            if (timer_Combo >= 3f)
+            if (timer_Combo >= 5f)
             {
                 attackcode = 0;
                 timer_Combo = 0f;
@@ -268,17 +268,21 @@ public class LSM_Player_Knight : LSM_PlayerBase
     public override void SpawnSetting(MoonHeader.Team t, short monHealth, string pname, LSM_PlayerCtrl pctrl)
     {
         base.SpawnSetting(t, monHealth, pname, pctrl);
-        CoolTime_E = 5f;
-        CoolTime_Q = 3f;
-        speed = 11;
+
+        MoonHeader.S_Status alpha = pctrl.hasItems.GetPlusStatus();
+
+        CoolTime_E = 5f + alpha.plusECool;
+        CoolTime_Q = 3f + alpha.plusQCool;
+        speed = 11 + alpha.plusSpeed;
         timer_E = 0;
         timer_Q = 0;
         object[] dummy_o = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Knight].getStatus_LV(GetLV());
         short[] add = GameManager.Instance.teamManagers[(int)t].GetAtkHp();
 
-        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1]);
+        this.actorHealth.Atk = (short)((short)dummy_o[1] + add[1] + alpha.plusATk);
         
 
-        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)((short)dummy_o[0] + add[0]), (short)((short)dummy_o[0] +add[0]), pname, (int)t);
+        photonView.RPC("SpawnSetting_RPC", RpcTarget.All, (short)((short)dummy_o[0] + add[0] + alpha.plusHP),
+            (short)((short)dummy_o[0] +add[0] + alpha.plusHP), pname, (int)t);
     }
 }

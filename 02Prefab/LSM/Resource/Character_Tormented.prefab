@@ -37,7 +37,6 @@ Transform:
   m_Children:
   - {fileID: 4341382743657825825}
   - {fileID: 6491851595771051864}
-  - {fileID: 7398524812479382322}
   - {fileID: 3800937156700966342}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -246,7 +245,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8303411329254008936}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7152344736704999244
 GameObject:
@@ -284,7 +283,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 8303411329254008936}
+    m_TransformParent: {fileID: 4341382743657825825}
     m_Modifications:
     - target: {fileID: 7552981319352151011, guid: c3f72832818c9e8448c7642c36abcf84, type: 3}
       propertyPath: m_Layer
@@ -304,7 +303,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7553142017490298374, guid: c3f72832818c9e8448c7642c36abcf84, type: 3}
       propertyPath: m_RootOrder
-      value: 2
+      value: 19
       objectReference: {fileID: 0}
     - target: {fileID: 7553142017490298374, guid: c3f72832818c9e8448c7642c36abcf84, type: 3}
       propertyPath: m_LocalScale.x
@@ -442,11 +441,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timer1: 0
---- !u!4 &7398524812479382322 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7553142017490298374, guid: c3f72832818c9e8448c7642c36abcf84, type: 3}
-  m_PrefabInstance: {fileID: 1044537951862220084}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &3898272307805055402
 PrefabInstance:
   m_ObjectHideFlags: 0

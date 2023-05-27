@@ -4,7 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using Unity.VisualScripting;
 
-public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters, I_Playable
+public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObservable, I_Characters//, I_Playable
 {
     GameObject playerCharacter;
     Rigidbody rigid;
@@ -20,7 +20,7 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
 
     // 조작 부분
     bool canMove = true;
-
+    
 
     // 조작 - 공격 관련 부분
     bool canAttack = true;
@@ -864,8 +864,8 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     public int GetState() { return (int)state_p; }
 
     #region I_Playable
-    public bool IsCanUseE() { return canE; }
-    public bool IsCanUseQ() { return canQ; }
+    public float IsCanUseE() { return 0; }
+    public float IsCanUseQ() { return 0; }
     public GameObject CameraSetting(GameObject cam)
     {
         playerCamera = cam.GetComponent<Camera>();
@@ -907,8 +907,10 @@ public class PSH_PlayerUniversal : MonoBehaviourPunCallbacks, I_Actor, IPunObser
     }
     public void AddKill()
     { myPlayerCtrl.AddingKD(0); }
+    public bool IsCanHit() { return false; }
     public void AddDeath()
     { myPlayerCtrl.AddingKD(1); }
+    public void AddCS() { }
     public byte GetLV() { return 0; }
     #endregion
 }

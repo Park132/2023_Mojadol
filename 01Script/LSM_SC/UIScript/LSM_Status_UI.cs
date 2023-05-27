@@ -29,7 +29,7 @@ public class LSM_Status_UI : MonoBehaviour
 	private void Awake()
     {
         pe_ = new PointerEventData(null);
-        //_gr= GetComponent<GraphicRaycaster>();
+        _gr= GetComponent<GraphicRaycaster>();
         _rrList= new List<RaycastResult>();
         tooltip = tooltip_pannel.GetComponent<LSM_Pannel_Tooltip>();
     }
@@ -45,7 +45,7 @@ public class LSM_Status_UI : MonoBehaviour
         else if (GameManager.Instance.onceStart && map_cam.gameObject.activeSelf)
         {
             //Debug.Log("in ui update " +pe_.position);
-            this.transform.SetAsLastSibling();
+            statusUI.transform.SetAsLastSibling();
             SettingPlayerInfo();
             SettingTooltipPannel();
         }
@@ -53,6 +53,9 @@ public class LSM_Status_UI : MonoBehaviour
 
     private void SettingPlayerInfo()
     {
+
+        MoonHeader.S_Status alpha = playerCtrl.hasItems.GetPlusStatus();
+
         byte t = playerCtrl.PlayerType;
         for (int i = 0; i < icons.Length; i++) { icons[i].SetActive(t == i); }
         playerName.text = playerCtrl.playerName;
@@ -62,8 +65,8 @@ public class LSM_Status_UI : MonoBehaviour
         object[] o_d = LSM_SettingStatus.Instance.lvStatus[(int)t].getStatus_LV(playerCtrl.GetLevel());
         short[] add = GameManager.Instance.teamManagers[(int)playerCtrl.player.team].GetAtkHp();
 
-        hp.text = "HP : "+ ((short)o_d[0]+ add[0]).ToString();
-        atk.text = "ATK : "+ ((short)o_d[1] + add[1]).ToString();
+        hp.text = "HP : "+ ((short)o_d[0]).ToString() + " +"+ (add[0] + (short)alpha.plusHP).ToString();
+        atk.text = "ATK : "+ ((short)o_d[1]).ToString() + " +" + (add[1] + (short)alpha.plusATk).ToString();
         gold.text = playerCtrl.GetGold().ToString();
         exp.text = playerCtrl.GetExp().ToString();
     }
@@ -76,8 +79,8 @@ public class LSM_Status_UI : MonoBehaviour
 
 
         if (_rrList.Count <= 0)
-        {Debug.Log("no _rr_list count"); tooltip_pannel.SetActive(false); return; }
-        else { Debug.Log("in rr_ in count"); }
+        { tooltip_pannel.SetActive(false); return; }
+        //else { Debug.Log("in rr_ in count"); }
 
         if ((tooltip_d = _rrList[0].gameObject.GetComponent<LSM_UI_Tooltip>()) != null)
         {

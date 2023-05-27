@@ -4910,6 +4910,7 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: 1447448489861254107}
+  - {fileID: 4586701091274509119}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -4969,7 +4970,7 @@ MonoBehaviour:
   orner: {fileID: 0}
   dam: 0
   isDestroed_: 0
-  isPenetration: 0
+  isPenetration: 1
   slash_effect:
   - {fileID: 7474370802789544926}
   - {fileID: 6736960293205245734}

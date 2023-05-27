@@ -10,6 +10,8 @@ public class LSM_TabUI : MonoBehaviour
     public TextMeshProUGUI PlayerName, PlayerLevel;
     private GameObject obj;
     private LSM_PlayerCtrl obj_p;
+    public TextMeshProUGUI[] numOfItemTxts;
+
 
     public void Setting(int t, string name, GameObject o)
     {
@@ -18,9 +20,17 @@ public class LSM_TabUI : MonoBehaviour
         obj = o;
         obj_p = o.GetComponent<LSM_PlayerCtrl>();
         PlayerLevel.text = "LV" +obj_p.GetLevel();
+        for (int i = 0; i < numOfItemTxts.Length; i++)
+        {
+            numOfItemTxts[i].text = obj_p.hasItems.NumOfItem(i).ToString();
+        }
     }
     private void Update()
     {
         PlayerLevel.text = "LV" + obj_p.GetLevel();
+        for (int i = 0; i < numOfItemTxts.Length; i++)
+        {
+            numOfItemTxts[i].text = obj_p.hasItems.NumOfItem(i).ToString();
+        }
     }
 }
