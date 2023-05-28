@@ -89,7 +89,7 @@ MonoBehaviour:
   MapCam: {fileID: 0}
   MapSubCam: {fileID: 0}
   MiniMapCam: {fileID: 0}
-  mapCamBasePosition: {x: 0, y: 200, z: 0}
+  mapCamBasePosition: {x: 0, y: 300, z: 0}
   minionStatsPannel: {fileID: 0}
   minionStatsPannel_SelectButton: {fileID: 0}
   PlayerType: 0
