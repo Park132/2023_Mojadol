@@ -104,8 +104,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 디버그용으로 미리 설정.
 		ResetTurret();
 		
-		searchRadius = 10f;
-		maxAttackRadius = 12f;
+		searchRadius = 14f;
+		maxAttackRadius = 16f;
 		
 
 		// 선택시 하이라이트 주기 위한 변수였음. 하지만 실패 후 더미로 남김.
@@ -292,7 +292,7 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 					{
 						Debug.Log("Player Find!");
 						I_Actor dummyCtr = hit.transform.GetComponent<I_Actor>();
-						//dummy_actor = dummyCtr.actorHealth;
+						dummy_actor = dummyCtr.GetActor();
 						if (dummyCtr.GetHealth() > 0)
 							dummy_bool = true;
 					}

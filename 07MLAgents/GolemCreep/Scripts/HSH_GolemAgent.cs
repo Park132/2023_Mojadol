@@ -77,7 +77,8 @@ public class HSH_GolemAgent : Agent, I_Creep
         if (!PhotonNetwork.IsMasterClient)
         {
             this.stat = (GolemStat)creepCtrl.stat.state;
-            StatCtrl();
+            if (stat != GolemStat.Death)
+                StatCtrl();
             spd = 0;
             return;
         }

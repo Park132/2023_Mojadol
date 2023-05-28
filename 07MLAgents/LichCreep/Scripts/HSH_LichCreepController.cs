@@ -66,7 +66,9 @@ public class HSH_LichCreepController : MonoBehaviour, I_Creep
                 spellFieldGenerator.SetActive(false);
             }
             this.lichstat = (LichStat)creepCtrl.stat.state;
-            AnimCtrl();
+
+            if (lichstat != LichStat.Death)
+                AnimCtrl();
 
             return;
         }

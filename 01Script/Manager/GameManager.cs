@@ -777,6 +777,8 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         endingUI.GetComponent<LSM_UI_Result>().Setting((MoonHeader.Team)t != mainPlayer.player.team);
         Cursor.lockState = CursorLockMode.None;
         Debug.Log("Team " + ((MoonHeader.Team)t).ToString() + " Lose");
+		yield return new WaitForSeconds(3f);
+		ScreenFade(true);
     }
 
     public void GoToLobby() { StartCoroutine(LobbyAnim()); }

@@ -15,18 +15,18 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (stream.IsWriting)
         {
-            stream.SendNext(this.gameObject.activeSelf);
+            //stream.SendNext(this.gameObject.activeSelf);
         }
         else
         {
-            bool isActive_ = (bool)stream.ReceiveNext();
-            this.gameObject.SetActive(isActive_);
+           // bool isActive_ = (bool)stream.ReceiveNext();
+         //   this.gameObject.SetActive(isActive_);
         }
     }
     private void Update()
     {
         timer_autoDisable += Time.deltaTime;
-        if (timer_autoDisable > 5f) { this.gameObject.SetActive(false); }
+        if (timer_autoDisable > 3f) { this.gameObject.SetActive(false); }
     }
 
     private void Awake()

@@ -34,8 +34,8 @@ public class LSM_BaseTurretSC : LSM_TurretSc
         stats.actorHealth.type = MoonHeader.AttackType.Turret;
         timer_regen = 0;
         isDie = false;
-        searchRadius *= 2;
-        maxAttackRadius *= 2;
+        searchRadius = 23;
+        maxAttackRadius = 27;
         
     }
 
@@ -66,16 +66,17 @@ public class LSM_BaseTurretSC : LSM_TurretSc
                     }
                 }
             }
-        }
 
-        if (isDie)
-        {
-            timer_regen += Time.deltaTime;
-            if (timer_regen >= 30f)
+            if (isDie)
             {
-                ReBuild();
+                timer_regen += Time.deltaTime;
+                if (timer_regen >= 30f)
+                {
+                    ReBuild();
+                }
             }
         }
+
     }
 
     private void ReBuild()
