@@ -151,7 +151,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
         //
         icon_materialL = new List<Material>();
         selected_e = false;
-        CollectingRadius = 5f;
+        CollectingRadius = 10f;
         last_Attack_Player = null;
     }
 
@@ -538,6 +538,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             {
                 last_Attack_Player.GetComponent<I_Playable>().AddKill();
                 last_Attack_Player.GetComponent<I_Characters>().AddEXP(150);
+                last_Attack_Player.GetComponent<I_Playable>().AddCollector(300);
                 GameManager.Instance.DisplayAdd(string.Format("{0}가 {1}를 처치했습니다.", last_Attack_Player.name, this.name));
             }
             else 

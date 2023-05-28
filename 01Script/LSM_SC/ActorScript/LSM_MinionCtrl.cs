@@ -217,8 +217,10 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		// 현재 개발중이므로 미리 설정해둠.
 		object[] ob_d = LSM_SettingStatus.Instance.lvStatus[(int)MoonHeader.ActorType.Minion_Melee + (int)typeM-1]
 			.getStatus_LV(Mathf.FloorToInt(GameManager.Instance.timer_inGameTurn / 3 * 60));
-		stats.Setting((short)ob_d[0], 4f, (short)ob_d[1], point.Ways, t, typeM,
-			(short)(typeM == MoonHeader.AttackType.Melee ? 60:30), (short)(typeM == MoonHeader.AttackType.Melee ? 20: 15)) ;
+        // mh: 최대 체력, sp: 스피드, atk: 공격력, des: 스포너로부터 받아올 이동경로, t: 미니언의 팀, type_d: 미니언의 타입,
+        // e: 죽었을때, 혹은 게임이 종료되었을 때 얻는 경험치
+        stats.Setting((short)ob_d[0], 4f, (short)ob_d[1], point.Ways, t, typeM,
+			(short)(typeM == MoonHeader.AttackType.Melee ? 60:30), (short)(typeM == MoonHeader.AttackType.Melee ? 40: 30)) ;
 
 		photonView.RPC("MS_RPC", RpcTarget.All, (short)stats.actorHealth.maxHealth, (short)stats.actorHealth.Atk, (short)t, (int)stats.speed, typeM);
 		nav.speed = stats.speed;

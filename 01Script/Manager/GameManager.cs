@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public static GameManager Instance{ get{ return instance; } }
 	// ///
 
-	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 160f;
+	const float SELECTATTACKPATHTIME = 60f, ROUNDTIME = 1800;
 	// SEARCHATTACKPATHTIME: 공격로 설정 시간. ROUNDTIME: 게임 진행 시간.
 
 	[Header("GameManager States")]

@@ -83,7 +83,7 @@ public class LSM_GameUI : MonoBehaviour
             playerHP_txt.text = player_ac.GetHealth() + " / " + player_ac.GetMaxHealth();
             playerGold_txt.text = player_playable.GetGold() + " G";
             playerLevel_txt.text = player_playable.GetLV().ToString() + "LV";
-            playerExp.fillAmount = (Mathf.Round(((float)player_playable.GetExp() / 200) * 100) / 100) * ((float)45/100) + 0.55f;
+            playerExp.fillAmount = (Mathf.Round(((float)player_playable.GetExp() / LSM_SettingStatus.Instance.lvStatus[type_].needExp[player_playable.GetLV()]) * 100) / 100) * ((float)45/100) + 0.55f;
 
             //QSkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseQ() || !player_playable.IsCanHit() ? 0 : 150));
             //ESkillCool.color = new Color32(0, 0, 0, (byte)(player_playable.IsCanUseE() || !player_playable.IsCanHit() ? 0 : 150));
