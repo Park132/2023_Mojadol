@@ -604,7 +604,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             if (ReferenceEquals(mapcamSub_Target, null))
                 break;
-            Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * 95;
+            Vector3 targetPosition = mapcamSub_Target.transform.position + Vector3.up * mapCamBasePosition.y;
             Vector3 dummy_position = Vector3.MoveTowards(MapCam.transform.position,
                 targetPosition, map_move * 2 * Time.deltaTime);
             bool dummy_inBox = MapMoveInBox(4, dummy_position);
