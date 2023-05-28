@@ -475,7 +475,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             Debug.DrawRay(ray.origin, ray.direction * 1000, Color.green, 3f);
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, 100, 1 << LayerMask.NameToLayer("Icon")))
+            if (Physics.Raycast(ray, out hit, 1000, 1 << LayerMask.NameToLayer("Icon")))
             {
                 Debug.Log(hit.transform.name + " : " + hit.transform.tag);
 
