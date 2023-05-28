@@ -472,7 +472,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         {
             if (EventSystem.current.IsPointerOverGameObject()) { return; }
             Ray ray = mapCamCamera.ScreenPointToRay(Input.mousePosition);
-            Debug.DrawRay(ray.origin, ray.direction * 100, Color.green, 3f);
+            Debug.DrawRay(ray.origin, ray.direction * 1000, Color.green, 3f);
             RaycastHit hit;
 
             if (Physics.Raycast(ray, out hit, 100, 1 << LayerMask.NameToLayer("Icon")))
