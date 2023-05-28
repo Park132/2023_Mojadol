@@ -22,6 +22,9 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
 
     public short[] add_Hp_Atk;
 
+    public GameObject[] Sounds;// 0: °È±â, 1: ÇÇ°Ý, 2: Á×À½
+    
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
@@ -82,12 +85,16 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
         this.stat.state = MoonHeader.CreepStat.Idle;
         stat.actorHealth.health = stat.actorHealth.maxHealth;
         this.mainCtrl.RegenProcessing();
+        icon.GetComponent<Renderer>().material.color = Color.yellow;
         foreach (Renderer item in bodies) { item.enabled = true; }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (ac_type == MoonHeader.ActorType.Creep_Golem && rigid.velocity.magnitude >= 0.5f)
+        { PlaySFX(0); }
+
         if (!once && GameManager.Instance.onceStart && !PhotonNetwork.IsMasterClient)
         {
             mainCtrl.Setting();
@@ -132,7 +139,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     private IEnumerator DamagedEffect()
     {
         Color damagedColor = new Color32(255, 150, 150, 255);
-
+        PlaySFX(1);
         //Vector3 knockbackDirection = Vector3.Scale(this.transform.position - origin, Vector3.zero - Vector3.up).normalized * 500 + Vector3.up * 100;
 
         foreach (Renderer r in bodies)
@@ -194,6 +201,7 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
     protected void DeadAnim()
     { 
         mainCtrl.DeadProcessing();
+        PlaySFX(2);
         stat.state = MoonHeader.CreepStat.Death;
         PoolManager.Instance.Get_Local_Item(1).transform.position = this.transform.position + Vector3.up * 1.5f;
         Invoke("Dead_renderer_disable", 5f);
@@ -236,6 +244,19 @@ public class LSM_CreepCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable,
                 this.stat.exp = 600 + 25*level;
             }
         }
+    }
+
+    protected void PlaySFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { return; }
+        else dummy_s.Play();
+    }
+    protected void StopSFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { dummy_s.Stop(); }
+        else { return; }
     }
 
     // ¾ÆÀÌÄÜ ¹× ¸öÃ¼ »ö º¯°æ.

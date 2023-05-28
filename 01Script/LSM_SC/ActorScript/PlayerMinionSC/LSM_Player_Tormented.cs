@@ -100,6 +100,7 @@ public class LSM_Player_Tormented : LSM_PlayerBase
     [PunRPC]
     private void basicAnim_RPC()
     {
+        PlaySFX(3);
         if (photonView.IsMine)
             return;
 
@@ -133,6 +134,8 @@ public class LSM_Player_Tormented : LSM_PlayerBase
         photonView.RPC("QE", RpcTarget.MasterClient, this.playerCamera.transform.forward);
 
         yield return new WaitForSeconds(1.3f);
+        canQ = false;
+        timer_Q = 0;
         canAttack = true;
         canMove = true;
     }
@@ -159,12 +162,15 @@ public class LSM_Player_Tormented : LSM_PlayerBase
         photonView.RPC("EAnim_RPC", RpcTarget.All);
         canAttack = false;
         canE = false;
+        timer_E = 0;
 
         currentSpeed = speed / 4;
         yield return new WaitForSeconds(5f);
         canMove = false;
         yield return new WaitForSeconds(3.5f);
 
+        canE = false;
+        timer_E = 0;
         canMove = true;
         currentSpeed = speed;
         canAttack = true;
@@ -177,7 +183,9 @@ public class LSM_Player_Tormented : LSM_PlayerBase
         anim.SetLayerWeight(1, 1f);
         anim.SetTrigger("skillE_Trigger");
         E_SkillSC.gameObject.SetActive(true);
-        E_SkillSC.timer1= 0;
+        E_SkillSC.Setting();
+
+
         Invoke("AnimatorLayerReset",7f);
     }
 

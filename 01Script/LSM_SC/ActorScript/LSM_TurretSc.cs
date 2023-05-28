@@ -42,6 +42,8 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     protected GameObject last_Attack_Player;
     protected float timer_lastAttack;
 
+	public GameObject[] Sounds; // 0: 피격, 1: 죽음
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
 		if(stream.IsWriting)
@@ -221,10 +223,12 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	// 체력은 동기화되게 설정하였기에, 외적인 면만 보여주면 될듯..
 	[PunRPC]protected void Damaged_RPC_Turret()
     {
+		PlaySFX(0);
         StartCoroutine(DamagedEffect());
 	}
 
 	[PunRPC] protected void DestroyProcessing_RPC(int t) {
+		PlaySFX(1);
 		this.stats.actorHealth.team = (MoonHeader.Team)t;
 		ChangeTeamColor();
 		ChangeTeamColor(bodies[0].gameObject);
@@ -251,8 +255,6 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	protected virtual void DestroyProcessing(GameObject other)
 	{
-
-
 		if (!ReferenceEquals(last_Attack_Player, null))
 		{
 			last_Attack_Player.GetComponent<I_Playable>().AddTD();
@@ -436,4 +438,18 @@ public class LSM_TurretSc : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			}
 		}
 	}
+
+    protected void PlaySFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { return; }
+        else dummy_s.Play();
+    }
+    protected void StopSFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { dummy_s.Stop(); }
+        else { return; }
+    }
+
 }

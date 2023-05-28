@@ -34,6 +34,8 @@ public class LSM_BaseTurretSC : LSM_TurretSc
         stats.actorHealth.type = MoonHeader.AttackType.Turret;
         timer_regen = 0;
         isDie = false;
+        searchRadius *= 2;
+        maxAttackRadius *= 2;
         
     }
 
@@ -93,14 +95,17 @@ public class LSM_BaseTurretSC : LSM_TurretSc
         if (t == this.stats.actorHealth.team || !PhotonNetwork.IsMasterClient || isDie)
             return;
         this.stats.actorHealth.health -= dam;
-        StartCoroutine(DamagedEffect());
+        photonView.RPC("D_BT_RPC", RpcTarget.All);
+        //StartCoroutine(DamagedEffect());
         if (this.stats.actorHealth.health <= 0 && !isDie)
         {
             DestroyProcessing(other);
         }
         return;
     }
-
+    [PunRPC]
+    private void D_BT_RPC()
+    {PlaySFX(0); StartCoroutine(DamagedEffect()); }
     protected override IEnumerator DamagedEffect()
     {
         Color damagedColor = new Color32(255, 150, 150, 255);
@@ -122,10 +127,15 @@ public class LSM_BaseTurretSC : LSM_TurretSc
 
     protected override void DestroyProcessing(GameObject other)
     {
-        isDie = true;
         GameManager.Instance.DisplayAdd(string.Format("{0} Destroyed {1}", other.name, this.name));
+        photonView.RPC("Destroy_BT_RPC",RpcTarget.All);
+    }
+    [PunRPC]private void Destroy_BT_RPC() 
+    {
+        PlaySFX(1);
+        isDie = true;
         bodies[0].GetComponent<Renderer>().material.color = Color.black;
-        this.transform.tag = "Untagged";
+        //this.transform.tag = "Untagged";
         this.transform.gameObject.layer = 6;
     }
 }

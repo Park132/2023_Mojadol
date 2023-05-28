@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using Photon.Pun;
 
 public class LSM_UI_Result : MonoBehaviour
 {
@@ -33,5 +34,6 @@ public class LSM_UI_Result : MonoBehaviour
     private IEnumerator LobbyAnim() {
         yield return StartCoroutine( GameManager.Instance.ScreenFade(false));
         SceneManager.LoadScene(1);
+        PhotonNetwork.Disconnect();
     }
 }

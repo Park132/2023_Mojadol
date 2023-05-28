@@ -50,7 +50,9 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	public bool debugging_minion; // 디버깅 확인용...
 	private Vector3 networkPosition, networkVelocity;
-	
+
+	public GameObject[] Sounds;//0: walk, 1: hit, 2: death, 3: attack
+	private bool isMove;
 
 
     // 기즈모
@@ -85,28 +87,15 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
             stream.SendNext(dummy_int1);
             stream.SendNext(dummy_int2);
 
-            /*
-            stream.SendNext(stats.actorHealth.maxHealth);
-			stream.SendNext(stats.actorHealth.health);
-			stream.SendNext(stats.actorHealth.team);
-			stream.SendNext(stats.actorHealth.Atk);
-			stream.SendNext(stats.state);
-			*/
-
             stream.SendNext(nav.enabled ? nav.velocity : Vector3.zero );
-				
+
+			isMove = nav.enabled ? !nav.isStopped : false;
+            stream.SendNext(isMove);
 		}
 		else
 		{
 			bool isActive_ = (bool)stream.ReceiveNext();
 			this.gameObject.SetActive(isActive_);
-			/*
-			this.stats.actorHealth.maxHealth = (short)stream.ReceiveNext();
-			this.stats.actorHealth.health = (short)stream.ReceiveNext();
-			this.stats.actorHealth.team = (MoonHeader.Team)stream.ReceiveNext();
-			this.stats.actorHealth.Atk = (short)stream.ReceiveNext();
-			this.stats.state = (MoonHeader.State)stream.ReceiveNext();
-			*/
 
 			ulong receive_dummy = ((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue);
 			receive_dummy += (((ulong)(int)stream.ReceiveNext() & (ulong)uint.MaxValue) << 32);
@@ -114,11 +103,11 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
             this.stats.ReceiveDummy(receive_dummy);
 
-				rigid.velocity = networkVelocity;
+			rigid.velocity = networkVelocity;
 
-				//float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.timestamp)) * 20;
-				networkPosition = this.transform.position + networkVelocity * 5;
-			
+			//float lag = Mathf.Abs((float)(PhotonNetwork.Time - info.timestamp)) * 20;
+			networkPosition = this.transform.position + networkVelocity * 5;
+			isMove = (bool)stream.ReceiveNext();
 		}
 	}
 
@@ -163,12 +152,12 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
         //maxAtkRadius = 13f;
 
     }
-	private void Start()
-	{
 
-	}
 	private void LateUpdate()
 	{
+		if (isMove) { PlaySFX(0); }
+		else { StopSFX(0); }
+
 		if (!PhotonNetwork.IsMasterClient) return;
 
 		// 현재 게임의 진행 상태가 어떻게 되는지 확인 후, 상태를 변경.
@@ -205,12 +194,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
     {
         if (!photonView.IsMine)
         {
-			//rigid.velocity = networkVelocity;
 			rigid.MovePosition(rigid.position + networkVelocity * Time.deltaTime);
-            //transform.position = transform.position + (networkVelocity * Time.deltaTime);
-            //transform.position = Vector3.MoveTowards(transform.position, transform.position + networkVelocity, Time.deltaTime);
-            //transform.position = Vector3.MoveTowards(transform.position, networkPosition, Time.deltaTime);
-            //Debug.Log(string.Format("velocityMagnitude : {0}\nvelocity : {1}",networkVelocity.magnitude, stats.speed));
         }
     }
 
@@ -461,14 +445,16 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 			// 타겟이 파괴되었다면. -> 현재 ObjectPooling을 사용하고있으므로, ActiveSelf를 사용하여 현재 활성/비활성 상태를 확인.
 			if (!target_attack.activeSelf && this.stats.state != MoonHeader.State.Thinking
 				|| this.stats.state == MoonHeader.State.Dead ||
-				(!ReferenceEquals(target_attack.GetComponent<I_Characters>(),null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
+				(!ReferenceEquals(target_attack.GetComponent<I_Characters>(), null) && target_attack.GetComponent<I_Characters>().GetState() == 1))
 			{
 				//Debug.Log("Attack Finish in Destroy"); 
-				StartCoroutine(AttackFin()); 
+				StartCoroutine(AttackFin());
 			}
 
 			else if (target_actor.GetTeam() == this.stats.actorHealth.team && target_attack.CompareTag("Turret"))
 			{ CheckingTurretTeam(target_attack.GetComponent<LSM_TurretSc>().waypoint); StartCoroutine(AttackFin()); }
+			else if (target_attack.CompareTag("Turret") && target_actor.GetHealth() <= 0)
+			{ StartCoroutine(AttackFin()); }
 
 			else if (stats.state == MoonHeader.State.Attack && !PlayerSelect)
 			{
@@ -497,7 +483,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 				// 공격이 불가능한 경우, 가능한 경우에 따라 Obstacl, Agent를 활성/비활성.
 				// Agent 및 Obstacle을 동시에 사용한다면 오류 발생 -> 자신 또한 장애물이라 생각하며 자신이 있는 길을 피하려는 모순
 				// 그렇기에 Obstacle과 Agent를 서로 키고 끄고를 하는 것임. 허나 비활성화한다고 바로 비활성화되지는 않은듯함.
-				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함. 간단하게 해결하기 위하여 변환되는 순간 속도를 0으로 설정.
+				// 약간의 텀을 주지 않는다면 서로 충돌하여 팅겨나가는 경우가 존재함.
 
 				if (dummy_cant_attack && nav.isStopped)
 				{
@@ -532,7 +518,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 
 	}
 
-	[PunRPC]protected void AAnim_RPC() { anim.SetTrigger("Attack"); }
+	[PunRPC]protected void AAnim_RPC() {PlaySFX(3); anim.SetTrigger("Attack"); }
 
 	private IEnumerator Attack_Anim()
 	{
@@ -600,6 +586,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	[PunRPC] protected void DamMinion_RPC() {
+		PlaySFX(1);
         StartCoroutine(DamagedEffect());
     }
 
@@ -657,7 +644,7 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 	}
 
 	[PunRPC]protected void DeadAnim()
-	{ anim.SetTrigger("DeadAnim"); this.transform.gameObject.layer = 12; }
+	{PlaySFX(2); anim.SetTrigger("DeadAnim"); this.transform.gameObject.layer = 12; }
 	[PunRPC] protected void DeadP_M() {photonView.RPC("DeadP", RpcTarget.All); this.gameObject.SetActive(false); }
 	[PunRPC]protected void DeadP()
 	{ this.gameObject.SetActive(false); }
@@ -815,7 +802,20 @@ public class LSM_MinionCtrl : MonoBehaviourPunCallbacks, I_Actor, IPunObservable
 		this.transform.parent = PoolManager.Instance.gameObject.transform;
 		PoolManager.Instance.poolList_Minion[index].Add(this.gameObject);
     }
-    
+
+    protected void PlaySFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { return; }
+        else dummy_s.Play();
+    }
+    protected void StopSFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { dummy_s.Stop(); }
+        else { return; }
+    }
+
 
     // I_Actor 구현 함수
     #region I_Actor

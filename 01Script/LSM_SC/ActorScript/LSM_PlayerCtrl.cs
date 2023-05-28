@@ -61,6 +61,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
     private float timer_photon;
 
+    public GameObject[] localSounds;
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
@@ -171,7 +173,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             player.statep = MoonHeader.State_P.None;
 
             if (photonView.IsMine)
-            { MapCam.SetActive(true); MapSubCam.SetActive(true); MainCam.SetActive(false); MiniMapCam.SetActive(false); }
+            { MapCam.SetActive(true); MapSubCam.SetActive(true); MainCam.SetActive(false); MiniMapCam.SetActive(false); MapCam.GetComponent<AudioListener>().enabled = true; }
             // 모든 스포너를 받아온 후 팀에 해당하는 스포너를 받아옴. 한개밖에 없다는 가정으로 하나의 마스터스포너를 받아옴.
             GameObject[] dummySpawners = GameObject.FindGameObjectsWithTag("Spawner");
             foreach (GameObject s in dummySpawners)
@@ -392,7 +394,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             else
             {
                 // 미니맵캠을 플레이어 위치로 이동.
-                MiniMapCam.transform.position = Vector3.Scale(playerMinion.transform.position, Vector3.one - Vector3.up) + Vector3.up * 95;
+                MiniMapCam.transform.position = Vector3.Scale(playerMinion.transform.position, Vector3.one - Vector3.up) + Vector3.up * mapCamBasePosition.y;
 
                 // 메인카메라를 기준. 메인카메라가 보고있는 방향으로 레이를 쏴, 미니언 혹은 플레이어, 터렛 등을 식별.
                 // 이후 게임UI에 정보를 전달.
@@ -442,12 +444,14 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (isMainPlayer)
         {
+            SoundManager.Instance.BGMMute(false);
             player.statep = MoonHeader.State_P.None;
             yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
             playerMinion = null;
             MainCam.SetActive(false);
             MiniMapCam.SetActive(false);
             MapCam.SetActive(true);
+            MapCam.GetComponent<AudioListener>().enabled= true;
             MapCam.transform.position = mapCamBasePosition;
             mapCamCamera.orthographicSize = MapCamBaseSize;
             yield return null;
@@ -573,7 +577,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
                 minionStatsPannel_txt.text = string.Format("Type : {0}\nHealth : {1}\nATK : {2}",
                                 subTarget_Actor.GetActor().type, subTarget_Actor.GetActor().health, subTarget_Actor.GetActor().Atk);
 
-                MapCam.transform.position = (mapcamSub_Target.transform.position + Vector3.up * 95);
+                MapCam.transform.position = (mapcamSub_Target.transform.position + Vector3.up * mapCamBasePosition.y);
                 MapSubCam.transform.position = mapsubcam_target.transform.position;
                 MapSubCam.transform.rotation = mapsubcam_target.transform.rotation;
             }
@@ -644,6 +648,7 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
 
 
         minionStatsPannel.SetActive(false);
+        PlaySFX(0);
         float dummy_time_in = 0;
         while (true)
         {
@@ -697,6 +702,8 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
         player.statep = MoonHeader.State_P.Selected;
         Cursor.lockState = CursorLockMode.Locked;
 
+        SoundManager.Instance.BGMMute(true);
+
         yield return new WaitForSeconds(3f);
         StartCoroutine(GameManager.Instance.ScreenFade(true));
         //subTarget_minion.stats.state = MoonHeader.State.Normal;
@@ -726,6 +733,20 @@ public class LSM_PlayerCtrl : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
     }
+
+    protected void PlaySFX(int num)
+    {
+        AudioSource dummy_s = localSounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { return; }
+        else dummy_s.Play();
+    }
+    protected void StopSFX(int num)
+    {
+        AudioSource dummy_s = localSounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { dummy_s.Stop(); }
+        else { return; }
+    }
+
     public void AddingKD(byte i) { kd[i] += 1; }
     public void AddingCS() { minionK += 1; }
     public void AddingTD() { turretK += 1; }

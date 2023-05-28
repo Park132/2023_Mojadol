@@ -64,6 +64,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     protected Vector3 networkPosition, networkVelocity;
     protected Vector3 preCamera;
 
+    protected bool isMove;
 
     protected MeshRenderer icon_ren;
     protected List<Material> icon_materialL;
@@ -73,6 +74,8 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     public float CollectingRadius;
     private float timer_collect;
     private byte settingLevel;
+
+    public GameObject[] Sounds; //0 : 걷기, 1: 피격, 2 : 죽음
     #endregion
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) // 되는 것 같긴한데 실제로 적용되는지는 확인하기 힘듬 
@@ -87,6 +90,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             stream.SendNext(dummy_int1);
             stream.SendNext(dummy_int2);
             stream.SendNext(rigid.velocity);
+            stream.SendNext(isMove);
             //stream.SendNext(Mathf.RoundToInt(pitch / 3));
         }
         else
@@ -101,6 +105,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
             ReceiveDummyUnZip(receive_dummy);
             networkVelocity = (Vector3)stream.ReceiveNext();
             rigid.velocity = networkVelocity;
+            isMove = (bool)stream.ReceiveNext();
             //pitch = (int)stream.ReceiveNext();
         }
     }
@@ -161,6 +166,8 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
                 { timer_lastAttack = 0; last_Attack_Player = null; }
             }
         }
+
+        if (isMove) { PlaySFX(0); }
 
         // 지연보상에대한 내용.
         if (!photonView.IsMine)
@@ -303,13 +310,15 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
 
         thisVelocity = new Vector3(thisVelocity.x * (isborder_x ? 0.4f : 1), 0, thisVelocity.z * (isborder_z ? 0.4f : 1));
         //if (!isborder)this.transform.position = this.transform.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint?1.5f:1f);
-        if (!isborder) rigid.MovePosition(rigid.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint ? 1.5f : 1f));
-        //this.rigid.velocity = thisVelocity * currentSpeed * (sprint?1.5f:1f);
+        if (!isborder) rigid.MovePosition(rigid.position + thisVelocity * currentSpeed * Time.deltaTime * (sprint ? 1.5f : 1f));        
 
         // 점프
         isGrounded = Physics.Raycast(this.transform.position + Vector3.up * 0.5f, Vector3.down, 0.8f, 1 << LayerMask.NameToLayer("Map"));
         Debug.DrawRay(this.transform.position + Vector3.up * 0.5f, Vector3.down * 0.8f, Color.red);
         //bool canJump = !isGrounded;
+
+        if ((x != 0 || y != 0 )&& isGrounded) { isMove = true; }
+        else { isMove = false; }
 
         anim.SetBool("InAir", !isGrounded);
 
@@ -451,9 +460,12 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     }
     public void Damaged(short dam, Vector3 origin, MoonHeader.Team t, GameObject other, float power)
     {
-        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead || !PhotonNetwork.IsMasterClient)
+        if (t == actorHealth.team || state_p == MoonHeader.State_P_Minion.Dead)
             return;
 
+        PlaySFX(1);
+        if (!PhotonNetwork.IsMasterClient)
+            return;
         if (other.CompareTag("PlayerMinion"))
         { last_Attack_Player = other; timer_lastAttack = 0; }
         else if (other.CompareTag("DamageArea"))
@@ -491,6 +503,7 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     {
         this.gameObject.layer = 12;
         state_p = MoonHeader.State_P_Minion.Dead;
+        PlaySFX(2);
         if (photonView.IsMine)
         {
             StartCoroutine(DeadInOrner());
@@ -611,6 +624,18 @@ public class LSM_PlayerBase : MonoBehaviourPunCallbacks, IPunObservable, I_Actor
     [PunRPC] protected void MinionEnable_RPC() { this.gameObject.SetActive(true); }
     #endregion
 
+    protected void PlaySFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { return; }
+        else dummy_s.Play();
+    }
+    protected void StopSFX(int num)
+    {
+        AudioSource dummy_s = Sounds[num].GetComponent<AudioSource>();
+        if (dummy_s.isPlaying) { dummy_s.Stop(); }
+        else { return; }
+    }
     // I_Actor 인터페이스에 미리 선언해둔 함수들 구현
     public short GetHealth() { return this.actorHealth.health; }
     public short GetMaxHealth() { return this.actorHealth.maxHealth; }

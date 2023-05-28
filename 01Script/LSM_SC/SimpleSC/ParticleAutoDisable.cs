@@ -7,6 +7,7 @@ using Unity.VisualScripting.Antlr3.Runtime.Misc;
 public class ParticleAutoDisable : MonoBehaviourPunCallbacks, IPunObservable
 {
     ParticleSystem ps;
+    float timer_autoDisable = 0;
     //bool alive;
     //float timer = 0;
 
@@ -22,7 +23,11 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks, IPunObservable
             this.gameObject.SetActive(isActive_);
         }
     }
-
+    private void Update()
+    {
+        timer_autoDisable += Time.deltaTime;
+        if (timer_autoDisable > 5f) { this.gameObject.SetActive(false); }
+    }
 
     private void Awake()
     {
@@ -42,6 +47,7 @@ public class ParticleAutoDisable : MonoBehaviourPunCallbacks, IPunObservable
     
     private void OnEnable()
     {
+        timer_autoDisable = 0;
         //if (PhotonNetwork.IsMasterClient)
         //{ StartCoroutine(CheckAlive()); timer = 0f; }
     }

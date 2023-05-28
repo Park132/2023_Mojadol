@@ -147,6 +147,8 @@ public class LSM_Player_Knight : LSM_PlayerBase
         photonView.RPC("AttackEffect_Q", RpcTarget.MasterClient);
         yield return new WaitForSecondsRealtime(0.7f);
         //canQ = true;
+        canQ = false;
+        timer_Q = 0;
         canAttack = true;
         canMove = true;
         //anim.applyRootMotion = false;
@@ -202,8 +204,9 @@ public class LSM_Player_Knight : LSM_PlayerBase
             input_E = false;
             casting_E= false;
             photonView.RPC("EAnimE_RPC", RpcTarget.All, this.playerCamera.transform.forward, timer_E);
-            timer_E = 0;
             yield return new WaitForSeconds(1.8f);
+            canE = false;
+            timer_E = 0;
             EskillOver();
         }
     }

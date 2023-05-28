@@ -6,6 +6,8 @@ using UnityEngine.UI;
 using System;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.SceneManagement;
+
 
 //탈출 제작, 낭떠러지에 빠지면 즉사.
 
@@ -62,7 +64,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	public String mainPlayerName;
 	public byte mainPlayerSelectNum;
 	public float timer_AllRunning, timer_inGameTurn;
-	public GameObject shopUI, endingUI;
+	public GameObject shopUI, endingUI, errorUI;
 
 	public LSM_CreepCtrl[] creeps;
 
@@ -173,10 +175,14 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
     {
         base.OnPlayerLeftRoom(otherPlayer);
         Debug.Log("Client is Left!");
-
-        PhotonNetwork.Disconnect();
-		onceStart = false; 
-		
+		if (gameState != MoonHeader.GameState.Ending)
+		{
+            Cursor.lockState = CursorLockMode.None;
+            errorUI.SetActive(true);
+            StopAllCoroutines();
+            PhotonNetwork.Disconnect();
+			onceStart = false;
+		}
     }
 
     #endregion
@@ -210,7 +216,9 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 		tabUI = GameObject.Find("TabUI");
 		shopUI = GameObject.Find("ShopPannel");
 		endingUI = GameObject.Find("ResultPannel");
-		gameUI_SC = gameUI.GetComponent<LSM_GameUI>();
+		errorUI = GameObject.Find("ErrorPannel"); errorUI.SetActive(false);
+
+        gameUI_SC = gameUI.GetComponent<LSM_GameUI>();
 		gameUI.SetActive(false);
 
 		wayPoints = GameObject.FindGameObjectsWithTag("WayPoint");
@@ -539,6 +547,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         //selectAttackPathUI.GetComponentInChildren<Button>().gameObject.SetActive(true);
         selectAttackPathUI.transform.Find("WaitingPannel").gameObject.SetActive(false);
         foreach (LSM_CreepCtrl item in creeps) { item.ResetCreep(); }
+		ScreenFade(true);
     }
 	[PunRPC]private void StartGameReady_RPC()
 	{
@@ -546,6 +555,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         SettingTurnText();      // 턴 상태 UI를 변경.
         foreach (GameObject s in spawnPoints)   // 모든 마스터 스포너에게 턴이 변경됐음을 알림.
         { s.GetComponent<LSM_Spawner>().ChangeTurn(); }
+        ScreenFade(true);
     }
 	[PunRPC]private void GamingReady_RPC()
 	{
@@ -571,6 +581,7 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
         ScreenFade(false);
         StartCoroutine(mainPlayer.AttackPathSelectSetting());
         Cursor.lockState = CursorLockMode.None;
+
     }
     #endregion
 
@@ -635,27 +646,10 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 				origin += plustAlpha;
 				screen.color = new Color(0, 0, 0, origin);
 			}
-			/*
-			while (true)
-			{
-				yield return new WaitForSeconds(Time.deltaTime);
-				float plustAlpha = Time.deltaTime * (inout ? -1: 1) * 2;
-				origin += plustAlpha;
-				screen.color = new Color(0, 0, 0, origin);
-				if (Mathf.Abs(origin - (inout ? 0:1)) <= 0.1f)
-					break;
-			}*/
-
-			/*
-			for (int i = 0; i < time; i++)
-			{
-				yield return new WaitForSeconds(0.01f);
-				origin += alpha;
-				screen.color = new Color(0, 0, 0, origin);
-			}
-			*/
 			screen.color = new Color(0, 0, 0, (inout ? 0 : 1));
 		}
+		else
+		{ yield return new WaitForSeconds(1); screen.color = new Color(0, 0, 0, (inout ? 0 : 1)); }
 	}
 
 	// 게임매니저에 저장되어있는 플레이어 미니언을 삭제하는 함수.
@@ -773,9 +767,23 @@ public class GameManager : MonoBehaviourPunCallbacks,IPunObservable
 	{
         ScreenFade(false);
         gameState = MoonHeader.GameState.Ending;
-        StartCoroutine(mainPlayer.AttackPathSelectSetting());
-		endingUI.GetComponent<LSM_UI_Result>().Setting((MoonHeader.Team)t != mainPlayer.player.team);
+		StartCoroutine(EndGame(t));
+    }
+	private IEnumerator EndGame(int t)
+	{
+        
+        yield return StartCoroutine(mainPlayer.AttackPathSelectSetting());
+        endingUI.SetActive(true);
+        endingUI.GetComponent<LSM_UI_Result>().Setting((MoonHeader.Team)t != mainPlayer.player.team);
         Cursor.lockState = CursorLockMode.None;
         Debug.Log("Team " + ((MoonHeader.Team)t).ToString() + " Lose");
+    }
+
+    public void GoToLobby() { StartCoroutine(LobbyAnim()); }
+    private IEnumerator LobbyAnim()
+    {
+        yield return StartCoroutine(GameManager.Instance.ScreenFade(false));
+        SceneManager.LoadScene(1);
+        PhotonNetwork.Disconnect();
     }
 }
